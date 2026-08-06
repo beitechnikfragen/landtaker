@@ -111,48 +111,13 @@
       defer
     ></script>
 
-    <script data-cfasync="false">
-      window.ramp = window.ramp || {};
-      window.ramp.que = window.ramp.que || [];
-      window.ramp.passiveMode = true;
-    </script>
+    <!-- Ads (Playwire/Ramp + Google Publisher Tag) removed.
+         Re-add our own ad stack here when the time comes. -->
 
-    <script>
-      window.googletag = window.googletag || { cmd: [] };
-      googletag.cmd.push(function () {
-        googletag.pubads().set("page_url", "http://openfront.io ");
-      });
-    </script>
-
-    <!-- Analytics -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=AW-16702609763"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-
-      gtag("js", new Date());
-      gtag("config", "AW-16702609763");
-    </script>
-    <!-- Google tag (gtag.js) -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-WQGQQ8RDN4"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
-
-      gtag("config", "G-WQGQQ8RDN4");
-    </script>
+    <!-- Analytics removed (was: Google Ads AW-16702609763 + GA4 G-WQGQQ8RDN4).
+         Re-add our own analytics snippet here when the time comes.
+         Note: src/client/Main.ts declares an optional `window.gtag` and calls it
+         defensively, so its absence is safe. -->
   </head>
 
   <body
@@ -465,19 +430,9 @@
       });
     </script>
 
-    <!-- Analytics -->
-    <script
-      defer
-      src="https://static.cloudflareinsights.com/beacon.min.js"
-      data-cf-beacon='{"token": "03d93e6fefb349c28ee69b408fa25a13"}'
-    ></script>
+    <!-- Analytics removed (was: Cloudflare Web Analytics beacon).
+         Re-add our own analytics beacon here when the time comes. -->
     <script type="module" src="/src/client/Main.ts"></script>
-    <footer>
-      <script
-        data-cfasync="false"
-        async
-        src="//cdn.intergient.com/1025558/75940/ramp.js"
-      ></script>
-    </footer>
+    <!-- Ads removed (was: Playwire/Ramp loader in <footer>). -->
   </body>
 </html>

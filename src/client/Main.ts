@@ -431,8 +431,12 @@ class Client {
       }
       const isAdFree =
         userMeResponse !== false && userMeResponse.player?.adfree === true;
-      window.adsEnabled =
-        !isAdFree && !crazyGamesSDK.isOnCrazyGames() && !isDesktopShell();
+      // Ads are disabled outright while we run without an ad stack: the
+      // Playwire/Ramp + GPT + Admiral tags were removed. Restore the
+      // entitlement expression below when our own ad stack lands.
+      //   !isAdFree && !crazyGamesSDK.isOnCrazyGames() && !isDesktopShell()
+      void isAdFree;
+      window.adsEnabled = false;
       // Ad-eligible users only: paid/adfree users must never load Admiral (its
       // adblock popup fires autonomously once the payload runs). Start watching
       // adblock state; once a blocker is ever detected the in-game ad is
