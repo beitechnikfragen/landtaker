@@ -47,6 +47,12 @@ export function getDefaultKeybinds(isMac: boolean): Record<string, string> {
     shiftKey: "ShiftLeft",
     resetGfx: "KeyR",
     selectAllWarships: "KeyF",
+    // Direct chat/emoji access. Previously both were only reachable by
+    // opening the radial menu on a player, which costs several clicks
+    // mid-fight. Z and X are unbound elsewhere and sit next to each other on
+    // the left hand, which already rests on WASD.
+    openChat: "KeyZ",
+    openEmojis: "KeyX",
     pauseGame: "KeyP",
     gameSpeedUp: "Period",
     gameSpeedDown: "Comma",

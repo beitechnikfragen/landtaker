@@ -1,5 +1,7 @@
 import { EventBus } from "../../core/EventBus";
+import { AllPlayers } from "../../core/game/Game";
 import { UserSettings } from "../../core/game/UserSettings";
+import { Emoji, flattenedEmojiTable } from "../../core/Util";
 import { Controller } from "../Controller";
 import { AttackingTroopsController } from "../controllers/AttackingTroopsController";
 import { BuildPreviewController } from "../controllers/BuildPreviewController";
@@ -11,8 +13,10 @@ import { StructureHighlightController } from "../controllers/StructureHighlightC
 import { ViewModeController } from "../controllers/ViewModeController";
 import { WarshipSelectionController } from "../controllers/WarshipSelectionController";
 import { GameStartingModal } from "../GameStartingModal";
+import { OpenChatEvent, OpenEmojisEvent } from "../InputHandler";
 import { MapRenderer } from "../render/gl";
 import { TransformHandler } from "../TransformHandler";
+import { SendEmojiIntentEvent } from "../Transport";
 import { UIState } from "../UIState";
 import { GameView } from "../view";
 import { FrameProfiler } from "./FrameProfiler";
@@ -228,6 +232,31 @@ export function createRenderer(
   }
   chatModal.g = game;
   chatModal.initEventBus(eventBus);
+
+  // Direct hotkey access to chat and emojis. Both were previously reachable
+  // only by opening the radial menu on a player, which is several clicks in
+  // the middle of a fight. Messages default to every player: the fast path is
+  // for broadcasting, and picking a single recipient stays available through
+  // the radial menu.
+  eventBus.on(OpenChatEvent, () => {
+    const myPlayer = game.myPlayer();
+    if (!myPlayer?.isAlive()) return;
+    chatModal.open(myPlayer, myPlayer);
+  });
+
+  eventBus.on(OpenEmojisEvent, () => {
+    const myPlayer = game.myPlayer();
+    if (!myPlayer?.isAlive()) return;
+    emojiTable.showTable((emoji) => {
+      eventBus.emit(
+        new SendEmojiIntentEvent(
+          AllPlayers,
+          flattenedEmojiTable.indexOf(emoji as Emoji),
+        ),
+      );
+      emojiTable.hideTable();
+    });
+  });
 
   const multiTabModal = document.querySelector(
     "multi-tab-modal",

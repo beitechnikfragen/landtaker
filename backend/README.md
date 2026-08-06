@@ -9,22 +9,22 @@ Currently implemented: **auth core** (JWKS, token issuing/refresh,
 
 ## Stack
 
-| Piece      | Choice           | Why                                                                       |
-| ---------- | ---------------- | ------------------------------------------------------------------------- |
-| Runtime    | Node + TypeScript | Lets us import the game's Zod schemas directly instead of duplicating them |
-| HTTP       | Fastify          | Fast, schema-first, small surface                                          |
-| Database   | PostgreSQL       | Relational data (friends, parties, clans) and leaderboard aggregation      |
-| ORM        | Drizzle          | SQL-shaped, no codegen step                                               |
-| Cache/queue| Redis            | Party presence and matchmaking — ephemeral, high-churn                     |
-| Tokens     | jose (EdDSA)     | The game verifies `algorithms: ["EdDSA"]` and accepts nothing else         |
+| Piece       | Choice            | Why                                                                        |
+| ----------- | ----------------- | -------------------------------------------------------------------------- |
+| Runtime     | Node + TypeScript | Lets us import the game's Zod schemas directly instead of duplicating them |
+| HTTP        | Fastify           | Fast, schema-first, small surface                                          |
+| Database    | PostgreSQL        | Relational data (friends, parties, clans) and leaderboard aggregation      |
+| ORM         | Drizzle           | SQL-shaped, no codegen step                                                |
+| Cache/queue | Redis             | Party presence and matchmaking — ephemeral, high-churn                     |
+| Tokens      | jose (EdDSA)      | The game verifies `algorithms: ["EdDSA"]` and accepts nothing else         |
 
 ## Quick start
 
 ```bash
 npm install
-npm run infra:up      # postgres on :5433, redis on :6380
+npm run infra:up # postgres on :5433, redis on :6380
 npm run db:migrate
-npm run dev           # http://localhost:8787
+npm run dev # http://localhost:8787
 ```
 
 No `.env` is needed for local development — defaults cover everything, and an
@@ -39,14 +39,32 @@ curl -s -X POST http://localhost:8787/auth/dev-login -H 'Content-Type: applicati
 
 ## Endpoints
 
-| Method | Path                      | Auth      | Notes                                |
-| ------ | ------------------------- | --------- | ------------------------------------ |
-| GET    | `/health`                 | —         | Liveness                             |
-| GET    | `/.well-known/jwks.json`  | —         | Public verification key              |
-| GET    | `/users/@me`              | Bearer    | Drives ads, ranked limits, ban screen |
-| POST   | `/auth/refresh`           | —         | Rotates the refresh token            |
-| POST   | `/auth/logout`            | —         | Revokes one refresh token            |
-| POST   | `/auth/dev-login`         | —         | **Development only**, never registered in production |
+| Method | Path                     | Auth   | Notes                                                |
+| ------ | ------------------------ | ------ | ---------------------------------------------------- |
+| GET    | `/health`                | —      | Liveness                                             |
+| GET    | `/.well-known/jwks.json` | —      | Public verification key                              |
+| GET    | `/users/@me`             | Bearer | Drives ads, ranked limits, ban screen                |
+| POST   | `/auth/refresh`          | —      | Rotates the refresh token                            |
+| POST   | `/auth/logout`           | —      | Revokes one refresh token                            |
+| POST   | `/auth/dev-login`        | —      | **Development only**, never registered in production |
+| GET    | `/parties/@me`           | Bearer | The caller's party, or null                          |
+| POST   | `/parties`               | Bearer | Create; returns the invite code                      |
+| POST   | `/parties/join`          | Bearer | Join by invite code                                  |
+| POST   | `/parties/leave`         | Bearer | Leave; transfers leadership or deletes               |
+| POST   | `/parties/kick`          | Bearer | Leader only                                          |
+
+### Party rules
+
+- A player is in at most one party — enforced by a unique index, not a
+  check-then-insert, so concurrent joins cannot both win.
+- Re-joining the party you are already in is a no-op returning 200; joining a
+  _different_ one is 409. A double-clicked invite link must not error.
+- When the leader leaves, leadership passes to the longest-standing member; the
+  party is deleted once the last member leaves, so no orphan rows accumulate.
+- Invite codes omit `0/O`, `1/I/L`, `5/S` and `8/B` — they get read aloud.
+
+Behaviour is covered end to end by `scripts/smoke-parties.sh` (needs a running
+backend); the database-free invariants have unit tests.
 
 ## Things that are not negotiable
 
@@ -98,16 +116,17 @@ Still served by the upstream API — each has to be reimplemented here:
 - [ ] `/matchmaking/join` (WebSocket) + `/matchmaking/checkin`
 - [ ] Friends API
 - [ ] ELO calculation and leaderboards
-- [ ] **Parties** (new) — schema is in place, routes are not
+- [x] **Parties** (new) — REST routes done. Still missing: live updates over
+      WebSocket (members currently only see changes when they re-fetch), the
+      client UI, and placing a party on one team at match start
+      (`matchmakingTeams` in GameManager, and TeamAssignment in the
+      deterministic core — that part needs tests).
 
 Client-side work that does not need this backend:
 
-- [ ] **Faster chat + emojis** (new) — today chat is reachable only through the
-      radial menu (`MainRadialMenu` → `ChatIntegration.setupChatModal`), which
-      costs several clicks mid-game. Wanted: a direct key/hotbar path and
-      quicker emoji access. The simulation side already exists
-      (`QuickChatExecution`, `EmojiExecution`), so this is mostly UI plus
-      possibly new entries in `resources/QuickChat.json`.
+- [x] **Faster chat + emojis** (new) — direct hotkeys (Z / X by default,
+      rebindable under Settings → Keybinds → Communication). Both broadcast to
+      all players; picking a single recipient stays on the radial menu.
 - [ ] **More public lobbies in parallel** — the master currently schedules one
       upcoming game at a time (`MasterLobbyService.maybeScheduleLobby`).
 

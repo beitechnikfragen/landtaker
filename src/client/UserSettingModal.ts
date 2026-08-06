@@ -671,6 +671,32 @@ export class UserSettingModal extends BaseModal {
       <h2
         class="text-blue-200 text-xl font-bold mt-8 mb-3 border-b border-white/10 pb-2"
       >
+        ${translateText("user_setting.comms_keybinds")}
+      </h2>
+
+      <setting-keybind
+        action="openChat"
+        label=${translateText("user_setting.open_chat")}
+        description=${translateText("user_setting.open_chat_desc")}
+        defaultKey=${this.defaultKeybinds.openChat}
+        .value=${this.getKeyValue("openChat")}
+        .display=${this.getKeyChar("openChat")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
+      <setting-keybind
+        action="openEmojis"
+        label=${translateText("user_setting.open_emojis")}
+        description=${translateText("user_setting.open_emojis_desc")}
+        defaultKey=${this.defaultKeybinds.openEmojis}
+        .value=${this.getKeyValue("openEmojis")}
+        .display=${this.getKeyChar("openEmojis")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
+      <h2
+        class="text-blue-200 text-xl font-bold mt-8 mb-3 border-b border-white/10 pb-2"
+      >
         ${translateText("user_setting.zoom_controls")}
       </h2>
 

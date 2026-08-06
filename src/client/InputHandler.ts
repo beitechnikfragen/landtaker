@@ -129,6 +129,15 @@ export class WarshipSelectionBoxCancelEvent implements GameEvent {}
 /** Emitted when the player triggers select-all-warships hotkey */
 export class SelectAllWarshipsEvent implements GameEvent {}
 
+/**
+ * Emitted by the direct chat hotkey. Chat is otherwise only reachable through
+ * the radial menu, which is too slow mid-game.
+ */
+export class OpenChatEvent implements GameEvent {}
+
+/** Emitted by the direct emoji hotkey. */
+export class OpenEmojisEvent implements GameEvent {}
+
 /** Emitted when a touch long-press is detected (shows crosshair indicator) */
 export class TouchLongPressStartEvent implements GameEvent {
   constructor(
@@ -284,6 +293,21 @@ export class InputHandler {
     this.addKeybindAndEvent(this.keybinds.selectAllWarships, () => {
       this.eventBus.emit(new SelectAllWarshipsEvent());
     });
+    // `!e.repeat` so holding the key does not reopen the panel every frame.
+    this.addKeybindAndEvent(
+      this.keybinds.openChat ?? "KeyZ",
+      () => {
+        this.eventBus.emit(new OpenChatEvent());
+      },
+      (e: KeyboardEvent) => !e.repeat,
+    );
+    this.addKeybindAndEvent(
+      this.keybinds.openEmojis ?? "KeyX",
+      () => {
+        this.eventBus.emit(new OpenEmojisEvent());
+      },
+      (e: KeyboardEvent) => !e.repeat,
+    );
     this.addKeybindAndEvent(this.keybinds.requestAlliance, () => {
       this.eventBus.emit(new DoRequestAllianceEvent());
     });
