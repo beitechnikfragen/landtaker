@@ -1,0 +1,51 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    // "bundler", not "nodenext": we type-check the game's own sources under
+    // ../src/core, and those use extensionless relative imports (the game
+    // builds with Vite). nodenext rejects those outright, which would make
+    // sharing the Zod schemas impossible.
+    "moduleResolution": "bundler",
+    "strict": true,
+    // OFF for the same reason as noUncheckedIndexedAccess: the game's classes
+    // assign some fields outside the constructor and do not enable this.
+    "strictPropertyInitialization": false,
+    "noImplicitOverride": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    // OFF, even though our own code would benefit. The shared schemas pull the
+    // game's client sources into this program transitively
+    // (ApiSchemas -> game/Game -> ...), and the game does not enable this flag,
+    // so turning it on reports ~400 errors in code this project does not own
+    // and buries our own. Revisit if the game ever adopts it.
+    "noUncheckedIndexedAccess": false,
+    // Needed because the transitively-included client code touches `document`.
+    "lib": ["ES2023", "DOM"],
+    "resolveJsonModule": true,
+    // Deliberately OFF. The shared schemas pull the game's sources into this
+    // program, and the game does not use verbatimModuleSyntax — enabling it
+    // here reports hundreds of errors in code this project does not own.
+    "verbatimModuleSyntax": false,
+    // Imports carry explicit .ts extensions so Node can run the sources
+    // directly (type-stripping) with no build step.
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "types": ["node"],
+    // Reach into the game's Zod schemas so wire contracts are shared, never
+    // duplicated. Import them as `@game/ApiSchemas`.
+    "paths": {
+      "@game/*": ["../src/core/*"],
+      // The game resolves these through Vite; mirror them so the shared
+      // schemas resolve here too.
+      "resources/*": ["../resources/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "drizzle.config.ts"],
+  // The game's sources are imported for their types but NOT type-checked here:
+  // this project runs stricter settings (noUncheckedIndexedAccess,
+  // verbatimModuleSyntax) than the game does, so checking them would report
+  // hundreds of pre-existing errors in code this project does not own.
+  // The game keeps checking itself via its own `tsc --noEmit`.
+  "exclude": ["node_modules", "../src/**/*"]
+}

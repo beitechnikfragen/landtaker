@@ -1,0 +1,42 @@
+# Local infrastructure for the backend. The backend itself runs on the host
+# (npm run dev) so it picks up code changes without a rebuild.
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: openfront
+      POSTGRES_PASSWORD: openfront
+      POSTGRES_DB: openfront
+    # 5433 on the host, not 5432: a local PostgreSQL install commonly owns
+    # 5432 already, and the resulting connections silently hit that server
+    # instead (surfacing as a password failure). Inside the compose network the
+    # port is still 5432.
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openfront -d openfront"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    # Party and matchmaking state is ephemeral by design: losing it on restart
+    # drops players back to the lobby, which is recoverable. No persistence.
+    command: redis-server --save "" --appendonly no
+    # 6380 on the host for the same reason as Postgres above — a local Redis
+    # may already own 6379.
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:

@@ -1,0 +1,8 @@
+node_modules/
+*.log
+
+# Secrets. The repo-root .gitignore already matches `.env*`, which would also
+# swallow the checked-in template — hence the explicit unignore.
+.env
+.env.local
+!.env.example

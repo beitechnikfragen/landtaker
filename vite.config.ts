@@ -193,6 +193,10 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: "jsdom",
       setupFiles: "./tests/setup.ts",
+      // The backend is a separate project with its own vitest config, deps and
+      // aliases. Without this it gets picked up here and fails against the
+      // wrong module resolution. Run it with `npm test` inside backend/.
+      exclude: ["**/node_modules/**", "**/dist/**", "backend/**"],
     },
     root: "./",
     base: "/",
