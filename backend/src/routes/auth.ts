@@ -1,12 +1,12 @@
 import { and, eq, gt, isNull } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { config, isProduction } from "../config.ts";
 import {
   generateRefreshToken,
   hashRefreshToken,
   issueAccessToken,
 } from "../auth/tokens.ts";
+import { config, isProduction } from "../config.ts";
 import { db } from "../db/index.ts";
 import { refreshTokens, users } from "../db/schema.ts";
 import { createUser } from "../services/users.ts";
@@ -16,6 +16,21 @@ const DevLoginBodySchema = z.object({
   // Reuse an existing account across restarts, or omit to mint a new one.
   userId: z.uuid().optional(),
   role: z.enum(["root", "admin", "mod", "flagged", "banned"]).optional(),
+  // Bare display name. The game shows the verified check for any username
+  // without a dot (isVerifiedUsername in src/core/ApiSchemas.ts), so a name
+  // given here is rendered bare and gets the badge. Dots are rejected because
+  // they would silently produce an unverified name.
+  username: z
+    .string()
+    .min(3)
+    .max(24)
+    .refine((v) => !v.includes("."), {
+      message: "username must not contain a dot (it would drop the badge)",
+    })
+    .optional(),
+  // Defaults to true so the badge is on by default in dev; pass false to see
+  // how an ordinary "Name.1234" account renders.
+  verified: z.boolean().default(true),
 });
 
 export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
@@ -91,7 +106,9 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
     await db
       .update(refreshTokens)
       .set({ revokedAt: new Date() })
-      .where(eq(refreshTokens.tokenHash, hashRefreshToken(parsed.data.refreshToken)));
+      .where(
+        eq(refreshTokens.tokenHash, hashRefreshToken(parsed.data.refreshToken)),
+      );
     // Always 204: revoking an already-dead token is not an error, and probing
     // for which tokens exist should not be possible.
     return reply.code(204).send();
@@ -117,16 +134,41 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
           })) ?? null)
         : null;
 
-      user ??= await createUser({
-        role: parsed.data.role ?? null,
-        usernameBase: "DevPlayer",
+      // "premium" renders the name bare, which is what earns the verified
+      // check; anything else renders "base.1234". See resolveDisplayUsername.
+      const identity = {
+        usernameBase: parsed.data.username ?? "DevPlayer",
         usernameDiscriminator: String(
           Math.floor(Math.random() * 10_000),
         ).padStart(4, "0"),
+        usernameStatus: parsed.data.verified ? "premium" : "claimed",
+      };
+
+      user ??= await createUser({
+        role: parsed.data.role ?? null,
+        ...identity,
         adfree: true,
         canCreatePublicLobbies: true,
         unlimitedRanked: true,
       });
+
+      // Re-logging into an existing account applies the requested name/badge
+      // too, so flipping them does not require a fresh account each time.
+      if (parsed.data.username !== undefined || !user.usernameStatus) {
+        const [updated] = await db
+          .update(users)
+          .set({
+            usernameBase: identity.usernameBase,
+            usernameStatus: identity.usernameStatus,
+            // Keep the existing suffix if there is one; it is only shown for
+            // non-verified accounts anyway.
+            usernameDiscriminator:
+              user.usernameDiscriminator ?? identity.usernameDiscriminator,
+          })
+          .where(eq(users.id, user.id))
+          .returning();
+        if (updated) user = updated;
+      }
 
       const refresh = generateRefreshToken();
       await db.insert(refreshTokens).values({

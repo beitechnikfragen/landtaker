@@ -1,0 +1,22 @@
+<!--
+  Landtaker wordmark (dark backgrounds) — lighter blue for contrast.
+  See LandtakerLogo.svg for why this is a <text> SVG and not traced paths.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1364 259"
+  role="img"
+  aria-label="Landtaker"
+>
+  <g
+    font-family="'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif"
+    font-weight="700"
+    font-size="150"
+    text-anchor="middle"
+    fill="#3aa9e8"
+  >
+    <text x="140" y="185" fill="#1c7fbe">&gt;</text>
+    <text x="682" y="185" letter-spacing="6">LANDTAKER</text>
+    <text x="1224" y="185" fill="#1c7fbe">&lt;</text>
+  </g>
+</svg>

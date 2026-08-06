@@ -1,0 +1,24 @@
+<!--
+  Square Landtaker mark for narrow viewports — replaces the old OF.png.
+  Stacked "LAND / TAKER" so it stays legible when the wide wordmark would
+  shrink to nothing. Original work, see LandtakerLogo.svg.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 512 512"
+  role="img"
+  aria-label="Landtaker"
+>
+  <g
+    font-family="'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif"
+    font-weight="700"
+    font-size="104"
+    text-anchor="middle"
+    fill="#007bc3"
+  >
+    <text x="256" y="238" letter-spacing="4">LAND</text>
+    <text x="256" y="342" letter-spacing="4">TAKER</text>
+  </g>
+  <!-- Underline echoing the bracket accents of the wide wordmark. -->
+  <rect x="146" y="372" width="220" height="14" rx="7" fill="#00589a" />
+</svg>

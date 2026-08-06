@@ -1,0 +1,30 @@
+<!--
+  Landtaker wordmark (light backgrounds).
+
+  Original work — deliberately NOT derived from proprietary/images/*, which is
+  All Rights Reserved and must not be reused. Same viewBox as the old logo so
+  every existing layout box keeps working.
+
+  Text is rendered as a <text> element rather than traced outlines: it stays
+  editable, and the file stays a few hundred bytes instead of ~100 KB of paths.
+  Swap in a real designed mark when there is one; nothing else needs to change.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1364 259"
+  role="img"
+  aria-label="Landtaker"
+>
+  <g
+    font-family="'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif"
+    font-weight="700"
+    font-size="150"
+    text-anchor="middle"
+    fill="#007bc3"
+  >
+    <!-- Bracket accents, matching the ">OPENFRONT<" treatment they replace. -->
+    <text x="140" y="185" fill="#00589a">&gt;</text>
+    <text x="682" y="185" letter-spacing="6">LANDTAKER</text>
+    <text x="1224" y="185" fill="#00589a">&lt;</text>
+  </g>
+</svg>

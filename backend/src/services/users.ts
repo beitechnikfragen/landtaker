@@ -1,6 +1,6 @@
-import { and, eq, isNull, or, gt } from "drizzle-orm";
-import { randomBytes } from "node:crypto";
 import type { UserMeResponse } from "@game/ApiSchemas.ts";
+import { and, eq, gt, isNull, or } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
 import { db } from "../db/index.ts";
 import {
   bans,
@@ -69,6 +69,12 @@ export async function buildUserMeResponse(
       username: resolveDisplayUsername(user),
       usernameBase: user.usernameBase,
       usernameDiscriminator: user.usernameDiscriminator,
+      ...(user.usernameStatus
+        ? {
+            usernameStatus:
+              user.usernameStatus as UserMeResponse["player"]["usernameStatus"],
+          }
+        : {}),
       nextUsernameChangeAt: user.nextUsernameChangeAt?.toISOString() ?? null,
       achievements: { singleplayerMap: [] },
       leaderboard: {
@@ -82,13 +88,26 @@ export async function buildUserMeResponse(
 }
 
 /**
- * The display form the game renders as-is. Entitled claim holders show the bare
+ * Statuses that render the bare name. Only these earn the verified check —
+ * the game derives the badge purely from the name having no dot
+ * (isVerifiedUsername in src/core/ApiSchemas.ts), so this list IS the badge
+ * rule. "claimed" deliberately does not qualify: a claim reserves the name,
+ * an entitlement displays it.
+ */
+const BARE_NAME_STATUSES = new Set(["premium", "indefinite"]);
+
+/**
+ * The display form the game renders as-is. Entitled holders show the bare
  * base; everyone else gets "base.1234". The game explicitly forbids assembling
  * this client-side, so it is resolved here and here only.
  */
-function resolveDisplayUsername(user: typeof users.$inferSelect): string | null {
+function resolveDisplayUsername(
+  user: typeof users.$inferSelect,
+): string | null {
   if (!user.usernameBase) return null;
-  if (user.usernameStatus === "claimed") return user.usernameBase;
+  if (BARE_NAME_STATUSES.has(user.usernameStatus ?? "")) {
+    return user.usernameBase;
+  }
   if (!user.usernameDiscriminator) return user.usernameBase;
   return `${user.usernameBase}.${user.usernameDiscriminator}`;
 }

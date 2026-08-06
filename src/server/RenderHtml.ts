@@ -41,12 +41,18 @@ export async function renderHtmlContent(htmlPath: string): Promise<string> {
       assetManifest,
       cdnBase,
     ),
+    // Our own marks in resources/. The former OpenFront.png / OF.png live in
+    // proprietary/ (All Rights Reserved) and must not be used here.
     desktopLogoImageUrl: buildAssetUrl(
-      "images/OpenFront.png",
+      "images/LandtakerLogo.svg",
       assetManifest,
       cdnBase,
     ),
-    mobileLogoImageUrl: buildAssetUrl("images/OF.png", assetManifest, cdnBase),
+    mobileLogoImageUrl: buildAssetUrl(
+      "images/LandtakerMark.svg",
+      assetManifest,
+      cdnBase,
+    ),
   });
 }
 

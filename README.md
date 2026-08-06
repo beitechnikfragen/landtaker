@@ -1,14 +1,14 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="proprietary/images/OpenFrontLogoDark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="proprietary/images/OpenFrontLogo.svg">
-    <img src="proprietary/images/OpenFrontLogo.svg" alt="OpenFrontIO Logo" width="300">
+    <source media="(prefers-color-scheme: dark)" srcset="resources/images/LandtakerLogoDark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="resources/images/LandtakerLogo.svg">
+    <img src="resources/images/LandtakerLogo.svg" alt="Landtaker Logo" width="300">
   </picture>
 </p>
 
-[OpenFront.io](https://openfront.io/) is an online real-time strategy game focused on territorial control and alliance building. Players compete to expand their territory, build structures, and form strategic alliances in various maps based on real-world geography.
+Landtaker is an online real-time strategy game focused on territorial control and alliance building. Players compete to expand their territory, build structures, and form strategic alliances in various maps based on real-world geography.
 
-This is a fork/rewrite of WarFront.io. Credit to https://github.com/WarFrontIO.
+Landtaker is a fork of [OpenFront.io](https://openfront.io/), which is itself a fork/rewrite of WarFront.io. Credit to https://github.com/openfrontio/OpenFrontIO and https://github.com/WarFrontIO. This project is not affiliated with or endorsed by OpenFront Inc.
 
 ![CI](https://github.com/openfrontio/OpenFrontIO/actions/workflows/ci.yml/badge.svg)
 [![Crowdin](https://badges.crowdin.net/openfront-mls/localized.svg)](https://crowdin.com/project/openfront-mls)

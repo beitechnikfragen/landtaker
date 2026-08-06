@@ -691,7 +691,7 @@
     "preset_colorblind_desc": "Colorblind-friendly territory and border colors",
     "preset_custom": "Custom",
     "preset_default": "Default",
-    "preset_default_desc": "The standard OpenFront look",
+    "preset_default_desc": "The standard Landtaker look",
     "preset_delete_confirm": "Delete preset \"{name}\"?",
     "preset_migrated_name": "My settings",
     "preset_name_placeholder": "Preset name",
@@ -817,7 +817,7 @@
     "radial_title": "Radial menu",
     "table_action": "Action",
     "table_key": "Key",
-    "troubleshooting_desc": "If you experience performance issues, crashes, or other problems while playing OpenFront, please visit our Troubleshooting page for help diagnosing and fixing common issues:",
+    "troubleshooting_desc": "If you experience performance issues, crashes, or other problems while playing Landtaker, please visit our Troubleshooting page for help diagnosing and fixing common issues:",
     "ui_attack_ratio": "Attack ratio - The amount of troops that will be used when you attack. You can adjust the attack ratio using the slider. Having more attacking troops than defending troops will make you lose fewer troops in the attack, while having less will increase the damage dealt to your attacking troops. The effect doesn't go beyond ratios of 2:1.",
     "ui_control": "Control panel",
     "ui_control_desc": "The control panel contains the following elements:",
@@ -903,14 +903,14 @@
     "got_it": "Got it",
     "how": "How",
     "later": "Later",
-    "modal_desc": "Your browser doesn't support fullscreen, but you can add OpenFront to your Home Screen for an immersive experience:",
+    "modal_desc": "Your browser doesn't support fullscreen, but you can add Landtaker to your Home Screen for an immersive experience:",
     "modal_title": "Fullscreen on iOS",
     "never": "Never",
     "step_add_to_home_label": "Add to Home Screen",
     "step_open": "Open from your Home Screen — launches fullscreen without the address bar",
     "step_scroll_and_tap": "Scroll down and tap",
     "step_share": "Tap the Share button in your browser",
-    "text": "For fullscreen, add OpenFront to your Home Screen"
+    "text": "For fullscreen, add Landtaker to your Home Screen"
   },
   "kick_reason": {
     "admin": "Kicked by an admin",
@@ -1003,7 +1003,7 @@
     "solo": "Solo",
     "store": "Store",
     "terms_of_service": "Terms of Service",
-    "title": "OpenFront (ALPHA)",
+    "title": "Landtaker (ALPHA)",
     "troubleshooting": "Troubleshooting",
     "user_avatar_alt": "{username}'s avatar",
     "wiki": "Wiki"
@@ -1171,7 +1171,7 @@
     "dismiss": "Dismiss",
     "error": "Couldn't save that. Please try again.",
     "no": "No thanks",
-    "title": "Keep up with OpenFront?",
+    "title": "Keep up with Landtaker?",
     "yes": "Yes please"
   },
   "matchmaking_modal": {
@@ -1213,7 +1213,7 @@
   },
   "news_box": {
     "dismiss": "Dismiss",
-    "firefox_warning": "OpenFront.io doesn't perform well with [Firefox-based browsers](https://simple.wikipedia.org/wiki/Web_browsers_based_on_Firefox). We recommend you to use a [Chromium-based browser](https://en.wikipedia.org/wiki/Chromium_(web_browser)#Browsers_based_on_Chromium) for best performance.",
+    "firefox_warning": "Landtaker doesn't perform well with [Firefox-based browsers](https://simple.wikipedia.org/wiki/Web_browsers_based_on_Firefox). We recommend you to use a [Chromium-based browser](https://en.wikipedia.org/wiki/Chromium_(web_browser)#Browsers_based_on_Chromium) for best performance.",
     "go_to_item": "Go to item {num}",
     "news": "NEWS",
     "tournament": "TOURNAMENT",
@@ -1609,7 +1609,7 @@
     "browser": "Browser",
     "canvas_2d_no_gpu": "Canvas 2D (no GPU)",
     "charging": "Charging",
-    "chromium_tip": "OpenFront runs best on Chromium-based browsers.",
+    "chromium_tip": "Landtaker runs best on Chromium-based browsers.",
     "copied_to_clipboard": "Info copied to the clipboard! Feel free to share it on our Discord if you need help.",
     "device_pixel_ratio": "Device Pixel Ratio",
     "environment": "Environment",

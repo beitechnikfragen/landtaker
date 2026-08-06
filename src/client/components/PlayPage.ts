@@ -58,8 +58,8 @@ export class PlayPage extends LitElement {
               class="col-start-2 flex items-center justify-center text-malibu-blue min-w-0"
             >
               <img
-                src=${assetUrl("images/OpenFrontLogo.svg")}
-                alt="OpenFront"
+                src=${assetUrl("images/LandtakerLogo.svg")}
+                alt="Landtaker"
                 class="h-full w-auto"
               />
             </div>
@@ -162,11 +162,8 @@ export class PlayPage extends LitElement {
 
         <game-mode-selector></game-mode-selector>
 
-        <!-- Desktop gets the compact footer button instead. -->
-        <steam-wishlist
-          campaign="home_mobile"
-          class="block px-2 pb-4 lg:hidden"
-        ></steam-wishlist>
+        <!-- Steam wishlist promo removed along with the footer one: it points
+             at OpenFront's store page, not ours. -->
       </div>
     `;
   }

@@ -8,6 +8,13 @@ import { formatDebugTranslation } from "./Utils";
 import en from "../../resources/lang/en.json";
 import metadata from "../../resources/lang/metadata.json";
 
+/**
+ * Browser-tab title. A product name is the same in every language, and the
+ * Crowdin-managed locale files still carry the upstream one, so this is kept
+ * out of the translation layer entirely.
+ */
+const GAME_TITLE = "Landtaker (ALPHA)";
+
 type LanguageMetadata = {
   code: string;
   native: string;
@@ -249,7 +256,11 @@ export class LangSelector extends LitElement {
       "streaming-now",
     ];
 
-    document.title = this.translateText("main.title") ?? document.title;
+    // The product name is intentionally NOT translated: every language file
+    // still carries the upstream title, and those are Crowdin-managed, so
+    // translating here would put "OpenFront" back into the tab for every
+    // non-English locale.
+    document.title = GAME_TITLE;
 
     document.querySelectorAll("[data-i18n]").forEach((element) => {
       const key = element.getAttribute("data-i18n");

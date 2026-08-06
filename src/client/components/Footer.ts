@@ -1,7 +1,6 @@
 import { LitElement, html } from "lit";
 import { customElement } from "lit/decorators.js";
 import { assetUrl } from "../../core/AssetUrls";
-import "./SteamWishlistButton";
 
 @customElement("page-footer")
 export class Footer extends LitElement {
@@ -102,16 +101,9 @@ export class Footer extends LitElement {
           </div>
         </div>
 
-        <!-- Phones keep the full store widget on the play page instead; there
-             is no room for it here. -->
-        <div
-          class="hidden lg:flex lg:col-start-3 lg:items-center lg:justify-end lg:pt-2 lg:pr-20"
-        >
-          <steam-wishlist-button
-            campaign="home_desktop"
-            class="min-w-0 flex-1 max-w-[544px]"
-          ></steam-wishlist-button>
-        </div>
+        <!-- The Steam wishlist promo was removed: it points at OpenFront's own
+             store page, which is not ours to advertise. Re-add a promo in this
+             grid column if we ever ship on a store. -->
 
         <!-- Single instance: translateText() resolves the active language via
              document.querySelector("lang-selector"), so a second one would
