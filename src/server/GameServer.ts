@@ -39,6 +39,7 @@ import { archive, finalizeGameRecord } from "./Archive";
 import { Client } from "./Client";
 import { ClientMsgRateLimiter } from "./ClientMsgRateLimiter";
 import { fetchCustomTribes } from "./CustomTribes";
+import { fetchPartyMembers } from "./JoinVerify";
 import { ServerEnv } from "./ServerEnv";
 import {
   noopMatchTelemetryEmitter,
@@ -117,6 +118,11 @@ export class GameServer {
   // reconnecting player skip the single-use Turnstile re-check.
   private admittedPersistentIds: Set<string> = new Set();
   private clientsDisconnectedStatus: Map<ClientID, boolean> = new Map();
+  // Party membership as it stood when each player joined, keyed by the
+  // joiner's publicId and holding every party member's publicId. Frozen at
+  // join (see recordPartyMembers) so a party edited mid-lobby can't move
+  // someone who already committed to this match.
+  private partyMembersByPublicId: Map<string, string[]> = new Map();
   private _hasStarted = false;
   private _startTime: number | null = null;
   private hasReachedMaxPlayerCount: boolean = false;
@@ -781,6 +787,23 @@ export class GameServer {
     });
     this.addListeners(client);
     this.startLobbyInfoBroadcast();
+
+    // Party lookup is deliberately fire-and-forget: joinClient stays
+    // synchronous, and grouping is a preference, not a precondition for
+    // playing. A slow or failed lookup costs the party its grouping, never
+    // the join. The roster is read once at start(), so anything that lands
+    // before then counts; a lookup still in flight at start is ignored
+    // rather than awaited, which keeps start() off the network path.
+    if (client.publicId !== undefined && !this._hasStarted) {
+      const publicId = client.publicId;
+      void fetchPartyMembers(publicId).then((members) => {
+        // Discard a late answer: after start() the rosters have already been
+        // baked into gameStartInfo, and mutating them now would desync the
+        // archived replay record from the assignment clients actually ran.
+        if (members.length === 0 || this._hasStarted) return;
+        this.recordPartyMembers(publicId, members);
+      });
+    }
 
     if (this.activeClients.length >= (this.gameConfig.maxPlayers ?? Infinity)) {
       this.hasReachedMaxPlayerCount = true;
@@ -1589,19 +1612,77 @@ export class GameServer {
     };
   }
 
+  /**
+   * Freeze a joining player's party roster for this lobby.
+   *
+   * Called from the join path with what the backend reported at that moment.
+   * Later joins never revise an earlier entry: the roster feeds deterministic
+   * team assignment, and it must not shift under a player who already
+   * committed to the match.
+   */
+  public recordPartyMembers(publicId: string, memberPublicIds: string[]): void {
+    this.partyMembersByPublicId.set(publicId, memberPublicIds);
+  }
+
+  /**
+   * Party members' publicIds for a client, themselves excluded.
+   *
+   * Symmetric by construction: A and B are treated as partied if EITHER
+   * one's frozen roster names the other. A one-sided roster happens
+   * routinely — B joined the party after A already joined the lobby, so A's
+   * snapshot predates B — and grouping only one direction would make the
+   * edge depend on join order.
+   */
+  private partyPeers(client: Client): string[] {
+    const publicId = client.publicId;
+    if (publicId === undefined) return [];
+    const peers = new Set<string>(
+      this.partyMembersByPublicId.get(publicId) ?? [],
+    );
+    for (const [otherId, members] of this.partyMembersByPublicId) {
+      if (otherId !== publicId && members.includes(publicId))
+        peers.add(otherId);
+    }
+    peers.delete(publicId);
+    return Array.from(peers);
+  }
+
   // Maps each active client's publicId-based friends list to in-game
   // clientIDs, dropping friends not present in this game. Returns undefined
   // when no friends are present so the field can be omitted from the wire
   // payload.
+  //
+  // Party members are folded in as friend edges. That is a deliberate choice
+  // of the SOFT grouping path over the strict clan one: assignTeams kicks
+  // clan overflow once a team is full, and for a variable-size lobby
+  // maxTeamSize is ceil(players / teams) — a number nobody knows while people
+  // are still joining. The client's partyFitsLobby gate only refuses joins
+  // for the fixed-size modes (Duos/Trios/Quads), so every variable-size lobby
+  // admits a party of any size. Routing those down the clan path would kick a
+  // player out of a match they were explicitly allowed to join, which is a
+  // far worse outcome than a party that ends up split across two teams. The
+  // friend path spills instead of benching, so "if you were let in, you
+  // play" holds.
+  //
+  // Emitting them through `friends` also keeps the simulation untouched:
+  // assignTeams already prefers the team holding the most of a player's
+  // friends, and the field is already carried in GameStartInfo and archived
+  // into the replay record, so replays stay in sync with recorded hashes.
   private buildFriendsLookup(): (client: Client) => ClientID[] | undefined {
     const publicIdToClientID = new Map<string, ClientID>();
     for (const c of this.activeClients) {
       if (c.publicId) publicIdToClientID.set(c.publicId, c.clientID);
     }
     return (client: Client) => {
-      const friendClientIDs = client.friends
-        .map((pid) => publicIdToClientID.get(pid))
-        .filter((id): id is ClientID => id !== undefined);
+      // Deduped: a party member who is also an account friend is one edge.
+      const ids = new Set<ClientID>();
+      for (const pid of client.friends.concat(this.partyPeers(client))) {
+        const id = publicIdToClientID.get(pid);
+        if (id !== undefined && id !== client.clientID) ids.add(id);
+      }
+      // Sorted so the edge list is byte-identical on every client regardless
+      // of Map/Set iteration order upstream — this feeds team assignment.
+      const friendClientIDs = Array.from(ids).sort();
       return friendClientIDs.length > 0 ? friendClientIDs : undefined;
     };
   }

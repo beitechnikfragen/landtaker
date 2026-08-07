@@ -4,8 +4,16 @@ Replacement for the closed-source API the upstream game talks to. The game
 server is stateless: it keeps matches in memory and calls this service for
 everything that has to persist — accounts, auth, stats, the game archive.
 
-Currently implemented: **auth core** (JWKS, token issuing/refresh,
-`/users/@me`). Everything else is listed under [Roadmap](#roadmap).
+Implemented: auth (JWKS, tokens, cookie sessions), `/users/@me`, player
+profiles, parties (incl. live updates over SSE), friends, the game archive,
+and ranked leaderboards. Clans, the shop and cosmetics answer as placeholders
+for now. What is still missing is listed under [Roadmap](#roadmap).
+
+Run every end-to-end check at once against a running backend:
+
+```bash
+bash scripts/smoke-all.sh
+```
 
 ## Stack
 
@@ -39,19 +47,28 @@ curl -s -X POST http://localhost:8787/auth/dev-login -H 'Content-Type: applicati
 
 ## Endpoints
 
-| Method | Path                     | Auth   | Notes                                                |
-| ------ | ------------------------ | ------ | ---------------------------------------------------- |
-| GET    | `/health`                | —      | Liveness                                             |
-| GET    | `/.well-known/jwks.json` | —      | Public verification key                              |
-| GET    | `/users/@me`             | Bearer | Drives ads, ranked limits, ban screen                |
-| POST   | `/auth/refresh`          | —      | Rotates the refresh token                            |
-| POST   | `/auth/logout`           | —      | Revokes one refresh token                            |
-| POST   | `/auth/dev-login`        | —      | **Development only**, never registered in production |
-| GET    | `/parties/@me`           | Bearer | The caller's party, or null                          |
-| POST   | `/parties`               | Bearer | Create; returns the invite code                      |
-| POST   | `/parties/join`          | Bearer | Join by invite code                                  |
-| POST   | `/parties/leave`         | Bearer | Leave; transfers leadership or deletes               |
-| POST   | `/parties/kick`          | Bearer | Leader only                                          |
+| Method | Path                     | Auth    | Notes                                                |
+| ------ | ------------------------ | ------- | ---------------------------------------------------- |
+| GET    | `/health`                | —       | Liveness                                             |
+| GET    | `/.well-known/jwks.json` | —       | Public verification key                              |
+| GET    | `/users/@me`             | Bearer  | Drives ads, ranked limits, ban screen                |
+| POST   | `/auth/refresh`          | —       | Rotates the refresh token                            |
+| POST   | `/auth/logout`           | —       | Revokes one refresh token                            |
+| POST   | `/auth/dev-login`        | —       | **Development only**, never registered in production |
+| GET    | `/parties/@me`           | Bearer  | The caller's party, or null                          |
+| POST   | `/parties`               | Bearer  | Create; returns the invite code                      |
+| POST   | `/parties/join`          | Bearer  | Join by invite code                                  |
+| POST   | `/parties/leave`         | Bearer  | Leave; transfers leadership or deletes               |
+| POST   | `/parties/kick`          | Bearer  | Leader only                                          |
+| GET    | `/parties/@me/fit`       | Bearer  | Can this party be seated in a lobby of that shape?   |
+| GET    | `/parties/@me/events`    | Bearer  | SSE stream of party changes                          |
+| GET    | `/parties/members`       | api key | Server-to-server; publicIds of a player's party      |
+| GET    | `/friends`               | Bearer  | Paged friends list                                   |
+| GET    | `/friends/requests`      | Bearer  | Incoming and outgoing                                |
+| GET    | `/leaderboard/ranked`    | —       | Paged, elo DESC                                      |
+| GET    | `/player/:publicId`      | Bearer  | Public profile                                       |
+| POST   | `/game/:id`              | api key | Archive a finished match                             |
+| GET    | `/game/:id`              | —       | Replay data; PII withheld without the api key        |
 
 ### Party rules
 
@@ -115,25 +132,31 @@ here (`noUncheckedIndexedAccess`, `verbatimModuleSyntax`,
 Still served by the upstream API — each has to be reimplemented here:
 
 - [ ] OAuth providers (Discord, Google, Steam)
-- [ ] `POST/GET /game/{id}` — archive, feeds replays
+- [x] `POST/GET /game/{id}` — archive, feeds replays. GET is deliberately
+      unauthenticated (the browser fetches it with no credentials to start a
+      replay); the api key instead decides whether `persistentID` comes back.
 - [ ] `/join_verify` — join authorization
 - [ ] `/cosmetics.json`, `/reserved_clan_tags`, `/custom_tribes`
 - [ ] `/matchmaking/join` (WebSocket) + `/matchmaking/checkin`
-- [ ] Friends API
-- [ ] ELO calculation and leaderboards
-- [x] **Parties** (new) — REST routes and client UI done (nav → Party).
-      Still missing: live updates over WebSocket (the modal polls every 5s
-      while open), and placing a party on one team at match start
-      (`matchmakingTeams` in GameManager, and TeamAssignment in the
-      deterministic core — that part needs tests).
+- [x] Friends API — requests, accept/deny, list, remove. A mutual request
+      auto-accepts, which is what the client already branches on.
+- [ ] ELO calculation — the leaderboard reads `leaderboardEntries`, but
+      nothing writes to it yet: match results are archived, not yet scored.
+- [x] **Parties** (new) — REST routes, client UI (nav → Party), live updates
+      over SSE, a join-time fit check, and party members biased onto the same
+      team at match start. The seating reuses the friends path rather than the
+      clan path: clan overflow is kicked, and a variable-size lobby admits a
+      party of any size, so the strict path would bench someone who was
+      explicitly allowed to join. The deterministic core was not modified.
 
 Client-side work that does not need this backend:
 
 - [x] **Faster chat + emojis** (new) — direct hotkeys (Z / X by default,
       rebindable under Settings → Keybinds → Communication). Both broadcast to
       all players; picking a single recipient stays on the radial menu.
-- [ ] **More public lobbies in parallel** — the master currently schedules one
-      upcoming game at a time (`MasterLobbyService.maybeScheduleLobby`).
+- [x] **More public lobbies in parallel** — `LOBBIES_PER_TYPE` (default 3,
+      was a hardcoded 2). Open lobbies of the same type also avoid repeating a
+      map that is already listed.
 
 ## Tests
 

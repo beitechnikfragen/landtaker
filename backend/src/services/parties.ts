@@ -107,6 +107,39 @@ export async function getPartyForUser(
   return getParty(membership.partyId, userId);
 }
 
+/**
+ * Public IDs of everyone in the given player's party, the player included.
+ * Empty when they are in no party, or when the id matches nobody.
+ *
+ * Keyed on publicId rather than the internal user id because the game server
+ * only ever knows publicIds — it never sees account ids, and must not.
+ * Returning an array (rather than a party object) keeps it that way: the
+ * caller needs group membership, not party internals.
+ */
+export async function listPartyMemberPublicIds(
+  publicId: string,
+): Promise<string[]> {
+  const user = await db.query.users.findFirst({
+    where: eq(users.publicId, publicId),
+  });
+  if (!user) return [];
+
+  const membership = await db.query.partyMembers.findFirst({
+    where: eq(partyMembers.userId, user.id),
+  });
+  if (!membership) return [];
+
+  const rows = await db
+    .select({ publicId: users.publicId })
+    .from(partyMembers)
+    .innerJoin(users, eq(users.id, partyMembers.userId))
+    .where(eq(partyMembers.partyId, membership.partyId));
+
+  // Sorted so the game server sees a stable order regardless of row order —
+  // it folds these into team-grouping input, which must be deterministic.
+  return rows.map((r) => r.publicId).sort();
+}
+
 export async function createParty(
   leaderId: string,
   options: { isOpen?: boolean; maxMembers?: number } = {},
