@@ -118,16 +118,15 @@ export class HomeHero extends LitElement {
     if (!hasLinkedAccount(this.userMeResponse) || this.userMeResponse === false)
       return nothing;
 
-    // UserMeResponse carries elo per queue, but no win/loss totals — so the
-    // rail shows the two ratings it can actually source rather than inventing
-    // a stat block.
-    const board = this.userMeResponse.player?.leaderboard;
+    const player = this.userMeResponse.player;
+    const board = player?.leaderboard;
     const elo1v1 = board?.oneVone?.elo;
-    const elo2v2 = board?.twoVtwo?.elo;
     const hasElo = typeof elo1v1 === "number" && Number.isFinite(elo1v1);
+    const record = board?.oneVone;
+    const matches = player?.recentMatches ?? [];
 
     return html`
-      <aside class="lt-rail flex flex-col">
+      <aside class="lt-rail flex flex-col min-w-0">
         <div class="lt-rail-h">${translateText("main.account")}</div>
         <div class="p-4">
           ${hasElo
@@ -139,21 +138,51 @@ export class HomeHero extends LitElement {
                   class="block mb-4"
                 ></rank-badge>
                 <div class="lt-kv">
+                  <span>${translateText("player_stats_tree.stats_wins")}</span>
+                  <b class="text-lt-ok">${record?.wins ?? 0}</b>
+                </div>
+                <div class="lt-kv">
                   <span
-                    >${translateText("mode_selector.ranked_1v1_title")}</span
+                    >${translateText("player_stats_tree.stats_losses")}</span
                   >
-                  <b class="text-lt-accent">${elo1v1}</b>
+                  <b class="text-lt-bad">${record?.losses ?? 0}</b>
                 </div>`
             : html`<div class="lt-label !text-[12px] !text-lt-500">
                 ${translateText("matchmaking_modal.no_elo")}
               </div>`}
-          ${typeof elo2v2 === "number" && Number.isFinite(elo2v2)
-            ? html`<div class="lt-kv">
-                <span>${translateText("mode_selector.ranked_2v2_title")}</span>
-                <b>${elo2v2}</b>
-              </div>`
-            : nothing}
         </div>
+        ${matches.length > 0
+          ? html`
+              <div class="lt-rail-h border-t border-lt-700">
+                ${translateText("clan_modal.tab_game_history")}
+              </div>
+              <div class="py-1">
+                ${matches.map(
+                  (match) => html`
+                    <div
+                      class="lt-row flex items-center gap-3 px-4 py-2 text-[13px]"
+                    >
+                      <!-- Placement carries the result: first place is the
+                           only one worth colouring. -->
+                      <i
+                        class="lt-num not-italic min-w-[26px] h-[20px] grid place-items-center border text-[12px] ${match.placement ===
+                        1
+                          ? "bg-lt-accent text-lt-accent-ink border-lt-accent"
+                          : "text-lt-400 border-lt-600"}"
+                        >${match.placement ?? "—"}</i
+                      >
+                      <span class="flex-1 min-w-0 truncate text-lt-100"
+                        >${match.map ?? "—"}</span
+                      >
+                      <span class="lt-label !text-[12px] !text-lt-500 shrink-0"
+                        >${match.mode ?? ""}</span
+                      >
+                    </div>
+                  `,
+                )}
+              </div>
+            `
+          : nothing}
       </aside>
     `;
   }
