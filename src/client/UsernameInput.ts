@@ -318,7 +318,7 @@ export class UsernameInput extends LitElement {
           />
           ${this.clanCheckPending
             ? html`<span
-                class="absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-white/30 border-t-white/80 rounded-full animate-spin pointer-events-none"
+                class="absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-lt-600 border-t-lt-100 rounded-full animate-spin pointer-events-none"
                 aria-hidden="true"
               ></span>`
             : null}
@@ -336,7 +336,7 @@ export class UsernameInput extends LitElement {
           title=${this.verifiedActive
             ? translateText("username.verified_heading")
             : ""}
-          class="flex-1 min-w-0 border-0 text-2xl font-medium tracking-wider text-left text-white placeholder-white/70 focus:outline-none focus:ring-0 overflow-x-auto whitespace-nowrap text-ellipsis pr-2 bg-transparent disabled:text-blue-400 disabled:cursor-not-allowed [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_4px_rgba(0,0,0,0.7)]"
+          class="flex-1 min-w-0 border-0 text-2xl font-medium tracking-wider text-left text-white placeholder-white/70 focus:outline-none focus:ring-0 overflow-x-auto whitespace-nowrap text-ellipsis pr-2 bg-transparent disabled:text-lt-accent disabled:cursor-not-allowed [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_4px_rgba(0,0,0,0.7)]"
         />
         <button
           type="button"
@@ -348,15 +348,15 @@ export class UsernameInput extends LitElement {
           <svg
             viewBox="0 0 24 24"
             class="w-5 h-5 transition-colors ${this.verifiedActive
-              ? "text-blue-400"
-              : "text-white/30 group-hover:text-white/50"}"
+              ? "text-lt-accent"
+              : "text-lt-600 group-hover:text-lt-500"}"
             aria-hidden="true"
           >
             <circle cx="12" cy="12" r="10" fill="currentColor"></circle>
             <path
               d="M7.5 12.5l3 3 6-6.5"
-              stroke="white"
-              stroke-width="2.2"
+              stroke="#100a03"
+              stroke-width="2.4"
               fill="none"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -365,8 +365,8 @@ export class UsernameInput extends LitElement {
           <span
             class="hidden sm:inline text-sm font-medium transition-colors ${this
               .verifiedActive
-              ? "text-blue-400"
-              : "text-white/70 group-hover:text-white"}"
+              ? "text-lt-accent"
+              : "text-lt-400 group-hover:text-lt-100"}"
             >${translateText("username.verified_toggle")}</span
           >
         </button>
@@ -374,7 +374,7 @@ export class UsernameInput extends LitElement {
       ${this.validationError
         ? html`<div
             id="username-validation-error"
-            class="absolute top-full left-0 z-50 w-full mt-1 px-3 py-2 text-sm font-medium border border-red-500/50 rounded-lg bg-red-900/90 text-red-200 backdrop-blur-md shadow-lg"
+            class="absolute top-full left-0 z-50 w-full mt-1 px-3 py-2 text-sm font-medium border border-lt-bad/60 bg-lt-900/95 text-lt-bad backdrop-blur-md"
           >
             ${this.validationError}
           </div>`
@@ -389,7 +389,7 @@ export class UsernameInput extends LitElement {
       tag: this.clanTag,
     });
     const className =
-      "absolute top-full left-0 z-50 mt-1 px-3 py-2 text-sm font-medium border border-red-500/50 rounded-lg bg-red-900/90 text-red-200 backdrop-blur-md shadow-lg lg:whitespace-nowrap";
+      "absolute top-full left-0 z-50 mt-1 px-3 py-2 text-sm font-medium border border-lt-bad/60 bg-lt-900/95 text-lt-bad backdrop-blur-md lg:whitespace-nowrap";
 
     if (this.clanTagOwnershipError !== "username.tag_not_member") {
       return html`<div id="clan-tag-validation-error" class=${className}>
