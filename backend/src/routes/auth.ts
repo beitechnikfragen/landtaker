@@ -181,6 +181,10 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       user ??= await createUser({
         role: parsed.data.role ?? null,
         ...identity,
+        // The client treats "has an email" as a linked account (a magic-link
+        // user has nothing else either), so without one a dev session would
+        // sign in but the whole signed-in UI would stay hidden.
+        email: `${identity.usernameBase.toLowerCase()}@dev.localhost`,
         adfree: true,
         canCreatePublicLobbies: true,
         unlimitedRanked: true,

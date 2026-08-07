@@ -51,21 +51,28 @@ export class DesktopNavBar extends LitElement {
 
     return html`
       <nav
-        class="hidden lg:flex w-full h-[76px] bg-lt-900/90 backdrop-blur-md items-stretch shrink-0 z-50 relative border-b border-lt-700"
+        class="hidden lg:flex w-full h-[84px] bg-lt-900/90 backdrop-blur-md items-stretch shrink-0 z-50 relative border-b border-lt-700"
       >
         <!-- Brand sits at the left edge, separated by a rule rather than
              centred — the row then reads left-to-right like a title bar. -->
-        <!-- Brand column: the lockup at full readable size with the version
-             centred beneath it, not squeezed beside it. -->
+        <!-- Brand column, as in the mock: the mark plus the wordmark set in
+             the display face. Type instead of the lockup's baked-in wordmark,
+             because the SVG renders its lettering at a fraction of the mark's
+             height — this stays razor-sharp at any size. -->
         <div
-          class="flex flex-col items-center justify-center gap-1 pl-5 pr-7 mr-2 border-r border-lt-700"
+          class="flex flex-col items-center justify-center gap-0.5 pl-5 pr-7 mr-2 border-r border-lt-700"
         >
-          <div class="h-12">
+          <div class="flex items-center gap-3">
             <img
-              class="block h-full aspect-[3943/1442]"
-              src=${assetUrl("images/logo/lockup-horizontal.svg")}
-              alt="Landtaker"
+              class="block h-14 w-14"
+              src=${assetUrl("images/logo/mark.svg")}
+              alt=""
+              aria-hidden="true"
             />
+            <span
+              class="lt-display text-[26px] leading-none !tracking-[0.24em] text-lt-100"
+              >LANDTAKER</span
+            >
           </div>
           <div
             id="game-version"

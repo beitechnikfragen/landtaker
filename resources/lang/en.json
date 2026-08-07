@@ -10,6 +10,7 @@
     "claim_failed": "Failed to claim reward. Please try again.",
     "clear_session": "Clear Session",
     "connected_as": "Connected as",
+    "dev_sign_in": "Dev sign-in (local only)",
     "email_placeholder": "Enter your email address",
     "enter_email_address": "Please enter an email address",
     "failed_to_send_recovery_email": "Failed to send recovery email",
