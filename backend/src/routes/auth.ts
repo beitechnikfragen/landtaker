@@ -178,6 +178,18 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
         usernameStatus: parsed.data.verified ? "premium" : "claimed",
       };
 
+      // Same username = same account, across browsers and sessions. Without
+      // this every dev sign-in minted a fresh user, so elo and history seeded
+      // onto one browser's account silently vanished in another.
+      user ??=
+        (await db.query.users.findFirst({
+          where: eq(
+            users.email,
+            `${identity.usernameBase.toLowerCase()}@dev.localhost`,
+          ),
+          orderBy: (u, { asc }) => [asc(u.createdAt)],
+        })) ?? null;
+
       user ??= await createUser({
         role: parsed.data.role ?? null,
         ...identity,
