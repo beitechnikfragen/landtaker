@@ -5,11 +5,20 @@ const INTENTS_PER_SECOND = 10;
 const INTENTS_PER_MINUTE = 150;
 const MAX_INTENT_SIZE = 2000;
 const TOTAL_BYTES = 5 * 1024 * 1024; // 5MB per client
+
+// Signaling kommt schubweise: ein SDP plus ein Schwall ICE-Kandidaten pro Peer.
+// Großzügig genug für einen Konferenz-Aufbau mit fünf Peers, eng genug gegen Fluten.
+const PHONE_PER_SECOND = 30;
+const PHONE_PER_MINUTE = 300;
+const MAX_PHONE_SIZE = 30000;
+
 export type RateLimitResult = "ok" | "limit" | "kick";
 
 interface ClientBucket {
   perSecond: RateLimiter;
   perMinute: RateLimiter;
+  phonePerSecond: RateLimiter;
+  phonePerMinute: RateLimiter;
   totalBytes: number;
 }
 
@@ -39,6 +48,18 @@ export class ClientMsgRateLimiter {
       }
     }
 
+    if (type === "phone") {
+      if (bytes > MAX_PHONE_SIZE) {
+        return "kick";
+      }
+      if (
+        !bucket.phonePerSecond.tryRemoveTokens(1) ||
+        !bucket.phonePerMinute.tryRemoveTokens(1)
+      ) {
+        return "limit";
+      }
+    }
+
     return "ok";
   }
 
@@ -54,6 +75,14 @@ export class ClientMsgRateLimiter {
       }),
       perMinute: new RateLimiter({
         tokensPerInterval: INTENTS_PER_MINUTE,
+        interval: "minute",
+      }),
+      phonePerSecond: new RateLimiter({
+        tokensPerInterval: PHONE_PER_SECOND,
+        interval: "second",
+      }),
+      phonePerMinute: new RateLimiter({
+        tokensPerInterval: PHONE_PER_MINUTE,
         interval: "minute",
       }),
       totalBytes: 0,
