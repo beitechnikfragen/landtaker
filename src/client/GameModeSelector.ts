@@ -210,31 +210,15 @@ export class GameModeSelector extends LitElement {
               </div>
             </div>`}
 
-        <!-- Solo: full width, desktop only -->
-        <div class="hidden sm:block h-14">
-          ${this.renderSmallActionCard(
-            translateText("main.solo"),
-            this.openSinglePlayerModal,
-            "lt-btn-primary",
-          )}
-        </div>
-        <!-- Bottom row: create + ranked + join (desktop only) -->
-        <div class="hidden sm:grid grid-cols-3 gap-4 h-14">
-          ${this.renderSmallActionCard(
-            translateText("main.create"),
-            this.openHostLobby,
-            "",
-          )}
+        <!-- Desktop keeps only ranked here: solo, create and join moved into
+             the hero, where the primary actions belong. Ranked is a separate
+             mode rather than a way into the same queue, so it stays with the
+             lobby list. -->
+        <div class="hidden sm:block h-12">
           ${this.renderSmallActionCard(
             translateText("mode_selector.ranked_title"),
             this.openRankedMenu,
             "",
-          )}
-          ${this.renderSmallActionCard(
-            translateText("main.join"),
-            this.openJoinLobby,
-            "",
-            this.hostedLobbyCount(),
           )}
         </div>
       </div>

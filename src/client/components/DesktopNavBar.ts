@@ -2,6 +2,7 @@ import { LitElement, html } from "lit";
 import { customElement } from "lit/decorators.js";
 import { assetUrl } from "../../core/AssetUrls";
 import { NavNotificationsController } from "./NavNotificationsController";
+import "./NavStatusCells";
 
 @customElement("desktop-nav-bar")
 export class DesktopNavBar extends LitElement {
@@ -155,8 +156,9 @@ export class DesktopNavBar extends LitElement {
               `
             : ""}
         </div>
-        <!-- Push the account cell to the right edge; the tabs stay left. -->
+        <!-- Push the status and account cells to the right edge; tabs stay left. -->
         <div class="flex-1"></div>
+        <nav-status-cells class="flex items-stretch"></nav-status-cells>
         <button
           id="nav-account-button"
           class="nav-menu-item lt-nav-cell relative"

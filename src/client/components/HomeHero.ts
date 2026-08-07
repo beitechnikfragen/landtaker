@@ -187,16 +187,92 @@ export class HomeHero extends LitElement {
     `;
   }
 
+  /**
+   * The primary actions live in the hero, not under the lobby cards: this is
+   * the first thing on the page, so the thing a player came to do belongs
+   * here. They open the same modals game-mode-selector does.
+   */
+  private open(selector: string) {
+    return () => {
+      const modal = document.querySelector(selector) as {
+        open?: () => void;
+      } | null;
+      modal?.open?.();
+    };
+  }
+
+  private renderActions() {
+    const slots = this.nextLobbySlots();
+
+    return html`
+      <div>
+        <!-- No invented sub-labels: the existing translations have none, so
+             the buttons carry their own strings and the live lobby fill goes
+             underneath, where it says something a label could not. -->
+        <div class="lt-group w-fit lt-rise">
+          <button
+            class="lt-btn lt-btn-primary"
+            @click=${this.open("single-player-modal")}
+          >
+            ${translateText("main.solo")}
+          </button>
+          <button class="lt-btn" @click=${this.open("host-lobby-modal")}>
+            ${translateText("main.create")}
+          </button>
+          <button class="lt-btn" @click=${this.open("join-lobby-modal")}>
+            ${translateText("main.join")}
+          </button>
+        </div>
+        ${slots !== null
+          ? html`<div
+              class="lt-label !text-[13px] !text-lt-500 mt-3 flex items-center gap-2"
+            >
+              <span class="text-lt-100 font-bold"
+                >${slots.filled}/${slots.max}</span
+              >
+              ${translateText("host_modal.players")}
+            </div>`
+          : nothing}
+      </div>
+    `;
+  }
+
+  /** Fill of the lobby that starts soonest — "46 of 64 slots filled". */
+  private nextLobbySlots(): { filled: number; max: number } | null {
+    if (this.lobbies === null) return null;
+    const offset = calculateServerTimeOffset(this.lobbies.serverTime, this.now);
+    const upcoming = Object.values(this.lobbies.games ?? {})
+      .flat()
+      .filter((lobby) => typeof lobby.startsAt === "number")
+      .map((lobby) => ({
+        lobby,
+        seconds: getSecondsUntilServerTimestamp(
+          lobby.startsAt!,
+          offset,
+          this.now,
+        ),
+      }))
+      .filter((entry) => entry.seconds > 0)
+      .sort((a, b) => a.seconds - b.seconds)[0];
+
+    const max = upcoming?.lobby.gameConfig?.maxPlayers;
+    if (!upcoming || typeof max !== "number") return null;
+    return { filled: upcoming.lobby.numClients ?? 0, max };
+  }
+
   render() {
     return html`
       <div class="lt-home border border-lt-700 bg-lt-900/55 backdrop-blur-sm">
-        <div class="flex flex-col justify-center gap-5 px-6 py-8 lg:px-8">
+        <div
+          class="flex flex-col justify-center gap-6 px-6 py-8 lg:px-10 lg:py-10"
+        >
           ${this.renderStatus()}
           <img
             src=${assetUrl("images/LandtakerLogoDark.svg")}
             alt="Landtaker"
-            class="block w-full max-w-[420px] aspect-[1364/259] lt-rise"
+            class="block w-full max-w-[460px] aspect-[1364/259] lt-rise"
           />
+          ${this.renderActions()}
         </div>
         ${this.renderRail()}
       </div>
