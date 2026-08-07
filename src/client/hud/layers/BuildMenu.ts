@@ -174,10 +174,10 @@ export class BuildMenu extends LitElement implements Controller {
       left: 50%;
       transform: translate(-50%, -50%);
       z-index: 9999;
-      background-color: #1e1e1e;
-      padding: 15px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-      border-radius: 10px;
+      background-color: rgb(11 14 17 / 0.96);
+      border: 1px solid var(--color-lt-700, #252c33);
+      padding: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -198,12 +198,13 @@ export class BuildMenu extends LitElement implements Controller {
       position: relative;
       width: 120px;
       height: 140px;
-      border: 2px solid #444;
-      background-color: #2c2c2c;
-      color: white;
-      border-radius: 12px;
+      border: 1px solid var(--color-lt-600, #333c45);
+      background-color: var(--color-lt-800, #14181c);
+      color: var(--color-lt-100, #e8ecef);
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition:
+        background-color 0.15s linear,
+        border-color 0.15s linear;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -213,38 +214,43 @@ export class BuildMenu extends LitElement implements Controller {
       gap: 5px;
     }
     .build-button:not(:disabled):hover {
-      background-color: #3a3a3a;
-      transform: scale(1.05);
-      border-color: #666;
+      background-color: var(--color-lt-750, #181d22);
+      border-color: var(--color-lt-accent, #ff8a1f);
     }
     .build-button:not(:disabled):active {
-      background-color: #4a4a4a;
-      transform: scale(0.95);
+      background-color: var(--color-lt-750, #181d22);
     }
     .build-button:disabled {
-      background-color: #1a1a1a;
-      border-color: #333;
+      background-color: var(--color-lt-850, #101418);
+      border-color: var(--color-lt-700, #252c33);
       cursor: not-allowed;
-      opacity: 0.7;
+      opacity: 0.45;
     }
     .build-button:disabled img {
       opacity: 0.5;
     }
     .build-button:disabled .build-cost {
-      color: #ff4444;
+      color: var(--color-lt-bad, #d1495b);
     }
     .build-icon {
       font-size: 40px;
       margin-bottom: 5px;
     }
     .build-name {
-      font-size: 14px;
-      font-weight: bold;
+      font-family: var(--font-lt-util, sans-serif);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
       margin-bottom: 5px;
       text-align: center;
     }
     .build-cost {
+      font-family: var(--font-lt-util, sans-serif);
       font-size: 14px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--color-lt-gold, #e8b93f);
     }
     .hidden {
       display: none !important;
@@ -253,27 +259,25 @@ export class BuildMenu extends LitElement implements Controller {
       position: absolute;
       top: -10px;
       right: -10px;
-      background-color: #2c2c2c;
-      color: white;
-      padding: 2px 10px;
-      border-radius: 10000px;
-      transition: all 0.3s ease;
+      background-color: rgb(11 14 17 / 0.9);
+      color: var(--color-lt-100, #e8ecef);
+      padding: 2px 8px;
+      transition:
+        background-color 0.15s linear,
+        border-color 0.15s linear;
       font-size: 12px;
+      font-variant-numeric: tabular-nums;
       display: flex;
       justify-content: center;
       align-content: center;
-      border: 1px solid #444;
+      border: 1px solid var(--color-lt-600, #333c45);
     }
     .build-button:not(:disabled):hover > .build-count-chip {
-      background-color: #3a3a3a;
-      border-color: #666;
-    }
-    .build-button:not(:disabled):active > .build-count-chip {
-      background-color: #4a4a4a;
+      border-color: var(--color-lt-accent, #ff8a1f);
     }
     .build-button:disabled > .build-count-chip {
-      background-color: #1a1a1a;
-      border-color: #333;
+      background-color: var(--color-lt-850, #101418);
+      border-color: var(--color-lt-700, #252c33);
       cursor: not-allowed;
     }
     .build-count {

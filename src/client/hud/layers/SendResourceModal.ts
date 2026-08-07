@@ -255,7 +255,7 @@ export class SendResourceModal extends LitElement {
         <button
           type="button"
           @click=${() => this.closeModal()}
-          class="absolute -top-3 -right-3 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-700 text-white shadow-sm hover:bg-red-500 transition-colors focus-visible:ring-2 focus-visible:ring-white/30 focus:outline-hidden"
+          class="absolute -top-3 -right-3 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-700 text-white shadow-sm hover:bg-lt-bad transition-colors focus-visible:ring-2 focus-visible:ring-white/30 focus:outline-hidden"
           aria-label=${this.i18n.closeLabel()}
           title=${this.i18n.closeLabel()}
         >
@@ -297,12 +297,12 @@ export class SendResourceModal extends LitElement {
           return html`
             <button
               ?disabled=${dead}
-              class="rounded-lg px-3 py-2 text-sm ring-1 transition
+              class="px-3 py-2 text-sm ring-1 transition
                 ${dead
-                ? "bg-zinc-800/70 text-zinc-400 ring-zinc-700 cursor-not-allowed"
+                ? "bg-lt-850/70 text-zinc-400 ring-zinc-700 cursor-not-allowed"
                 : active
                   ? "bg-indigo-600 text-white ring-indigo-300/60"
-                  : "bg-zinc-800 text-zinc-200 ring-zinc-700 hover:bg-zinc-700 hover:text-zinc-50"}"
+                  : "bg-lt-850 text-zinc-200 ring-zinc-700 hover:bg-zinc-700 hover:text-zinc-50"}"
               @click=${() => {
                 if (dead) return;
                 this.selectedPercent = pct;
@@ -345,7 +345,7 @@ export class SendResourceModal extends LitElement {
     return html`
       <div class="${sliderOuterMb}">
         <div
-          class="relative px-1 rounded-lg overflow-visible focus-within:ring-2 focus-within:ring-indigo-500/30"
+          class="relative px-1 overflow-visible focus-within:ring-2 focus-within:ring-indigo-500/30"
         >
           <input
             type="range"
@@ -378,7 +378,7 @@ export class SendResourceModal extends LitElement {
             style="--pos: ${percentNow}%"
           >
             <div
-              class="rounded-sm bg-[#0f1116] ring-1 ring-zinc-700 text-zinc-100 px-1.5 py-0.5 text-[12px] shadow-sm whitespace-nowrap w-max z-50"
+              class="bg-[#0f1116] ring-1 ring-zinc-700 text-zinc-100 px-1.5 py-0.5 text-[12px] shadow-sm whitespace-nowrap w-max z-50"
             >
               ${percentNow}% • ${this.format(this.sendAmount)}
             </div>
@@ -397,7 +397,7 @@ export class SendResourceModal extends LitElement {
                   style="--pos:${capPercent}%"
                 >
                   <div
-                    class="rounded-sm bg-[#0f1116] ring-1 ring-amber-400/40 text-amber-200 px-1 py-0.5 text-[11px] shadow-sm whitespace-nowrap"
+                    class="bg-[#0f1116] ring-1 ring-amber-400/40 text-amber-200 px-1 py-0.5 text-[11px] shadow-sm whitespace-nowrap"
                   >
                     ${this.i18n.cap()}
                   </div>
@@ -433,8 +433,8 @@ export class SendResourceModal extends LitElement {
         · ${this.i18n.summaryKeep()}
         <span
           class="font-semibold font-mono ${belowMinKeep
-            ? "text-amber-400"
-            : "text-emerald-400"}"
+            ? "text-lt-gold"
+            : "text-lt-ok"}"
         >
           ${this.format(keep)}
         </span>
@@ -449,8 +449,8 @@ export class SendResourceModal extends LitElement {
     return html`
       <div class="mt-5 flex justify-end gap-2">
         <button
-          class="h-10 min-w-24 rounded-lg px-3 text-sm font-semibold
-                 text-zinc-100 bg-zinc-800 ring-1 ring-zinc-700
+          class="h-10 min-w-24 px-3 text-sm font-semibold
+                 text-zinc-100 bg-lt-850 ring-1 ring-zinc-700
                  hover:bg-zinc-700 focus:outline-hidden
                  focus-visible:ring-2 focus-visible:ring-white/20"
           @click=${() => this.closeModal()}
@@ -458,7 +458,7 @@ export class SendResourceModal extends LitElement {
           ${this.i18n.cancel()}
         </button>
         <button
-          class="h-10 min-w-24 rounded-lg px-3 text-sm font-semibold text-white
+          class="h-10 min-w-24 px-3 text-sm font-semibold text-white
                  bg-indigo-600 enabled:hover:bg-indigo-500
                  focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-400/50
                  disabled:cursor-not-allowed disabled:opacity-50"
@@ -474,7 +474,7 @@ export class SendResourceModal extends LitElement {
   private renderDeadNote() {
     return html`
       <div
-        class="mb-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-200 text-sm"
+        class="mb-2 border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-200 text-sm"
       >
         <div class="font-semibold">${this.i18n.targetDeadTitle()}</div>
         <div>${this.i18n.targetDeadNote()}</div>
@@ -543,7 +543,7 @@ export class SendResourceModal extends LitElement {
     return html`
       <div class="absolute inset-0 z-1100 flex items-center justify-center p-4">
         <div
-          class="absolute inset-0 bg-black/60 rounded-2xl"
+          class="absolute inset-0 bg-black/60 "
           @click=${() => this.closeModal()}
         ></div>
 
@@ -556,7 +556,7 @@ export class SendResourceModal extends LitElement {
           @keydown=${this.handleKeydown}
         >
           <div
-            class="rounded-2xl bg-zinc-900 p-5 shadow-2xl ring-1 ring-zinc-800 max-h-[90vh] text-zinc-200"
+            class="bg-lt-900 p-5 shadow-2xl ring-1 ring-zinc-800 max-h-[90vh] text-zinc-200"
             @click=${(e: MouseEvent) => e.stopPropagation()}
           >
             ${this.renderHeader()} ${this.renderAvailable()}

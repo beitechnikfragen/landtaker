@@ -215,10 +215,10 @@ export class SettingsModal extends LitElement implements Controller {
         @contextmenu=${(e: Event) => e.preventDefault()}
       >
         <div
-          class="bg-slate-800 border border-slate-600 rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto"
+          class="bg-lt-850 border border-lt-600 max-w-md w-full max-h-[80vh] overflow-y-auto"
         >
           <div
-            class="flex items-center justify-between p-4 border-b border-slate-600"
+            class="flex items-center justify-between p-4 border-b border-lt-600"
           >
             <div class="flex items-center gap-2">
               <img
@@ -233,7 +233,7 @@ export class SettingsModal extends LitElement implements Controller {
               </h2>
             </div>
             <button
-              class="text-slate-400 hover:text-white text-2xl font-bold leading-none"
+              class="text-lt-400 hover:text-white text-2xl font-bold leading-none"
               @click=${this.closeModal}
             >
               ×
@@ -242,7 +242,7 @@ export class SettingsModal extends LitElement implements Controller {
 
           <div class="p-4 flex flex-col gap-3">
             <button
-              class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+              class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
               @click="${this.onGraphicsSettingsButtonClick}"
             >
               <img
@@ -255,14 +255,14 @@ export class SettingsModal extends LitElement implements Controller {
                 <div class="font-medium">
                   ${translateText("user_setting.graphics_settings_label")}
                 </div>
-                <div class="text-sm text-slate-400">
+                <div class="text-sm text-lt-400">
                   ${translateText("user_setting.graphics_settings_desc")}
                 </div>
               </div>
             </button>
 
             <div
-              class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+              class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
             >
               <img src=${musicIcon} alt="musicIcon" width="20" height="20" />
               <div class="flex-1">
@@ -275,16 +275,16 @@ export class SettingsModal extends LitElement implements Controller {
                   max="100"
                   .value=${this.userSettings.backgroundMusicVolume() * 100}
                   @input=${this.onVolumeChange}
-                  class="w-full border border-slate-500 rounded-lg"
+                  class="w-full border border-lt-600 "
                 />
               </div>
-              <div class="text-sm text-slate-400">
+              <div class="text-sm text-lt-400">
                 ${Math.round(this.userSettings.backgroundMusicVolume() * 100)}%
               </div>
             </div>
 
             <div
-              class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+              class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
             >
               <img
                 src=${musicIcon}
@@ -302,16 +302,16 @@ export class SettingsModal extends LitElement implements Controller {
                   max="100"
                   .value=${this.userSettings.soundEffectsVolume() * 100}
                   @input=${this.onSoundEffectsVolumeChange}
-                  class="w-full border border-slate-500 rounded-lg"
+                  class="w-full border border-lt-600 "
                 />
               </div>
-              <div class="text-sm text-slate-400">
+              <div class="text-sm text-lt-400">
                 ${Math.round(this.userSettings.soundEffectsVolume() * 100)}%
               </div>
             </div>
 
             <button
-              class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+              class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
               @click="${this.onTerrainButtonClick}"
             >
               <img src=${treeIcon} alt="treeIcon" width="20" height="20" />
@@ -319,11 +319,11 @@ export class SettingsModal extends LitElement implements Controller {
                 <div class="font-medium">
                   ${translateText("user_setting.toggle_terrain")}
                 </div>
-                <div class="text-sm text-slate-400">
+                <div class="text-sm text-lt-400">
                   ${translateText("user_setting.toggle_view_desc")}
                 </div>
               </div>
-              <div class="text-sm text-slate-400">
+              <div class="text-sm text-lt-400">
                 ${this.alternateView
                   ? translateText("user_setting.on")
                   : translateText("user_setting.off")}
@@ -331,7 +331,7 @@ export class SettingsModal extends LitElement implements Controller {
             </button>
 
             <button
-              class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+              class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
               @click="${this.onToggleEmojisButtonClick}"
             >
               <img src=${emojiIcon} alt="emojiIcon" width="20" height="20" />
@@ -339,11 +339,11 @@ export class SettingsModal extends LitElement implements Controller {
                 <div class="font-medium">
                   ${translateText("user_setting.emojis_label")}
                 </div>
-                <div class="text-sm text-slate-400">
+                <div class="text-sm text-lt-400">
                   ${translateText("user_setting.emojis_desc")}
                 </div>
               </div>
-              <div class="text-sm text-slate-400">
+              <div class="text-sm text-lt-400">
                 ${this.userSettings.emojis()
                   ? translateText("user_setting.on")
                   : translateText("user_setting.off")}
@@ -351,7 +351,7 @@ export class SettingsModal extends LitElement implements Controller {
             </button>
 
             <button
-              class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+              class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
               @click="${this.onToggleAlertFrameButtonClick}"
             >
               <img src=${sirenIcon} alt="alertFrame" width="20" height="20" />
@@ -359,11 +359,11 @@ export class SettingsModal extends LitElement implements Controller {
                 <div class="font-medium">
                   ${translateText("user_setting.alert_frame_label")}
                 </div>
-                <div class="text-sm text-slate-400">
+                <div class="text-sm text-lt-400">
                   ${translateText("user_setting.alert_frame_desc")}
                 </div>
               </div>
-              <div class="text-sm text-slate-400">
+              <div class="text-sm text-lt-400">
                 ${this.userSettings.alertFrame()
                   ? translateText("user_setting.on")
                   : translateText("user_setting.off")}
@@ -371,7 +371,7 @@ export class SettingsModal extends LitElement implements Controller {
             </button>
 
             <button
-              class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+              class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
               @click="${this.onToggleHelpMessagesButtonClick}"
             >
               <svg
@@ -400,11 +400,11 @@ export class SettingsModal extends LitElement implements Controller {
                 <div class="font-medium">
                   ${translateText("user_setting.help_messages_label")}
                 </div>
-                <div class="text-sm text-slate-400">
+                <div class="text-sm text-lt-400">
                   ${translateText("user_setting.help_messages_desc")}
                 </div>
               </div>
-              <div class="text-sm text-slate-400">
+              <div class="text-sm text-lt-400">
                 ${this.userSettings.helpMessages()
                   ? translateText("user_setting.on")
                   : translateText("user_setting.off")}
@@ -412,7 +412,7 @@ export class SettingsModal extends LitElement implements Controller {
             </button>
 
             <button
-              class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+              class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
               @click="${this.onToggleAttackingTroopsOverlayButtonClick}"
             >
               <img src=${swordIcon} alt="swordIcon" width="20" height="20" />
@@ -422,11 +422,11 @@ export class SettingsModal extends LitElement implements Controller {
                     "user_setting.attacking_troops_overlay_label",
                   )}
                 </div>
-                <div class="text-sm text-slate-400">
+                <div class="text-sm text-lt-400">
                   ${translateText("user_setting.attacking_troops_overlay_desc")}
                 </div>
               </div>
-              <div class="text-sm text-slate-400">
+              <div class="text-sm text-lt-400">
                 ${this.userSettings.attackingTroopsOverlay()
                   ? translateText("user_setting.on")
                   : translateText("user_setting.off")}
@@ -434,7 +434,7 @@ export class SettingsModal extends LitElement implements Controller {
             </button>
 
             <button
-              class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+              class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
               @click="${this.onToggleCursorCostLabelButtonClick}"
             >
               <img
@@ -447,11 +447,11 @@ export class SettingsModal extends LitElement implements Controller {
                 <div class="font-medium">
                   ${translateText("user_setting.cursor_cost_label_label")}
                 </div>
-                <div class="text-sm text-slate-400">
+                <div class="text-sm text-lt-400">
                   ${translateText("user_setting.cursor_cost_label_desc")}
                 </div>
               </div>
-              <div class="text-sm text-slate-400">
+              <div class="text-sm text-lt-400">
                 ${this.userSettings.cursorCostLabel()
                   ? translateText("user_setting.on")
                   : translateText("user_setting.off")}
@@ -459,7 +459,7 @@ export class SettingsModal extends LitElement implements Controller {
             </button>
 
             <button
-              class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+              class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
               @click="${this.onToggleRandomNameModeButtonClick}"
             >
               <img src=${ninjaIcon} alt="ninjaIcon" width="20" height="20" />
@@ -467,11 +467,11 @@ export class SettingsModal extends LitElement implements Controller {
                 <div class="font-medium">
                   ${translateText("user_setting.anonymous_names_label")}
                 </div>
-                <div class="text-sm text-slate-400">
+                <div class="text-sm text-lt-400">
                   ${translateText("user_setting.anonymous_names_desc")}
                 </div>
               </div>
-              <div class="text-sm text-slate-400">
+              <div class="text-sm text-lt-400">
                 ${this.userSettings.anonymousNames()
                   ? translateText("user_setting.on")
                   : translateText("user_setting.off")}
@@ -479,7 +479,7 @@ export class SettingsModal extends LitElement implements Controller {
             </button>
 
             <button
-              class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+              class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
               @click="${this.onToggleLeftClickOpensMenu}"
             >
               <img src=${mouseIcon} alt="mouseIcon" width="20" height="20" />
@@ -487,26 +487,26 @@ export class SettingsModal extends LitElement implements Controller {
                 <div class="font-medium">
                   ${translateText("user_setting.left_click_menu")}
                 </div>
-                <div class="text-sm text-slate-400">
+                <div class="text-sm text-lt-400">
                   ${translateText("user_setting.left_click_desc")}
                 </div>
               </div>
-              <div class="text-sm text-slate-400">
+              <div class="text-sm text-lt-400">
                 ${this.userSettings.leftClickOpensMenu()
                   ? translateText("user_setting.on")
                   : translateText("user_setting.off")}
               </div>
             </button>
 
-            <div class="border-t border-slate-600 pt-3 mt-4">
+            <div class="border-t border-lt-600 pt-3 mt-4">
               <div
-                class="px-3 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider"
+                class="px-3 py-1 text-xs font-semibold text-lt-400 uppercase tracking-wider"
               >
                 ${translateText("user_setting.development_only")}
               </div>
 
               <button
-                class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+                class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
                 @click="${this.onTogglePerformanceOverlayButtonClick}"
               >
                 <img
@@ -519,11 +519,11 @@ export class SettingsModal extends LitElement implements Controller {
                   <div class="font-medium">
                     ${translateText("user_setting.performance_overlay_label")}
                   </div>
-                  <div class="text-sm text-slate-400">
+                  <div class="text-sm text-lt-400">
                     ${translateText("user_setting.performance_overlay_desc")}
                   </div>
                 </div>
-                <div class="text-sm text-slate-400">
+                <div class="text-sm text-lt-400">
                   ${this.userSettings.performanceOverlay()
                     ? translateText("user_setting.on")
                     : translateText("user_setting.off")}
@@ -531,7 +531,7 @@ export class SettingsModal extends LitElement implements Controller {
               </button>
 
               <button
-                class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+                class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
                 @click="${this.onRenderDebugGuiButtonClick}"
               >
                 <img
@@ -544,16 +544,16 @@ export class SettingsModal extends LitElement implements Controller {
                   <div class="font-medium">
                     ${translateText("user_setting.render_debug_gui")}
                   </div>
-                  <div class="text-sm text-slate-400">
+                  <div class="text-sm text-lt-400">
                     ${translateText("user_setting.render_debug_gui_desc")}
                   </div>
                 </div>
               </button>
             </div>
 
-            <div class="border-t border-slate-600 pt-3 mt-4">
+            <div class="border-t border-lt-600 pt-3 mt-4">
               <button
-                class="flex gap-3 items-center w-full text-left p-3 hover:bg-red-600/20 rounded-sm text-red-400 transition-colors"
+                class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-bad/20 text-lt-bad transition-colors"
                 @click="${this.onExitButtonClick}"
               >
                 <img src=${exitIcon} alt="exitIcon" width="20" height="20" />
@@ -561,7 +561,7 @@ export class SettingsModal extends LitElement implements Controller {
                   <div class="font-medium">
                     ${translateText("user_setting.exit_game_label")}
                   </div>
-                  <div class="text-sm text-slate-400">
+                  <div class="text-sm text-lt-400">
                     ${translateText("user_setting.exit_game_info")}
                   </div>
                 </div>

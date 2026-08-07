@@ -193,10 +193,9 @@ body {
   padding: 15px 20px;
   font-size: 16px;
   cursor: pointer;
-  background-color: var(--color-malibu-blue);
-  color: white;
+  background-color: var(--color-lt-accent);
+  color: var(--color-lt-accent-ink);
   border: none;
-  border-radius: 8px;
   transition: background-color 0.3s;
   display: inline-block;
   margin: 0 0 20px 0;
@@ -660,11 +659,11 @@ label.option-card:hover {
 /* News Button Notification */
 news-button .active button {
   position: relative;
-  border-color: var(--color-malibu-blue) !important;
+  border-color: var(--color-lt-accent) !important;
   border-width: 2px !important;
   box-shadow:
-    0 0 0 1px rgba(37, 99, 235, 0.5),
-    0 0 8px rgba(37, 99, 235, 0.4);
+    0 0 0 1px rgba(255, 138, 31, 0.5),
+    0 0 8px rgba(255, 138, 31, 0.4);
 }
 
 news-button .active button::after {

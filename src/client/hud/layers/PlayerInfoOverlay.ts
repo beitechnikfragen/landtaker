@@ -213,7 +213,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
   private displayUnitCount(player: PlayerView, type: UnitType, icon: string) {
     return !this.game.config().isUnitDisabled(type)
       ? html`<div
-          class="flex items-center justify-center gap-0.5 lg:gap-1 p-0.5 lg:p-1 border rounded-md border-gray-500 text-[10px] lg:text-xs w-9 lg:w-12 h-6 lg:h-7"
+          class="flex items-center justify-center gap-0.5 lg:gap-1 p-0.5 lg:p-1 border border-gray-500 text-[10px] lg:text-xs w-9 lg:w-12 h-6 lg:h-7"
           translate="no"
         >
           <img
@@ -322,7 +322,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
         <div class="flex flex-col gap-1 shrink-0 w-28 md:w-36">
           <div class="flex items-center gap-1">
             <div
-              class="flex items-center justify-center px-1 py-0.5 border rounded-md border-yellow-400 font-bold text-yellow-400 text-sm lg:gap-1"
+              class="flex items-center justify-center px-1 py-0.5 border border-yellow-400 font-bold text-lt-gold text-sm lg:gap-1"
               translate="no"
             >
               <img src=${goldCoinIcon} width="13" height="13" />
@@ -331,8 +331,8 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
             <div
               class="flex flex-1 flex-col items-center justify-center text-xs font-bold ${attackingTroops >
               0
-                ? "text-aquarius"
-                : "text-white/40"} drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
+                ? "text-lt-accent"
+                : "text-lt-500"} drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
               translate="no"
             >
               <span class="flex items-center gap-px leading-none text-xs"
@@ -371,10 +371,10 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
             ${this.getRelationSmiley(player, myPlayer)}
             ${playerTeam !== "" && player.type() !== PlayerType.Bot
               ? html`<div class="flex flex-col leading-tight">
-                  <span class="text-gray-400 text-xs font-normal"
+                  <span class="text-lt-400 text-xs font-normal"
                     >${playerType}</span
                   >
-                  <span class="text-xs font-normal text-gray-400"
+                  <span class="text-xs font-normal text-lt-400"
                     >[<span
                       style="color: ${themeProvider
                         .current()
@@ -384,7 +384,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
                     >]</span
                   >
                 </div>`
-              : html`<span class="text-gray-400 text-xs font-normal"
+              : html`<span class="text-lt-400 text-xs font-normal"
                   >${playerType}</span
                 >`}
             ${this.renderPlayerNameIcons(player)}
@@ -431,7 +431,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
 
     return html`
       <div
-        class="w-full h-5 lg:h-6 border border-gray-600 rounded-md bg-gray-900/60 overflow-hidden relative"
+        class="w-full h-5 lg:h-6 border border-lt-600 bg-lt-900/60 overflow-hidden relative"
       >
         <div class="relative h-full">
           <div
@@ -439,7 +439,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
             style="transform: scaleX(${greenPercent / 100});"
           ></div>
           <div
-            class="absolute inset-y-0 left-0 w-full origin-left bg-malibu-blue transition-transform duration-200 ease-out"
+            class="absolute inset-y-0 left-0 w-full origin-left bg-lt-troop transition-transform duration-200 ease-out"
             style="transform: translateX(${greenPercent}%) scaleX(${orangePercent /
             100});"
           ></div>
@@ -512,7 +512,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
         @contextmenu=${(e: MouseEvent) => e.preventDefault()}
       >
         <div
-          class="bg-gray-800/92 backdrop-blur-sm shadow-xs min-[1200px]:rounded-lg sm:rounded-b-lg shadow-lg text-white text-lg lg:text-base w-full sm:w-[500px] overflow-hidden ${containerClasses}"
+          class="bg-lt-850/92 backdrop-blur-sm shadow-xs min-[1200px]:sm:shadow-lg text-white text-lg lg:text-base w-full sm:w-[500px] overflow-hidden ${containerClasses}"
         >
           ${this.player !== null ? this.renderPlayerInfo(this.player) : ""}
           ${this.unit !== null ? this.renderUnitInfo(this.unit) : ""}

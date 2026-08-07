@@ -157,7 +157,7 @@ export class HeadsUpMessage extends LitElement implements Controller {
         ${this.toastMessage
           ? html`
               <div
-                class="fixed top-6 left-1/2 -translate-x-1/2 z-[800] px-6 py-4 rounded-xl transition-all duration-300 animate-fade-in-out"
+                class="fixed top-6 left-1/2 -translate-x-1/2 z-[800] px-6 py-4 transition-all duration-300 animate-fade-in-out"
                 style="max-width: 90vw; min-width: 200px; text-align: center;
                   background: ${this.toastColor === "red"
                   ? "rgba(239,68,68,0.1)"
@@ -184,7 +184,7 @@ export class HeadsUpMessage extends LitElement implements Controller {
                 class="fixed top-[15%] left-1/2 -translate-x-1/2 z-[799]
                             inline-flex items-center justify-center min-h-8 lg:min-h-10
                             w-fit max-w-[90vw]
-                            bg-gray-800/70 rounded-md lg:rounded-lg
+                            bg-lt-850/70 lg:
                             backdrop-blur-xs text-white text-md lg:text-xl px-3 lg:px-4 py-1
                             text-center break-words"
                 style="word-wrap: break-word; hyphens: auto;"
@@ -205,7 +205,7 @@ export class HeadsUpMessage extends LitElement implements Controller {
                 class="fixed top-[25%] left-1/2 -translate-x-1/2 z-[799]
                             inline-flex flex-col items-center justify-center min-h-8 lg:min-h-10
                             w-fit max-w-[90vw]
-                            bg-amber-500/70 rounded-md lg:rounded-lg
+                            bg-amber-500/70 lg:
                             backdrop-blur-xs text-white text-md lg:text-xl px-3 lg:px-4 py-3
                             text-center break-words"
                 style="word-wrap: break-word; hyphens: auto; pointer-events: auto;"
@@ -213,7 +213,7 @@ export class HeadsUpMessage extends LitElement implements Controller {
               >
                 <div>${translateText("heads_up_message.ffa_collusion")}</div>
                 <button
-                  class="mt-2 px-3 py-1 rounded bg-black/20 hover:bg-black/30 text-sm"
+                  class="mt-2 px-3 py-1 bg-black/20 hover:bg-black/30 text-sm"
                   @click=${this.onCloseCollusionWarning}
                 >
                   ${translateText("heads_up_message.dont_show_again")}

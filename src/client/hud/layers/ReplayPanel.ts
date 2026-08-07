@@ -70,7 +70,7 @@ export class ReplayPanel extends LitElement implements Controller {
 
     return html`
       <div
-        class="p-2 bg-gray-800/92 backdrop-blur-sm shadow-xs min-[1200px]:rounded-lg rounded-l-lg"
+        class="p-2 bg-lt-850/92 backdrop-blur-sm shadow-xs min-[1200px]:"
         @contextmenu=${(e: Event) => e.preventDefault()}
       >
         <label class="block mb-2 text-white" translate="no">
@@ -93,11 +93,11 @@ export class ReplayPanel extends LitElement implements Controller {
 
   private renderSpeedButton(value: ReplaySpeedMultiplier, label: string) {
     const backgroundColor =
-      this._replaySpeedMultiplier === value ? "bg-malibu-blue" : "";
+      this._replaySpeedMultiplier === value ? "bg-lt-troop" : "";
 
     return html`
       <button
-        class="py-0.5 px-1 text-sm text-white rounded-sm border transition border-gray-500 ${backgroundColor} hover:border-gray-200"
+        class="py-0.5 px-1 text-sm text-white border transition border-gray-500 ${backgroundColor} hover:border-gray-200"
         @click=${() => this.onReplaySpeedChange(value)}
       >
         ${label}

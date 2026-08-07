@@ -100,7 +100,7 @@ export class ColumnPicker extends LitElement {
     litRender(
       html`
         <div
-          class="column-picker-popover fixed z-2000 bg-gray-800/95 border border-slate-500 rounded-md p-2 flex flex-col gap-1 overflow-y-auto whitespace-nowrap"
+          class="column-picker-popover fixed z-2000 bg-lt-850/95 border border-lt-600 p-2 flex flex-col gap-1 overflow-y-auto whitespace-nowrap"
           style="top: ${top}px; right: ${right}px; max-height: ${maxHeight}px;"
         >
           ${this.columns.map((column) => {
@@ -133,7 +133,7 @@ export class ColumnPicker extends LitElement {
   render() {
     return html`
       <button
-        class="px-0.5 leading-none text-xs lg:text-sm border rounded-md border-slate-500 transition-colors text-white hover:bg-white/10 bg-gray-700/50"
+        class="px-0.5 leading-none text-xs lg:text-sm border border-lt-600 transition-colors text-white hover:bg-white/10 bg-lt-800/50"
         title=${translateText("leaderboard.configure_columns")}
         aria-expanded=${this.open}
         aria-haspopup="menu"

@@ -127,7 +127,7 @@ export class ChatDisplay extends LitElement implements Controller {
       <div
         class="pointer-events-auto ${this._hidden
           ? "w-fit px-2.5 py-1.25"
-          : ""} rounded-md bg-black/60 relative max-h-[30vh] flex flex-col-reverse overflow-y-auto w-full lg:bottom-2.5 lg:right-2.5 z-50 lg:max-w-[30vw] lg:w-full lg:w-auto"
+          : ""} bg-black/60 relative max-h-[30vh] flex flex-col-reverse overflow-y-auto w-full lg:bottom-2.5 lg:right-2.5 z-50 lg:max-w-[30vw] lg:w-full lg:w-auto"
       >
         <div>
           <div class="w-full bg-black/80 sticky top-0 px-2.5">
@@ -152,7 +152,7 @@ export class ChatDisplay extends LitElement implements Controller {
             <span
               class="${this.newEvents
                 ? ""
-                : "hidden"} inline-block px-2 bg-red-500 rounded-xs"
+                : "hidden"} inline-block px-2 bg-red-500 "
               >${this.newEvents}</span
             >
           </button>

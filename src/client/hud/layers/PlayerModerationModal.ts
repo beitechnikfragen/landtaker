@@ -97,7 +97,7 @@ export class PlayerModerationModal extends LitElement {
     return html`
       <div class="absolute inset-0 z-1200 flex items-center justify-center p-4">
         <div
-          class="absolute inset-0 bg-black/60 rounded-2xl"
+          class="absolute inset-0 bg-black/60 "
           @click=${() => this.closeModal()}
         ></div>
 
@@ -110,7 +110,7 @@ export class PlayerModerationModal extends LitElement {
           @keydown=${this.handleKeydown}
         >
           <div
-            class="rounded-2xl bg-zinc-900 p-5 shadow-2xl ring-1 ring-zinc-800 max-h-[90vh] text-zinc-200"
+            class="bg-lt-900 p-5 shadow-2xl ring-1 ring-zinc-800 max-h-[90vh] text-zinc-200"
             @click=${(e: MouseEvent) => e.stopPropagation()}
           >
             <div class="mb-3 flex items-center justify-between relative">
@@ -132,7 +132,7 @@ export class PlayerModerationModal extends LitElement {
               <button
                 type="button"
                 @click=${() => this.closeModal()}
-                class="absolute -top-3 -right-3 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-700 text-white shadow-sm hover:bg-red-500 transition-colors focus-visible:ring-2 focus-visible:ring-white/30 focus:outline-hidden"
+                class="absolute -top-3 -right-3 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-700 text-white shadow-sm hover:bg-lt-bad transition-colors focus-visible:ring-2 focus-visible:ring-white/30 focus:outline-hidden"
                 aria-label=${translateText("common.close")}
                 title=${translateText("common.close")}
               >
@@ -140,9 +140,7 @@ export class PlayerModerationModal extends LitElement {
               </button>
             </div>
 
-            <div
-              class="mb-4 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
-            >
+            <div class="mb-4 border border-lt-700 bg-white/5 px-3 py-2">
               <div
                 class="text-sm font-semibold text-zinc-100 truncate"
                 title=${other.displayName()}

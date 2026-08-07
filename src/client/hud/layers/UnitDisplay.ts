@@ -120,7 +120,7 @@ export class UnitDisplay extends LitElement implements Controller {
     }
 
     return html`
-      <div class="border-t border-white/10 p-0.5 w-full">
+      <div class="border-t border-lt-700 p-0.5 w-full">
         <div class="grid grid-rows-1 grid-flow-col gap-0.5 w-fit mx-auto">
           ${this.renderUnitItem(
             cityIcon,
@@ -229,7 +229,7 @@ export class UnitDisplay extends LitElement implements Controller {
         ${hovered
           ? html`
               <div
-                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-gray-200 text-center w-max text-xs bg-gray-800/90 backdrop-blur-xs rounded-sm p-1 z-[100] shadow-lg pointer-events-none"
+                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-gray-200 text-center w-max text-xs bg-lt-850/90 backdrop-blur-xs p-1 z-[100] shadow-lg pointer-events-none"
               >
                 <div class="font-bold text-sm mb-1">
                   ${translateText(
@@ -241,7 +241,7 @@ export class UnitDisplay extends LitElement implements Controller {
                 </div>
                 ${unitType === UnitType.Warship
                   ? html`<div
-                      class="mt-1 px-2 py-1 text-[10px] text-cyan-300 border-t border-white/10"
+                      class="mt-1 px-2 py-1 text-[10px] text-cyan-300 border-t border-lt-700"
                     >
                       ⇧ ${translateText("build_menu.warship_shift_hint")}
                     </div>`
@@ -258,9 +258,9 @@ export class UnitDisplay extends LitElement implements Controller {
         <div
           class="${this.canBuild(unitType)
             ? ""
-            : "opacity-40"} border border-slate-500 rounded-sm px-0.5 pb-0.5 flex items-center gap-0.5 cursor-pointer
-             ${selected ? "hover:bg-gray-400/10" : "hover:bg-gray-800"}
-             rounded-sm text-white ${selected ? "bg-slate-400/20" : ""}"
+            : "opacity-40"} border border-lt-600 px-0.5 pb-0.5 flex items-center gap-0.5 cursor-pointer
+             ${selected ? "hover:bg-gray-400/10" : "hover:bg-lt-850"}
+             text-white ${selected ? "bg-slate-400/20" : ""}"
           @click=${() => {
             if (selected) {
               this.uiState.ghostStructure = null;
@@ -290,7 +290,7 @@ export class UnitDisplay extends LitElement implements Controller {
           @mouseleave=${() =>
             this.eventBus?.emit(new ToggleStructureEvent(null))}
         >
-          ${html`<div class="ml-0.5 text-[10px] relative -top-1 text-gray-400">
+          ${html`<div class="ml-0.5 text-[10px] relative -top-1 text-lt-400">
             ${displayHotkey}
           </div>`}
           <div class="flex items-center gap-0.5 pt-0.5">
