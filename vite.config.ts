@@ -124,8 +124,10 @@ export default defineConfig(({ mode }) => {
       assetManifest,
       cdnBase,
     ),
+    // The plain terrain map, not background.webp — that one carries the old
+    // hexagon overlay baked in, which the redesign drops.
     backgroundImageUrl: buildAssetUrl(
-      "images/background.webp",
+      "images/EuropeBackground.webp",
       assetManifest,
       cdnBase,
     ),

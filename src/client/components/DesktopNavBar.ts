@@ -58,10 +58,10 @@ export class DesktopNavBar extends LitElement {
         <div
           class="flex items-center gap-3 pl-5 pr-6 mr-2 border-r border-lt-700"
         >
-          <div class="h-7">
+          <div class="h-9">
             <img
-              class="block h-full aspect-[1364/259]"
-              src=${assetUrl("images/LandtakerLogoDark.svg")}
+              class="block h-full aspect-[3943/1442]"
+              src=${assetUrl("images/logo/lockup-horizontal.svg")}
               alt="Landtaker"
             />
           </div>

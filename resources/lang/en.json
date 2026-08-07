@@ -1852,5 +1852,19 @@
     "dev_sign_in": "Sign in",
     "dev_sign_in_note": "Development only: sign in with any name to test parties before accounts exist. A name without a dot gets the verified check.",
     "lobby_too_small": "Your party has {partySize} members, but this lobby plays teams of {seats}. Pick a lobby with bigger teams, or leave the party first."
+  },
+  "home": {
+    "servers_online": "Servers online",
+    "hero_title_1": "Take the map.",
+    "hero_title_2": "Hold it.",
+    "hero_lede": "Claim territory tile by tile, build an economy, and outlast every other nation on the board.",
+    "deploy": "Deploy",
+    "single_player": "Single player",
+    "no_queue": "No queue",
+    "private_lobby": "Private",
+    "by_invite": "By invite code",
+    "next_deployment": "Next deployment in {time}",
+    "slots_filled": "{filled} of {max} slots filled",
+    "deployments": "Deployments"
   }
 }

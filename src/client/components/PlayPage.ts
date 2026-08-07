@@ -57,7 +57,7 @@ export class PlayPage extends LitElement {
 
             <div class="col-start-2 flex items-center justify-center min-w-0">
               <img
-                src=${assetUrl("images/LandtakerLogoDark.svg")}
+                src=${assetUrl("images/logo/lockup-horizontal.svg")}
                 alt="Landtaker"
                 class="h-full w-auto"
               />
