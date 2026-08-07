@@ -1,0 +1,1237 @@
+<meta charset="utf-8" />
+<title>Landtaker — in-game HUD v2</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=Barlow+Condensed:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
+<style>
+  :root {
+    --bg: #0d1013;
+    --panel: #14181c;
+    --panel-2: #181d22;
+    --line: #252c33;
+    --line-2: #333c45;
+    --txt: #e8ecef;
+    --dim: #8c979f;
+    --dimmer: #5c666e;
+    --accent: #ff8a1f;
+    --ok: #7fb069;
+    --bad: #d1495b;
+    --gold: #e8b93f;
+    --troop: #5b9bd5;
+    --display: "Oswald", "Arial Narrow", sans-serif;
+    --util: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: #07090b;
+    font-family: var(--body);
+  }
+  .stage {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    color: var(--txt);
+    background: #0b1b2a;
+  }
+  .stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: url("EuropeBackground.webp") 46% 40% / 160% no-repeat;
+    filter: saturate(0.62) brightness(0.46) contrast(1.1);
+  }
+  /* Vignette pulls the edges down so edge-anchored HUD always has contrast under
+   it — the real game's panels fight a bright map at the corners. */
+  .stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+      radial-gradient(
+        20% 26% at 44% 52%,
+        rgba(255, 138, 31, 0.3),
+        transparent 64%
+      ),
+      radial-gradient(
+        16% 22% at 62% 44%,
+        rgba(91, 155, 213, 0.26),
+        transparent 64%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(7, 9, 11, 0.82) 0%,
+        transparent 16%,
+        transparent 74%,
+        rgba(7, 9, 11, 0.88) 100%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(7, 9, 11, 0.72) 0%,
+        transparent 22%,
+        transparent 80%,
+        rgba(7, 9, 11, 0.66) 100%
+      );
+  }
+  .hud {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .hud > * {
+    pointer-events: auto;
+  }
+  .pane {
+    background: rgba(11, 14, 17, 0.94);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(7px);
+  }
+
+  /* ============ LEADERBOARD (top left) ============ */
+  .lb {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 326px;
+  }
+  .lb-h {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 11px;
+    border-bottom: 1px solid var(--line);
+  }
+  .lb-h .ttl {
+    font-family: var(--util);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-weight: 700;
+  }
+  .lb-h .cnt {
+    font-family: var(--util);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--dimmer);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--txt);
+  }
+  thead th {
+    font-family: var(--util);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    font-weight: 600;
+    padding: 5px 10px;
+    text-align: right;
+    border-bottom: 1px solid var(--line);
+  }
+  thead th:nth-child(1) {
+    width: 26px;
+    text-align: left;
+  }
+  thead th:nth-child(2) {
+    text-align: left;
+  }
+  tbody td {
+    padding: 5px 10px;
+    font-size: 13px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    border-bottom: 1px solid rgba(37, 44, 51, 0.5);
+  }
+  tbody td:nth-child(1) {
+    text-align: left;
+    color: var(--dimmer);
+    font-family: var(--util);
+    font-size: 12px;
+  }
+  tbody td:nth-child(2) {
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  tbody tr:hover {
+    background: rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+  }
+  .sw {
+    width: 9px;
+    height: 9px;
+    flex: none;
+  }
+  .nmc {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  tr.self {
+    background: rgba(255, 138, 31, 0.1);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  tr.self td {
+    color: var(--txt);
+    font-weight: 600;
+    border-bottom: 0;
+  }
+  .self-wrap {
+    border-top: 1px solid var(--line-2);
+  }
+
+  /* ============ TOP RIGHT: clock + controls ============ */
+  .tr {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: stretch;
+  }
+  .tr .clk {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 13px;
+    border-right: 1px solid var(--line);
+  }
+  .tr .clk .t {
+    font-family: var(--util);
+    font-size: 19px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+  }
+  .tr .clk .lbl {
+    font-family: var(--util);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    font-weight: 600;
+  }
+  .tb {
+    width: 38px;
+    background: transparent;
+    border: 0;
+    border-right: 1px solid var(--line);
+    cursor: pointer;
+    color: var(--dim);
+    display: grid;
+    place-items: center;
+    transition:
+      background 0.12s linear,
+      color 0.12s linear;
+  }
+  .tb:last-child {
+    border-right: 0;
+  }
+  .tb:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--txt);
+  }
+  .tb.on {
+    color: var(--accent);
+  }
+  .tb svg {
+    width: 17px;
+    height: 17px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ============ PLAYER INFO (top centre, on hover/select) ============ */
+  .pi {
+    position: absolute;
+    top: 10px;
+    left: calc(50% - 60px);
+    transform: translateX(-50%);
+    min-width: 392px;
+  }
+  .pi-h {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .pi-h .flag {
+    width: 26px;
+    height: 17px;
+    flex: none;
+    border: 1px solid var(--line-2);
+    background: linear-gradient(
+      90deg,
+      #1c74d4 33%,
+      #f5d020 33% 66%,
+      #d1495b 66%
+    );
+  }
+  .pi-h .nm {
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .pi-h .kind {
+    font-family: var(--util);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+  }
+  .pi-h .rel {
+    margin-left: auto;
+    font-family: var(--util);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--bad);
+    border: 1px solid rgba(209, 73, 91, 0.45);
+    padding: 2px 8px;
+  }
+  .pi-g {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line);
+  }
+  .pi-c {
+    background: rgba(20, 24, 28, 0.96);
+    padding: 7px 11px;
+  }
+  .pi-c .k {
+    font-family: var(--util);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    font-weight: 600;
+    display: block;
+  }
+  .pi-c .v {
+    font-family: var(--util);
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+  }
+  .pi-c.gold .v {
+    color: var(--gold);
+  }
+  .pi-u {
+    display: flex;
+    gap: 14px;
+    padding: 6px 12px;
+    border-top: 1px solid var(--line);
+    font-family: var(--util);
+    font-size: 12px;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+  }
+  .pi-u span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .pi-u svg {
+    width: 13px;
+    height: 13px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ============ EVENT FEED (right) ============
+   The game already has 22 message types across 5 categories (Attack, Nuke,
+   Alliance, Trade, Chat) plus a TIER_1 set for urgent ones. This panel gives
+   that data a home: urgent events pinned on top, the rest scrolling below,
+   category chips to filter. Some events carry actions (accept/reject an
+   alliance) so rows can hold buttons. */
+  .ef {
+    position: absolute;
+    top: 64px;
+    right: 10px;
+    width: 322px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 190px);
+  }
+  .ef-h {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .ef-h .ttl {
+    font-family: var(--util);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-weight: 700;
+    margin-right: auto;
+  }
+  .chip {
+    font-family: var(--util);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    border: 1px solid var(--line-2);
+    padding: 1px 6px;
+    cursor: pointer;
+    background: transparent;
+    transition:
+      color 0.12s linear,
+      border-color 0.12s linear;
+  }
+  .chip:hover {
+    color: var(--txt);
+  }
+  .chip.on {
+    color: var(--accent);
+    border-color: rgba(255, 138, 31, 0.5);
+  }
+
+  /* urgent: nukes inbound, invasions, conquests — pinned, never scrolls away */
+  .ef-hot {
+    border-bottom: 1px solid var(--line);
+    background: rgba(209, 73, 91, 0.07);
+  }
+  .hot {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    padding: 8px 10px;
+    box-shadow: inset 3px 0 0 var(--bad);
+  }
+  .hot + .hot {
+    border-top: 1px solid rgba(37, 44, 51, 0.6);
+  }
+  .hot .ic {
+    width: 15px;
+    height: 15px;
+    flex: none;
+    margin-top: 1px;
+    stroke: var(--bad);
+    fill: none;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .hot .tx {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .hot .tx b {
+    font-weight: 700;
+  }
+  .hot .eta {
+    font-family: var(--util);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--bad);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ef-list {
+    overflow-y: auto;
+    flex: 1;
+  }
+  .ev {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    padding: 6px 10px;
+    font-size: 12.5px;
+    line-height: 1.42;
+    border-bottom: 1px solid rgba(37, 44, 51, 0.45);
+  }
+  .ev:hover {
+    background: rgba(255, 255, 255, 0.035);
+    cursor: pointer;
+  }
+  .ev .ic {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    margin-top: 2px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .ev .tx {
+    flex: 1;
+    min-width: 0;
+  }
+  .ev .tx b {
+    color: var(--txt);
+    font-weight: 600;
+  }
+  .ev .ts {
+    font-family: var(--util);
+    font-size: 11px;
+    color: var(--dimmer);
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
+  .ev.attack {
+    color: #e8a37c;
+  }
+  .ev.nuke {
+    color: #e07a8a;
+  }
+  .ev.alliance {
+    color: #9ccf8f;
+  }
+  .ev.trade {
+    color: var(--gold);
+  }
+  .ev.chat {
+    color: #8fb8d9;
+  }
+  /* rows that need an answer keep their buttons inline */
+  .ev-act {
+    display: flex;
+    gap: 6px;
+    margin-top: 5px;
+  }
+  .ev-act button {
+    font-family: var(--util);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2px 9px;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--dim);
+    cursor: pointer;
+    transition: 0.12s linear;
+  }
+  .ev-act button:hover {
+    color: var(--txt);
+    border-color: var(--dim);
+  }
+  .ev-act button.yes:hover {
+    color: var(--ok);
+    border-color: rgba(127, 176, 105, 0.5);
+  }
+  .ev-act button.no:hover {
+    color: var(--bad);
+    border-color: rgba(209, 73, 91, 0.5);
+  }
+
+  /* ============ BOTTOM BAR ============ */
+  .bb {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    transform: translateX(-50%);
+    width: min(760px, calc(100% - 20px));
+  }
+  .row1 {
+    display: flex;
+    align-items: stretch;
+    gap: 1px;
+    background: var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .rate {
+    background: rgba(20, 24, 28, 0.96);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 11px;
+    font-family: var(--util);
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--ok);
+  }
+  .rate svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .tbar {
+    position: relative;
+    flex: 1;
+    height: 34px;
+    background: #0b0e11;
+    overflow: hidden;
+  }
+  .tbar .fill {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    background: linear-gradient(90deg, #2b628f, var(--troop));
+  }
+  .tbar .txt {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--util);
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  }
+  .tbar .txt svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.6;
+  }
+  .goldc {
+    background: rgba(20, 24, 28, 0.96);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 13px;
+    font-family: var(--util);
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold);
+  }
+  .goldc svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+  }
+
+  .row2 {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 7px 11px;
+    border-bottom: 1px solid var(--line);
+  }
+  .row2 .lbl {
+    font-family: var(--util);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .slider {
+    position: relative;
+    flex: 1;
+    height: 22px;
+    background: #0b0e11;
+    border: 1px solid var(--line-2);
+    cursor: ew-resize;
+  }
+  .slider .f {
+    position: absolute;
+    inset: 0;
+    width: 38%;
+    background: linear-gradient(90deg, #7a4415, var(--accent));
+  }
+  .slider .knob {
+    position: absolute;
+    top: -3px;
+    left: 38%;
+    width: 4px;
+    height: 26px;
+    background: var(--txt);
+    transform: translateX(-2px);
+  }
+  .row2 .val {
+    font-family: var(--util);
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    min-width: 98px;
+    text-align: right;
+  }
+  .row2 .val b {
+    color: var(--accent);
+  }
+
+  /* build rail: labelled, not bare icons with mystery counters */
+  .rail {
+    display: flex;
+    gap: 1px;
+    background: var(--line);
+  }
+  .ri {
+    position: relative;
+    flex: 1;
+    background: rgba(20, 24, 28, 0.96);
+    border: 0;
+    cursor: pointer;
+    color: var(--txt);
+    padding: 8px 4px 7px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+    transition: background 0.12s linear;
+  }
+  .ri:hover {
+    background: var(--panel-2);
+  }
+  .ri.sel {
+    background: #20262d;
+    box-shadow: inset 0 -2px 0 var(--accent);
+  }
+  .ri.off {
+    opacity: 0.38;
+    cursor: not-allowed;
+  }
+  .ri svg {
+    width: 19px;
+    height: 19px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .ri .nm {
+    font-family: var(--util);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-weight: 600;
+    line-height: 1;
+  }
+  .ri .cost {
+    font-family: var(--util);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .ri.off .cost {
+    color: var(--bad);
+  }
+  .ri .n {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    font-family: var(--util);
+    font-size: 10px;
+    color: var(--txt);
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--line-2);
+    padding: 0 3px;
+    line-height: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ri .key {
+    position: absolute;
+    top: 3px;
+    left: 4px;
+    font-family: var(--util);
+    font-size: 9px;
+    color: var(--dimmer);
+    line-height: 13px;
+  }
+
+  /* ============ RADIAL MENU ============ */
+  .radial {
+    position: absolute;
+    left: 44%;
+    top: 52%;
+    transform: translate(-50%, -50%);
+    width: 186px;
+    height: 186px;
+  }
+  .radial svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .rseg {
+    fill: rgba(11, 14, 17, 0.93);
+    stroke: var(--line-2);
+    stroke-width: 1;
+    cursor: pointer;
+    transition: fill 0.12s linear;
+  }
+  .rseg:hover {
+    fill: rgba(255, 138, 31, 0.2);
+    stroke: var(--accent);
+  }
+  .rico {
+    stroke: #cdd6dd;
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+  .rmid {
+    fill: rgba(20, 24, 28, 0.97);
+    stroke: var(--accent);
+    stroke-width: 1.5;
+  }
+  .rlab {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    fill: var(--dim);
+    text-anchor: middle;
+    pointer-events: none;
+  }
+
+  .note {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0px);
+    transform: translateX(-50%);
+    font-family: var(--util);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    background: rgba(7, 9, 11, 0.92);
+    border: 1px solid var(--line);
+    padding: 5px 13px;
+    margin-bottom: 8px;
+    white-space: nowrap;
+  }
+</style>
+
+<div class="stage">
+  <div class="hud">
+    <!-- ===== leaderboard ===== -->
+    <div class="lb pane">
+      <div class="lb-h">
+        <span class="ttl">Standings</span
+        ><span class="cnt">103 nations · 12 out</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nation</th>
+            <th>Land</th>
+            <th>Gold</th>
+            <th>Troops</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>
+              <span class="sw" style="background: #c98b3f"></span
+              ><span class="nmc">Antarctica</span>
+            </td>
+            <td>2.6%</td>
+            <td>103K</td>
+            <td>39.5K</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>
+              <span class="sw" style="background: #6fb3d1"></span
+              ><span class="nmc">Russia</span>
+            </td>
+            <td>2.3%</td>
+            <td>103K</td>
+            <td>37.1K</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>
+              <span class="sw" style="background: #8f6fc4"></span
+              ><span class="nmc">Siberia</span>
+            </td>
+            <td>2.3%</td>
+            <td>103K</td>
+            <td>36.8K</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>
+              <span class="sw" style="background: #7fb069"></span
+              ><span class="nmc">Nunavut</span>
+            </td>
+            <td>2.2%</td>
+            <td>103K</td>
+            <td>36.0K</td>
+          </tr>
+        </tbody>
+        <tbody class="self-wrap">
+          <tr class="self">
+            <td>90</td>
+            <td>
+              <span class="sw" style="background: #ff8a1f"></span
+              ><span class="nmc">Ömer</span>
+            </td>
+            <td>0.4%</td>
+            <td>104K</td>
+            <td>12.1K</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ===== clock + controls ===== -->
+    <div class="tr pane">
+      <div class="clk">
+        <span class="lbl">Time</span><span class="t">01:44</span>
+      </div>
+      <button class="tb" title="Speed">
+        <svg viewBox="0 0 24 24"><path d="M4 5l8 7-8 7zM14 5l8 7-8 7z" /></svg>
+      </button>
+      <button class="tb on" title="Pause">
+        <svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14" /></svg>
+      </button>
+      <button class="tb" title="Settings">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4.6a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21 11a2 2 0 1 1 0 4z"
+          />
+        </svg>
+      </button>
+      <button class="tb" title="Leave">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <!-- ===== player info ===== -->
+    <div class="pi pane">
+      <div class="pi-h">
+        <span class="flag"></span>
+        <div><div class="nm">DR Congo</div></div>
+        <span class="kind">Nation</span>
+        <span class="rel">Hostile</span>
+      </div>
+      <div class="pi-g">
+        <div class="pi-c">
+          <span class="k">Troops</span><span class="v">13.2K</span>
+        </div>
+        <div class="pi-c gold">
+          <span class="k">Gold</span><span class="v">104K</span>
+        </div>
+        <div class="pi-c">
+          <span class="k">Land</span><span class="v">1.8%</span>
+        </div>
+        <div class="pi-c">
+          <span class="k">Attacking</span><span class="v">25.9K</span>
+        </div>
+      </div>
+      <div class="pi-u">
+        <span
+          ><svg viewBox="0 0 24 24"><path d="M4 20V8l8-5 8 5v12" /></svg>2
+          cities</span
+        >
+        <span
+          ><svg viewBox="0 0 24 24">
+            <path d="M12 3v13M6 9l6-6 6 6M4 20h16" /></svg
+          >1 port</span
+        >
+        <span
+          ><svg viewBox="0 0 24 24">
+            <path d="M12 21V9M7 9h10l-1-5H8zM5 21h14" /></svg
+          >0 defense</span
+        >
+        <span
+          ><svg viewBox="0 0 24 24">
+            <path
+              d="M12 2c2.5 3 4 6.5 4 10a4 4 0 0 1-8 0c0-3.5 1.5-7 4-10zM9 20h6"
+            /></svg
+          >0 silos</span
+        >
+      </div>
+    </div>
+
+    <!-- ===== radial menu ===== -->
+    <div class="radial">
+      <svg viewBox="0 0 200 200">
+        <!-- 4 quadrants around a centre button -->
+        <path class="rseg" d="M100 100 L100 18 A82 82 0 0 1 182 100 Z" />
+        <path class="rseg" d="M100 100 L182 100 A82 82 0 0 1 100 182 Z" />
+        <path class="rseg" d="M100 100 L100 182 A82 82 0 0 1 18 100 Z" />
+        <path class="rseg" d="M100 100 L18 100 A82 82 0 0 1 100 18 Z" />
+        <circle class="rmid" cx="100" cy="100" r="27" />
+        <!-- icons -->
+        <g class="rico" transform="translate(93 40)">
+          <circle cx="7" cy="7" r="8" />
+          <path d="M7 5v5M7 3.2v.2" />
+        </g>
+        <g class="rico" transform="translate(133 92)">
+          <path d="M4 16V6l7-4 7 4v10" />
+          <path d="M9 16v-5h5v5" />
+        </g>
+        <g class="rico" transform="translate(92 133)">
+          <path d="M2 10l4 4 5-9 4 6h5" />
+        </g>
+        <g class="rico" transform="translate(40 92)">
+          <path d="M3 15l12-12M12 3h4v4" />
+          <path d="M3 9V3h6" />
+        </g>
+        <g
+          class="rico"
+          transform="translate(89 89)"
+          style="stroke: var(--accent)"
+        >
+          <path d="M3 19L19 3M14 3h6v6" />
+          <path d="M3 9V3h6" />
+        </g>
+        <text class="rlab" x="100" y="14">Info</text>
+        <text class="rlab" x="100" y="196">Ally</text>
+      </svg>
+    </div>
+
+    <!-- ===== event feed ===== -->
+    <div class="ef pane">
+      <div class="ef-h">
+        <span class="ttl">Events</span>
+        <button class="chip on">All</button>
+        <button class="chip">War</button>
+        <button class="chip">Nuke</button>
+        <button class="chip">Pact</button>
+        <button class="chip">Chat</button>
+      </div>
+
+      <div class="ef-hot">
+        <div class="hot">
+          <svg class="ic" viewBox="0 0 24 24">
+            <path
+              d="M12 2c2.5 3 4 6.5 4 10a4 4 0 0 1-8 0c0-3.5 1.5-7 4-10zM9 20h6"
+            />
+          </svg>
+          <div class="tx"><b>Nuke inbound</b> from Siberia</div>
+          <span class="eta">0:08</span>
+        </div>
+        <div class="hot">
+          <svg class="ic" viewBox="0 0 24 24">
+            <path d="M3 18h18M6 18V9l6-6 6 6v9" />
+          </svg>
+          <div class="tx"><b>Naval invasion</b> on your south coast</div>
+          <span class="eta">0:21</span>
+        </div>
+      </div>
+
+      <div class="ef-list">
+        <div class="ev alliance">
+          <svg class="ic" viewBox="0 0 24 24">
+            <path d="M16 21v-2a4 4 0 0 0-8 0v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          <div class="tx">
+            <b>Russia</b> requests an alliance
+            <div class="ev-act">
+              <button class="yes">Accept</button
+              ><button class="no">Reject</button>
+            </div>
+          </div>
+          <span class="ts">now</span>
+        </div>
+        <div class="ev attack">
+          <svg class="ic" viewBox="0 0 24 24">
+            <path d="M15 4l5 5-9 9-5-5zM3 21l6-6" />
+          </svg>
+          <div class="tx"><b>Antarctica</b> attacked you with <b>24.1K</b></div>
+          <span class="ts">0:12</span>
+        </div>
+        <div class="ev attack">
+          <svg class="ic" viewBox="0 0 24 24">
+            <path d="M12 3l7.5 4v6c0 4-3.2 6.9-7.5 8-4.3-1.1-7.5-4-7.5-8V7z" />
+            <path d="M9 12l2 2 4-4" />
+          </svg>
+          <div class="tx">You conquered <b>Chad</b></div>
+          <span class="ts">0:34</span>
+        </div>
+        <div class="ev nuke">
+          <svg class="ic" viewBox="0 0 24 24">
+            <circle cx="12" cy="13" r="4" />
+            <path d="M12 2v4M4.9 6.2l2.8 2.8" />
+          </svg>
+          <div class="tx"><b>SAM</b> intercepted an incoming nuke</div>
+          <span class="ts">1:02</span>
+        </div>
+        <div class="ev trade">
+          <svg class="ic" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path
+              d="M12 7v10M9.5 9.5h4a1.8 1.8 0 0 1 0 3.6h-3a1.8 1.8 0 0 0 0 3.6h4"
+            />
+          </svg>
+          <div class="tx"><b>Nunavut</b> sent you <b>50K</b> gold</div>
+          <span class="ts">1:18</span>
+        </div>
+        <div class="ev alliance">
+          <svg class="ic" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v6M12 16.5v.5" />
+          </svg>
+          <div class="tx"><b>Byzantium</b> broke your alliance</div>
+          <span class="ts">1:45</span>
+        </div>
+        <div class="ev chat">
+          <svg class="ic" viewBox="0 0 24 24">
+            <path
+              d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+            />
+          </svg>
+          <div class="tx">
+            <b>Mongolia:</b> attacking from the east, hold the line
+          </div>
+          <span class="ts">2:03</span>
+        </div>
+        <div class="ev attack">
+          <svg class="ic" viewBox="0 0 24 24">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+          <div class="tx">Your attack on <b>Russia</b> failed</div>
+          <span class="ts">2:29</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== bottom bar ===== -->
+    <div class="bb pane">
+      <div class="note">
+        In-game HUD mockup v2 — rebuilt against the real UI
+      </div>
+      <div class="row1">
+        <div class="rate">
+          <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" /></svg>+7/s
+        </div>
+        <div class="tbar">
+          <div class="fill"></div>
+          <div class="txt">
+            <svg viewBox="0 0 24 24" style="stroke: #e8ecef">
+              <path d="M16 21v-2a4 4 0 0 0-8 0v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            12.1K / 12.1K
+          </div>
+        </div>
+        <div class="goldc">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path
+              d="M12 7v10M9.5 9.5h4a1.8 1.8 0 0 1 0 3.6h-3a1.8 1.8 0 0 0 0 3.6h4"
+            />
+          </svg>
+          104K
+        </div>
+      </div>
+
+      <div class="row2">
+        <span class="lbl">Attack ratio</span>
+        <div class="slider">
+          <div class="f"></div>
+          <div class="knob"></div>
+        </div>
+        <span class="val"><b>38%</b> · 4.6K</span>
+      </div>
+
+      <div class="rail">
+        <button class="ri sel">
+          <span class="key">1</span><span class="n">2</span>
+          <svg viewBox="0 0 24 24">
+            <path d="M4 20V8l8-5 8 5v12" />
+            <path d="M9 20v-6h6v6" />
+          </svg>
+          <span class="nm">City</span><span class="cost">125K</span>
+        </button>
+        <button class="ri">
+          <span class="key">2</span><span class="n">1</span>
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3v13M6 9l6-6 6 6M4 20h16" />
+          </svg>
+          <span class="nm">Port</span><span class="cost">125K</span>
+        </button>
+        <button class="ri">
+          <span class="key">3</span>
+          <svg viewBox="0 0 24 24">
+            <path d="M3 21h18M5 21V9l7-5 7 5v12M10 21v-5h4v5" />
+          </svg>
+          <span class="nm">Factory</span><span class="cost">125K</span>
+        </button>
+        <button class="ri">
+          <span class="key">4</span>
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3l7.5 4v6c0 4-3.2 6.9-7.5 8-4.3-1.1-7.5-4-7.5-8V7z" />
+          </svg>
+          <span class="nm">Defense</span><span class="cost">50K</span>
+        </button>
+        <button class="ri off">
+          <span class="key">5</span>
+          <svg viewBox="0 0 24 24"><path d="M12 2v6M8 8h8l-1.5 12h-5z" /></svg>
+          <span class="nm">Silo</span><span class="cost">1.0M</span>
+        </button>
+        <button class="ri off">
+          <span class="key">6</span>
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="13" r="4" />
+            <path d="M12 2v4M4.9 6.2l2.8 2.8M19.1 6.2l-2.8 2.8" />
+          </svg>
+          <span class="nm">SAM</span><span class="cost">1.5M</span>
+        </button>
+        <button class="ri off">
+          <span class="key">7</span>
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 2c2.5 3 4 6.5 4 10a4 4 0 0 1-8 0c0-3.5 1.5-7 4-10zM9 20h6"
+            />
+          </svg>
+          <span class="nm">Nuke</span><span class="cost">750K</span>
+        </button>
+        <button class="ri off">
+          <span class="key">8</span>
+          <svg viewBox="0 0 24 24">
+            <path d="M3 18h18M6 18V9l6-6 6 6v9" />
+            <path d="M10 18v-4h4v4" />
+          </svg>
+          <span class="nm">Warship</span><span class="cost">250K</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
