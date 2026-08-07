@@ -843,6 +843,7 @@
   },
   "home": {
     "by_invite": "By invite code",
+    "commander": "Commander",
     "deploy": "Deploy",
     "deployments": "Deployments",
     "hero_lede": "Claim territory tile by tile, build an economy, and outlast every other nation on the board.",

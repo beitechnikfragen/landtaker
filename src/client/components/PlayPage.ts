@@ -2,7 +2,6 @@ import { LitElement, html } from "lit";
 import { customElement } from "lit/decorators.js";
 import { assetUrl } from "../../core/AssetUrls";
 import { crazyGamesSDK } from "../CrazyGamesSDK";
-import "./CosmeticBackground";
 import "./HomeHero";
 import "./NewsBox";
 import "./SteamWishlist";
@@ -107,51 +106,20 @@ export class PlayPage extends LitElement {
         <!-- Mobile: spacer for fixed top bar -->
         <div class="lg:hidden h-[calc(env(safe-area-inset-top)+56px)]"></div>
 
-        <!-- Hero: the mark plus live server state, with the player's own
-             standing alongside it when they are signed in. -->
-        <home-hero class="hidden lg:block w-full"></home-hero>
+        <!-- Hero + commander rail. The rail holds the identity controls (flag,
+             name, skin), so it exists on every breakpoint and for everyone —
+             signed in just adds rank and history to it. On mobile only the
+             rail renders; the display headline is desktop-only. -->
+        <home-hero class="block w-full"></home-hero>
 
-        <!-- Top strip: news + identity on the left, Streaming Now on the right. The 2fr/1fr
+        <!-- Top strip: news on the left, Streaming Now on the right. The 2fr/1fr
              split only exists while the panel is live (.streaming-live via has-[]) —
              otherwise the left column takes the full row. -->
         <div
           class="w-full pb-4 lg:pb-0 flex flex-col gap-4 sm:-mx-4 sm:w-[calc(100%+2rem)] lg:mx-0 lg:w-full lg:grid lg:grid-cols-1 lg:has-[.streaming-live]:grid-cols-[2fr_1fr] lg:gap-4 lg:items-stretch"
         >
-          <!-- Left column: news banner + identity row, stacked tight. -->
           <div class="flex flex-col gap-2 min-w-0">
             <news-box></news-box>
-
-            <!-- Identity row: flag + tag/username + skin in one line. Flag sits before the
-                 tag (where it shows in-game), skin at the end; both preview the current
-                 selection. Replaces the old separate SELECT SKIN / SELECT FLAG buttons. -->
-            <div
-              class="relative bg-lt-800 border border-lt-700 overflow-visible flex items-center sm:min-h-[60px] sm:flex-1 sm:z-20"
-            >
-              <!-- Selected skin/pattern fills the bubble like the player's territory in
-                   game (the skin button updates it), shown as a frame around the controls. -->
-              <cosmetic-background
-                class="absolute inset-0 z-0 overflow-hidden pointer-events-none"
-              ></cosmetic-background>
-              <!-- Controls share one surface bubble so it reads as a single clean bar
-                   (buttons blend at rest and only highlight on hover). -->
-              <div
-                class="relative z-10 flex h-full w-full min-w-0 items-center gap-2 bg-lt-800/85 p-1"
-              >
-                <flag-input
-                  show-select-label
-                  class="shrink-0 h-full max-h-[52px] aspect-square"
-                ></flag-input>
-                <username-input
-                  class="flex-1 min-w-0 h-10 sm:h-[50px]"
-                ></username-input>
-                <!-- Raised 3D shadow so the skin pops off the bar and is easy to spot. -->
-                <cosmetics-input
-                  id="cosmetics-input-mobile"
-                  show-select-label
-                  class="no-crazygames shrink-0 h-full max-h-[52px] aspect-square border border-lt-600"
-                ></cosmetics-input>
-              </div>
-            </div>
           </div>
 
           <!-- Right column: Streaming Now (desktop only), stretched to the left column's

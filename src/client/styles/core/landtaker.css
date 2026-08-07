@@ -286,6 +286,26 @@
   background: rgb(255 255 255 / 0.04);
 }
 
+/* Identity controls inside the rail. The pickers were sized for the old
+   full-width bar; at 320px the type has to come down or the name drowns. */
+.lt-rail username-input input {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* The clan tag sits one level deeper (div > div > input) than the name. */
+.lt-rail username-input div > div > input {
+  font-size: 13px;
+  width: 3rem;
+}
+
+/* The verified toggle keeps its icon but drops the word — at 320px the label
+   would push the name itself out of view. !important because the span's
+   sm:inline utility otherwise wins at desktop widths. */
+.lt-rail username-input button > span {
+  display: none !important;
+}
+
 /* ------------------------------------------------------------------ state */
 
 /* Marks the row/tile the player is currently on. Left bar rather than a fill,
