@@ -257,6 +257,13 @@ export function getProprietaryDir(rootDir: string = process.cwd()): string {
   return path.join(rootDir, "proprietary");
 }
 
+// Landtaker's own brand assets (logos, rank insignia). Separate from both
+// resources/ (CC BY-SA) and proprietary/ (OpenFront Inc., All Rights Reserved)
+// so our marks can carry their own licence — see brand/LICENSE.
+export function getBrandDir(rootDir: string = process.cwd()): string {
+  return path.join(rootDir, "brand");
+}
+
 // Scans directories with synchronous fs.existsSync — assumes a small number of sourceDirs.
 function resolveSourceDir(relativePath: string, sourceDirs: string[]): string {
   for (const dir of sourceDirs) {
