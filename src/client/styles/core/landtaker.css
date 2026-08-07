@@ -133,6 +133,61 @@
   margin-top: 3px;
 }
 
+/* --------------------------------------------------------------- nav items */
+
+/* Top-bar tabs. The active tab is marked by an underline in the accent rather
+   than a colour swap, so the label keeps full contrast either way. */
+.lt-nav-item {
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  font-family: var(--font-lt-util);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-lt-400);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    color 0.12s linear,
+    background 0.12s linear;
+}
+
+.lt-nav-item:hover {
+  color: var(--color-lt-100);
+  background: rgb(255 255 255 / 0.03);
+}
+
+.lt-nav-item.active {
+  color: var(--color-lt-100);
+  border-bottom-color: var(--color-lt-accent);
+}
+
+.lt-nav-item:focus-visible {
+  outline: 2px solid var(--color-lt-accent);
+  outline-offset: -2px;
+}
+
+/* Right-hand meta cells: online count, currency, account. */
+.lt-nav-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  border-left: 1px solid var(--color-lt-700);
+  color: var(--color-lt-100);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s linear;
+}
+
+.lt-nav-cell:hover {
+  background: rgb(255 255 255 / 0.04);
+}
+
 /* ------------------------------------------------------------------ state */
 
 /* Marks the row/tile the player is currently on. Left bar rather than a fill,

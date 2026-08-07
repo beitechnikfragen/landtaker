@@ -24,7 +24,7 @@ export class PlayPage extends LitElement {
 
         <!-- Mobile: Fixed top bar -->
         <div
-          class="lg:hidden fixed left-0 right-0 top-0 z-40 pt-[env(safe-area-inset-top)] bg-surface border-b border-white/10"
+          class="lg:hidden fixed left-0 right-0 top-0 z-40 pt-[env(safe-area-inset-top)] bg-lt-900/95 backdrop-blur-md border-b border-lt-700"
         >
           <div
             class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center h-14 px-2 gap-2"
@@ -124,17 +124,17 @@ export class PlayPage extends LitElement {
                  tag (where it shows in-game), skin at the end; both preview the current
                  selection. Replaces the old separate SELECT SKIN / SELECT FLAG buttons. -->
             <div
-              class="relative bg-surface border-y border-white/10 overflow-visible flex items-center sm:min-h-[60px] sm:flex-1 sm:z-20 sm:border-y-0 sm:rounded-xl"
+              class="relative bg-lt-800 border border-lt-700 overflow-visible flex items-center sm:min-h-[60px] sm:flex-1 sm:z-20"
             >
               <!-- Selected skin/pattern fills the bubble like the player's territory in
                    game (the skin button updates it), shown as a frame around the controls. -->
               <cosmetic-background
-                class="absolute inset-0 z-0 overflow-hidden sm:rounded-xl pointer-events-none"
+                class="absolute inset-0 z-0 overflow-hidden pointer-events-none"
               ></cosmetic-background>
               <!-- Controls share one surface bubble so it reads as a single clean bar
                    (buttons blend at rest and only highlight on hover). -->
               <div
-                class="relative z-10 flex h-full w-full min-w-0 items-center gap-2 bg-surface/80 p-1 sm:rounded-xl"
+                class="relative z-10 flex h-full w-full min-w-0 items-center gap-2 bg-lt-800/85 p-1"
               >
                 <flag-input
                   show-select-label
@@ -147,7 +147,7 @@ export class PlayPage extends LitElement {
                 <cosmetics-input
                   id="cosmetics-input-mobile"
                   show-select-label
-                  class="no-crazygames shrink-0 h-full max-h-[52px] aspect-square rounded-lg [box-shadow:0_3px_6px_#00000099,0_1px_2px_#000000cc]"
+                  class="no-crazygames shrink-0 h-full max-h-[52px] aspect-square border border-lt-600"
                 ></cosmetics-input>
               </div>
             </div>

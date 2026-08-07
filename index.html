@@ -121,15 +121,38 @@
   </head>
 
   <body
-    class="h-full select-none font-sans min-h-screen bg-neutral-800 transition-opacity duration-300 ease-in-out flex flex-row overflow-hidden"
+    class="h-full select-none font-sans min-h-screen bg-lt-900 transition-opacity duration-300 ease-in-out flex flex-row overflow-hidden"
   >
     <div id="hex-grid" class="fixed inset-0 -z-50 pointer-events-none">
+      <!-- The map reads as terrain, not as a tinted graphic: mostly desaturated
+           with a trace of its own colour left in. The old hue-rotate(180deg)
+           pushed it to teal, which fought everything drawn on top. -->
       <div
         id="background-layer"
-        class="absolute inset-x-0 top-0 -bottom-[4cm] bg-cover opacity-30 [filter:brightness(1.0)] dark:[filter:sepia(0.2)_saturate(1.2)_hue-rotate(180deg)_brightness(0.9)]"
+        class="absolute inset-x-0 top-0 -bottom-[4cm] bg-cover opacity-90 [filter:grayscale(0.8)_contrast(1.25)_brightness(0.5)_sepia(0.12)]"
         style="
           background-image: var(--background-image-url);
-          background-position: center top;
+          background-position: center 30%;
+        "
+      ></div>
+      <!-- Vignette: keeps the edges dark so edge-anchored UI always has
+           contrast under it, and stops the map competing with the centre. -->
+      <div
+        class="absolute inset-0"
+        style="
+          background:
+            linear-gradient(
+              180deg,
+              rgba(13, 16, 19, 0.8) 0%,
+              rgba(13, 16, 19, 0.35) 30%,
+              rgba(13, 16, 19, 0.55) 70%,
+              #0d1013 100%
+            ),
+            radial-gradient(
+              70% 55% at 50% 42%,
+              transparent 30%,
+              rgba(13, 16, 19, 0.7) 100%
+            );
         "
       ></div>
       <div
