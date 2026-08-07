@@ -6,8 +6,9 @@ everything that has to persist — accounts, auth, stats, the game archive.
 
 Implemented: auth (JWKS, tokens, cookie sessions), `/users/@me`, player
 profiles, parties (incl. live updates over SSE), friends, the game archive,
-and ranked leaderboards. Clans, the shop and cosmetics answer as placeholders
-for now. What is still missing is listed under [Roadmap](#roadmap).
+ranked leaderboards with Elo scoring, ranked matchmaking, and join
+verification. Clans, the shop and cosmetics answer as placeholders for now.
+What is still missing is listed under [Roadmap](#roadmap).
 
 Run every end-to-end check at once against a running backend:
 
@@ -69,6 +70,10 @@ curl -s -X POST http://localhost:8787/auth/dev-login -H 'Content-Type: applicati
 | GET    | `/player/:publicId`      | Bearer  | Public profile                                       |
 | POST   | `/game/:id`              | api key | Archive a finished match                             |
 | GET    | `/game/:id`              | —       | Replay data; PII withheld without the api key        |
+| WS     | `/matchmaking/join`      | Bearer  | Ranked queue, 1v1 and 2v2                            |
+| POST   | `/matchmaking/checkin`   | api key | Workers offer a game slot; long-polls for a match    |
+| POST   | `/join_verify`           | api key | Ban check on every join; fails open                  |
+| POST   | `/custom_tribes`         | api key | Bot name pool; empty until purchases exist           |
 
 ### Party rules
 
@@ -135,13 +140,27 @@ Still served by the upstream API — each has to be reimplemented here:
 - [x] `POST/GET /game/{id}` — archive, feeds replays. GET is deliberately
       unauthenticated (the browser fetches it with no credentials to start a
       replay); the api key instead decides whether `persistentID` comes back.
-- [ ] `/join_verify` — join authorization
-- [ ] `/cosmetics.json`, `/reserved_clan_tags`, `/custom_tribes`
-- [ ] `/matchmaking/join` (WebSocket) + `/matchmaking/checkin`
+- [x] `/join_verify` — join authorization. Enforces bans; Turnstile and
+      username moderation are deliberately NOT faked (no secret key, no
+      model). Fails open: the game server already admits the player on a 500,
+      so failing closed would buy a misleading log line and nothing else.
+- [x] `/custom_tribes` — returns an empty pool, honestly. Tribe names are paid,
+      moderated UGC and none of purchases, ownership records or moderation
+      exist yet; inventing names would manufacture appearance stats for
+      purchases nobody made. The game falls back to organic names.
+- [ ] `/cosmetics.json`, `/reserved_clan_tags` — still placeholders. The clan
+      tag list is a security control (it blocks tag impersonation), so serving
+      guesses would invert it.
+- [x] `/matchmaking/join` (WebSocket) + `/matchmaking/checkin` — rating-based
+      pairing with a window that widens while you wait. The window test is
+      symmetric, so a long waiter widens their own tolerance but cannot drag a
+      newcomer into a hopeless match.
 - [x] Friends API — requests, accept/deny, list, remove. A mutual request
       auto-accepts, which is what the client already branches on.
-- [ ] ELO calculation — the leaderboard reads `leaderboardEntries`, but
-      nothing writes to it yet: match results are archived, not yet scored.
+- [x] ELO — ranked matches now move the ladder. Standard Elo, K=32 fixed
+      (archives arrive late, out of order and twice, so a decaying K would rate
+      the same match differently depending on when it landed). 2v2 rates
+      pairwise, not on team averages.
 - [x] **Parties** (new) — REST routes, client UI (nav → Party), live updates
       over SSE, a join-time fit check, and party members biased onto the same
       team at match start. The seating reuses the friends path rather than the

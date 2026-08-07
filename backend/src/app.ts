@@ -3,10 +3,12 @@ import cors from "@fastify/cors";
 import Fastify, { type FastifyError, type FastifyInstance } from "fastify";
 import { config, isProduction } from "./config.ts";
 import { registerAuthRoutes } from "./routes/auth.ts";
+import { registerCustomTribeRoutes } from "./routes/customTribes.ts";
 import { registerFriendRoutes } from "./routes/friends.ts";
 import { registerGameRoutes } from "./routes/games.ts";
 import { registerJoinVerifyRoutes } from "./routes/joinVerify.ts";
 import { registerLeaderboardRoutes } from "./routes/leaderboard.ts";
+import { registerMatchmakingRoutes } from "./routes/matchmaking.ts";
 import { registerPartyRoutes } from "./routes/parties.ts";
 import { registerPartyEventRoutes } from "./routes/partyEvents.ts";
 import { registerStubRoutes } from "./routes/stubs.ts";
@@ -74,6 +76,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registerLeaderboardRoutes(app);
   await registerFriendRoutes(app);
   await registerJoinVerifyRoutes(app);
+  await registerMatchmakingRoutes(app);
+  await registerCustomTribeRoutes(app);
   // Placeholder endpoints for features not built yet (clans, cosmetics,
   // streams, news, Stripe) — see routes/stubs.ts.
   await registerStubRoutes(app);
