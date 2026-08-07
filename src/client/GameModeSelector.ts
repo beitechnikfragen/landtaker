@@ -188,6 +188,13 @@ export class GameModeSelector extends LitElement {
           class="no-crazygames"
         ></ios-add-to-home-screen-banner>
 
+        <!-- Section rule above the cards, as in the mock: DEPLOYMENTS ——— -->
+        <div class="hidden sm:flex lt-rule">
+          <h2 class="lt-label !text-[14px] !text-lt-400">
+            ${translateText("home.deployments")}
+          </h2>
+        </div>
+
         <!-- Game cards grid -->
         ${this.lobbies === null
           ? html`<div
