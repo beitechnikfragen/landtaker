@@ -36,6 +36,45 @@
   --shadow-lobby-card-hover: 0 0 0 2px #0084d1, 0 0 20px rgba(0, 132, 209, 0.5);
   --shadow-action-card-hover:
     0 0 0 1px #0084d1, 0 0 12px rgba(0, 132, 209, 0.35);
+
+  /* ==========================================================================
+     Landtaker UI palette
+     --------------------------------------------------------------------------
+     The tokens above are OpenFront's brand (blue, glow shadows, rounded). These
+     are ours: near-black neutrals, hard edges, and a SINGLE accent that is
+     spent only on the active state — the thing the player should look at right
+     now. If two things on a screen are orange, one of them is wrong.
+
+     Neutrals are a ramp, not a set of one-offs: -900 page, -850/-800 panels,
+     -700/-600 lines, -400/-500 muted text, -100 body text. Reach for the ramp
+     before inventing a new value.
+     ========================================================================== */
+
+  /* surfaces */
+  --color-lt-900: #0d1013; /* page background */
+  --color-lt-850: #101418; /* raised panel */
+  --color-lt-800: #14181c; /* panel */
+  --color-lt-750: #181d22; /* panel, hover/selected */
+  --color-lt-700: #252c33; /* hairline divider */
+  --color-lt-600: #333c45; /* stronger border, input outline */
+  --color-lt-500: #5c666e; /* dimmest text — labels, timestamps */
+  --color-lt-400: #8c979f; /* muted text — secondary values */
+  --color-lt-100: #e8ecef; /* body text */
+
+  /* the one accent */
+  --color-lt-accent: #ff8a1f;
+  --color-lt-accent-hi: #ff9c40; /* hover */
+  --color-lt-accent-ink: #100a03; /* text on an accent fill */
+
+  /* semantic — used for meaning, never decoration */
+  --color-lt-ok: #7fb069; /* gains, alliances, healthy */
+  --color-lt-bad: #d1495b; /* losses, incoming attacks, unaffordable */
+  --color-lt-gold: #e8b93f; /* the gold resource specifically */
+  --color-lt-troop: #5b9bd5; /* the troop resource specifically */
+
+  /* type roles — condensed display + narrow utility face, body stays Inter */
+  --font-lt-display: "Oswald", "Arial Narrow", var(--font-display), sans-serif;
+  --font-lt-util: "Barlow Condensed", "Arial Narrow", sans-serif;
 }
 
 @layer base {

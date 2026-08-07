@@ -1,0 +1,211 @@
+/*
+ * Landtaker UI primitives
+ * =======================
+ * The building blocks the redesigned screens are made of. Colour and type
+ * tokens live in styles.css (@theme); this file turns them into the handful of
+ * shapes that repeat everywhere, so a screen is assembled rather than
+ * hand-painted.
+ *
+ * The look: near-black panels, hard edges, hairline dividers, and one accent
+ * spent only on the active state. Panels are separated by 1px gaps over a
+ * divider-coloured background rather than by margins — that is what gives the
+ * "one machined slab" feel instead of floating cards.
+ *
+ * Numbers are always tabular so columns of figures don't jitter as they tick.
+ */
+
+/* ---------------------------------------------------------------- surfaces */
+
+.lt-panel {
+  background: var(--color-lt-800);
+  border: 1px solid var(--color-lt-700);
+}
+
+/* Over the game canvas: translucent so the map still reads, blurred so text on
+   top of busy terrain stays legible. */
+.lt-panel-glass {
+  background: rgb(11 14 17 / 0.94);
+  border: 1px solid var(--color-lt-700);
+  backdrop-filter: blur(7px);
+}
+
+/* A row of cells that reads as one slab: children sit on a divider-coloured
+   background with 1px gaps, so the "borders" are the background showing through
+   and never double up between neighbours. */
+.lt-group {
+  display: flex;
+  gap: 1px;
+  background: var(--color-lt-700);
+  border: 1px solid var(--color-lt-700);
+}
+
+.lt-group > * {
+  background: var(--color-lt-800);
+}
+
+.lt-divide {
+  border-bottom: 1px solid var(--color-lt-700);
+}
+
+/* ------------------------------------------------------------------- type */
+
+/* Section headings, tab labels, button text. */
+.lt-display {
+  font-family: var(--font-lt-display);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Small labels above values, table headers, chips, timestamps. The narrow face
+   lets these stay readable at 11-13px where Inter would turn to mush. */
+.lt-label {
+  font-family: var(--font-lt-util);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-lt-500);
+}
+
+/* Numbers that update in place — resource counters, timers, standings. */
+.lt-num {
+  font-family: var(--font-lt-util);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+.lt-btn {
+  font-family: var(--font-lt-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-lt-100);
+  background: var(--color-lt-800);
+  border: 0;
+  padding: 15px 32px;
+  cursor: pointer;
+  transition:
+    background 0.12s linear,
+    color 0.12s linear;
+}
+
+.lt-btn:hover {
+  background: var(--color-lt-750);
+}
+
+.lt-btn:focus-visible {
+  outline: 2px solid var(--color-lt-accent);
+  outline-offset: -2px;
+}
+
+/* The one primary action on a screen. If there are two, one is not primary. */
+.lt-btn-primary {
+  background: var(--color-lt-accent);
+  color: var(--color-lt-accent-ink);
+}
+
+.lt-btn-primary:hover {
+  background: var(--color-lt-accent-hi);
+}
+
+.lt-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.lt-btn:disabled:hover {
+  background: var(--color-lt-800);
+}
+
+/* Secondary line under a button label ("Free for all · Europe"). */
+.lt-btn-sub {
+  display: block;
+  font-family: var(--font-lt-util);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  opacity: 0.62;
+  margin-top: 3px;
+}
+
+/* ------------------------------------------------------------------ state */
+
+/* Marks the row/tile the player is currently on. Left bar rather than a fill,
+   so it survives on top of a busy background. */
+.lt-active {
+  box-shadow: inset 2px 0 0 var(--color-lt-accent);
+  background: rgb(255 138 31 / 0.09);
+}
+
+.lt-row {
+  transition: background 0.12s linear;
+}
+
+.lt-row:hover {
+  background: rgb(255 255 255 / 0.04);
+}
+
+/* --------------------------------------------------------------- sections */
+
+/* "LABEL ─────────────── hint" — a heading that spans its column. */
+.lt-rule {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.lt-rule::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-lt-700);
+}
+
+/* -------------------------------------------------------------- meters */
+
+/* Progress/fill bars: lobby capacity, rank progress, troop ratio. Deliberately
+   thin — a meter is a reading, not a decoration. */
+.lt-meter {
+  height: 3px;
+  background: rgb(255 255 255 / 0.1);
+  overflow: hidden;
+}
+
+.lt-meter > i {
+  display: block;
+  height: 100%;
+  background: var(--color-lt-accent);
+}
+
+/* ------------------------------------------------------------------ motion */
+
+/* One settle-in on load; no looping ambient movement. */
+@keyframes lt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lt-rise {
+  animation: lt-rise 0.5s cubic-bezier(0.2, 0.6, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lt-rise {
+    animation: none;
+  }
+
+  .lt-btn {
+    transition: none;
+  }
+}
