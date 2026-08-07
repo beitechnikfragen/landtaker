@@ -225,13 +225,13 @@ export class AccountModal extends BaseModal {
     const hasEmail = consent.hasEmail;
     const on = consent.consented === "approved";
     return html`
-      <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+      <div class="bg-white/5 border border-lt-700 p-6">
         <div class="flex items-start justify-between gap-4">
           <div class="flex-1">
             <div class="text-white font-medium">
               ${translateText("account_modal.marketing_title")}
             </div>
-            <div class="text-white/50 text-sm mt-1">
+            <div class="text-lt-500 text-sm mt-1">
               ${hasEmail
                 ? translateText("account_modal.marketing_desc")
                 : translateText("account_modal.marketing_no_email")}
@@ -245,7 +245,7 @@ export class AccountModal extends BaseModal {
                 ?disabled=${this.consentBusy}
                 @click=${() => this.setConsent(!on)}
                 class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 disabled:opacity-60 ${on
-                  ? "bg-malibu-blue shadow-[var(--shadow-malibu-blue-pill)]"
+                  ? "bg-lt-accent shadow-[var(--shadow-malibu-blue-pill)]"
                   : "bg-white/15"}"
               >
                 <span
@@ -295,7 +295,7 @@ export class AccountModal extends BaseModal {
         .value=${this.email}
         @input=${this.handleEmailInput}
         placeholder=${translateText("account_modal.email_placeholder")}
-        class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10"
+        class="w-full px-4 py-3 bg-white/5 border border-lt-700 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10"
       />
       <o-button
         variant="primary"
@@ -353,10 +353,10 @@ export class AccountModal extends BaseModal {
     }
     return html`
       <div class="flex flex-col gap-6">
-        <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+        <div class="bg-white/5 border border-lt-700 p-6">
           <div class="flex flex-col items-center gap-4">
             <div
-              class="text-xs text-white/40 uppercase tracking-widest font-bold border-b border-white/5 pb-2 px-8"
+              class="text-xs text-lt-500 uppercase tracking-widest font-bold border-b border-white/5 pb-2 px-8"
             >
               ${translateText("account_modal.connected_as")}
             </div>
@@ -418,10 +418,10 @@ export class AccountModal extends BaseModal {
   private renderCrazyGamesAccount(user: CrazyGamesUser): TemplateResult {
     return html`
       <div class="flex flex-col gap-6">
-        <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+        <div class="bg-white/5 border border-lt-700 p-6">
           <div class="flex flex-col items-center gap-4">
             <div
-              class="text-xs text-white/40 uppercase tracking-widest font-bold border-b border-white/5 pb-2 px-8"
+              class="text-xs text-lt-500 uppercase tracking-widest font-bold border-b border-white/5 pb-2 px-8"
             >
               ${translateText("account_modal.connected_as")}
             </div>
@@ -449,9 +449,9 @@ export class AccountModal extends BaseModal {
     return html`
       <div class="flex items-center justify-center p-6 min-h-full">
         <div
-          class="w-full max-w-md bg-white/5 rounded-2xl border border-white/10 p-8 text-center"
+          class="w-full max-w-md bg-white/5 border border-lt-700 p-8 text-center"
         >
-          <p class="text-white/50 text-sm font-medium mb-6">
+          <p class="text-lt-500 text-sm font-medium mb-6">
             ${translateText("account_modal.sign_in_desc")}
           </p>
           <o-button
@@ -508,10 +508,10 @@ export class AccountModal extends BaseModal {
   private renderEmptyState(icon: string, message: string): TemplateResult {
     return html`
       <div
-        class="bg-white/5 rounded-xl border border-white/10 p-12 flex flex-col items-center justify-center text-center"
+        class="bg-white/5 border border-lt-700 p-12 flex flex-col items-center justify-center text-center"
       >
         <div class="text-4xl mb-3">${icon}</div>
-        <p class="text-white/60 text-sm">${message}</p>
+        <p class="text-lt-400 text-sm">${message}</p>
       </div>
     `;
   }
@@ -624,7 +624,7 @@ export class AccountModal extends BaseModal {
           })
         : translateText("account_modal.linked_to_google");
       return html`
-        <div class="flex items-center gap-2 text-white/70 text-sm">
+        <div class="flex items-center gap-2 text-lt-400 text-sm">
           <img
             src=${assetUrl("images/GoogleLogo.svg")}
             alt=${translateText("account_modal.google_alt")}
@@ -644,7 +644,7 @@ export class AccountModal extends BaseModal {
     return html`
       <button
         @click=${this.handleLinkGoogle}
-        class="w-full px-6 py-3 text-[#1f1f1f] bg-white hover:bg-[#f7f8f8] border border-[#dadce0] rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] transition-colors duration-200 flex items-center justify-center gap-3 shadow-lg"
+        class="w-full px-6 py-3 text-[#1f1f1f] bg-white hover:bg-[#f7f8f8] border border-[#dadce0] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] transition-colors duration-200 flex items-center justify-center gap-3 shadow-lg"
       >
         <img
           src=${assetUrl("images/GoogleLogo.svg")}
@@ -722,16 +722,14 @@ export class AccountModal extends BaseModal {
   private renderLoginOptions() {
     return html`
       <div class="flex items-center justify-center p-6 min-h-full">
-        <div
-          class="w-full max-w-md bg-white/5 rounded-2xl border border-white/10 p-8"
-        >
+        <div class="w-full max-w-md bg-white/5 border border-lt-700 p-8">
           <div class="text-center mb-8">
             <div
-              class="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-white/10 shadow-inner"
+              class="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-6 border border-lt-700 shadow-inner"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="w-8 h-8 text-blue-400"
+                class="w-8 h-8 text-lt-accent"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -744,7 +742,7 @@ export class AccountModal extends BaseModal {
                 <line x1="15" y1="12" x2="3" y2="12"></line>
               </svg>
             </div>
-            <p class="text-white/50 text-sm font-medium">
+            <p class="text-lt-500 text-sm font-medium">
               ${translateText("account_modal.sign_in_desc")}
             </p>
             ${this.renderCurrency()}
@@ -754,7 +752,7 @@ export class AccountModal extends BaseModal {
             <!-- Discord Login Button -->
             <button
               @click="${this.handleDiscordLogin}"
-              class="w-full px-6 py-4 text-white bg-[#5865F2] hover:bg-[#4752C4] border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5865F2] transition-colors duration-200 flex items-center justify-center gap-3 group relative overflow-hidden shadow-lg hover:shadow-[#5865F2]/20"
+              class="w-full px-6 py-4 text-white bg-[#5865F2] hover:bg-[#4752C4] border border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5865F2] transition-colors duration-200 flex items-center justify-center gap-3 group relative overflow-hidden shadow-lg hover:shadow-[#5865F2]/20"
             >
               <img
                 src=${assetUrl("images/DiscordLogo.svg")}
@@ -771,7 +769,7 @@ export class AccountModal extends BaseModal {
                  dark text, the multicolor "G" mark) -->
             <button
               @click="${this.handleGoogleLogin}"
-              class="w-full px-6 py-4 text-[#1f1f1f] bg-white hover:bg-[#f7f8f8] border border-[#dadce0] rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] transition-colors duration-200 flex items-center justify-center gap-3 group relative overflow-hidden shadow-lg"
+              class="w-full px-6 py-4 text-[#1f1f1f] bg-white hover:bg-[#f7f8f8] border border-[#dadce0] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] transition-colors duration-200 flex items-center justify-center gap-3 group relative overflow-hidden shadow-lg"
             >
               <img
                 src=${assetUrl("images/GoogleLogo.svg")}
@@ -798,10 +796,10 @@ export class AccountModal extends BaseModal {
             <div class="space-y-3">${this.renderEmailField()}</div>
           </div>
 
-          <div class="mt-8 text-center border-t border-white/10 pt-6">
+          <div class="mt-8 text-center border-t border-lt-700 pt-6">
             <button
               @click="${this.handleLogout}"
-              class="text-[10px] font-bold text-white/20 hover:text-red-400 transition-colors uppercase tracking-widest pb-0.5"
+              class="text-[10px] font-bold text-white/20 hover:text-lt-bad transition-colors uppercase tracking-widest pb-0.5"
             >
               ${translateText("account_modal.clear_session")}
             </button>

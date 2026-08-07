@@ -55,7 +55,7 @@ export function renderRoleIcon(role: string): TemplateResult {
   }
   return html`<svg
     xmlns="http://www.w3.org/2000/svg"
-    class="w-4 h-4 text-white/40"
+    class="w-4 h-4 text-lt-500"
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -71,9 +71,9 @@ export function renderRoleIcon(role: string): TemplateResult {
 
 export function renderStat(label: string, value: string): TemplateResult {
   return html`
-    <div class="bg-white/5 rounded-xl border border-white/10 p-4 text-center">
+    <div class="bg-white/5 border border-lt-700 p-4 text-center">
       <div
-        class="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1"
+        class="text-[10px] font-bold text-lt-500 uppercase tracking-wider mb-1"
       >
         ${label}
       </div>
@@ -92,43 +92,43 @@ function renderPaginationButtons(
       <button
         @click=${() => onPageChange(1)}
         ?disabled=${currentPage <= 1}
-        class="px-2 py-1 text-xs font-bold rounded-lg transition-all
+        class="px-2 py-1 text-xs font-bold transition-all
           ${currentPage <= 1
           ? "text-white/20 cursor-not-allowed"
-          : "text-white/60 hover:text-white hover:bg-white/10"}"
+          : "text-lt-400 hover:text-white hover:bg-white/10"}"
       >
         &lt;&lt;
       </button>
       <button
         @click=${() => onPageChange(Math.max(1, currentPage - 1))}
         ?disabled=${currentPage <= 1}
-        class="px-2 py-1 text-xs font-bold rounded-lg transition-all
+        class="px-2 py-1 text-xs font-bold transition-all
           ${currentPage <= 1
           ? "text-white/20 cursor-not-allowed"
-          : "text-white/60 hover:text-white hover:bg-white/10"}"
+          : "text-lt-400 hover:text-white hover:bg-white/10"}"
       >
         &lt;
       </button>
-      <span class="text-xs text-white/50 font-medium px-1">
+      <span class="text-xs text-lt-500 font-medium px-1">
         ${currentPage} / ${totalPages}
       </span>
       <button
         @click=${() => onPageChange(Math.min(totalPages, currentPage + 1))}
         ?disabled=${currentPage >= totalPages}
-        class="px-2 py-1 text-xs font-bold rounded-lg transition-all
+        class="px-2 py-1 text-xs font-bold transition-all
           ${currentPage >= totalPages
           ? "text-white/20 cursor-not-allowed"
-          : "text-white/60 hover:text-white hover:bg-white/10"}"
+          : "text-lt-400 hover:text-white hover:bg-white/10"}"
       >
         &gt;
       </button>
       <button
         @click=${() => onPageChange(totalPages)}
         ?disabled=${currentPage >= totalPages}
-        class="px-2 py-1 text-xs font-bold rounded-lg transition-all
+        class="px-2 py-1 text-xs font-bold transition-all
           ${currentPage >= totalPages
           ? "text-white/20 cursor-not-allowed"
-          : "text-white/60 hover:text-white hover:bg-white/10"}"
+          : "text-lt-400 hover:text-white hover:bg-white/10"}"
       >
         &gt;&gt;
       </button>
@@ -143,7 +143,7 @@ export function renderServerPagination(
 ): TemplateResult {
   return html`
     <div
-      class="flex items-center justify-center gap-1 pt-4 border-t border-white/10"
+      class="flex items-center justify-center gap-1 pt-4 border-t border-lt-700"
     >
       ${renderPaginationButtons(currentPage, totalPages, onPageChange)}
     </div>
@@ -160,7 +160,7 @@ export function renderMemberSearchInput(
       <input
         type="text"
         @input=${onInput}
-        class="w-full h-10 pl-10 pr-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 text-sm"
+        class="w-full h-10 pl-10 pr-4 bg-white/5 border border-lt-700 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 text-sm"
         placeholder="${translateText(placeholderKey)}"
       />
       <svg
@@ -211,9 +211,7 @@ function renderOrderIcon(order: ClanMemberOrder): TemplateResult {
       class="flex flex-col items-start justify-center gap-[3px] w-4 h-4"
       aria-hidden="true"
     >
-      ${widths.map(
-        (w) => html`<span class="${w} h-[2px] bg-current rounded-sm"></span>`,
-      )}
+      ${widths.map((w) => html`<span class="${w} h-[2px] bg-current "></span>`)}
     </span>
   `;
 }
@@ -232,14 +230,14 @@ export function renderMemberSortControl(
   return html`
     <div class="flex items-center gap-2 shrink-0">
       <label
-        class="text-[10px] font-bold text-white/40 uppercase tracking-wider hidden sm:inline"
+        class="text-[10px] font-bold text-lt-500 uppercase tracking-wider hidden sm:inline"
       >
         ${translateText("clan_modal.sort_by")}
       </label>
       <select
         @change=${(e: Event) =>
           onSortChange((e.target as HTMLSelectElement).value as ClanMemberSort)}
-        class="flex-1 sm:flex-none h-10 pl-3 pr-8 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 text-sm appearance-none bg-no-repeat bg-[right_0.5rem_center] bg-[length:1rem] bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22rgba(255,255,255,0.5)%22 stroke-width=%222%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22m6 9 6 6 6-6%22/></svg>')]"
+        class="flex-1 sm:flex-none h-10 pl-3 pr-8 bg-white/5 border border-lt-700 text-white focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 text-sm appearance-none bg-no-repeat bg-[right_0.5rem_center] bg-[length:1rem] bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22rgba(255,255,255,0.5)%22 stroke-width=%222%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22m6 9 6 6 6-6%22/></svg>')]"
       >
         ${sortOptions.map(
           (opt) => html`
@@ -258,7 +256,7 @@ export function renderMemberSortControl(
         @click=${onOrderToggle}
         title=${orderLabel}
         aria-label=${orderLabel}
-        class="h-10 w-10 shrink-0 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl text-white/70 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all"
+        class="h-10 w-10 shrink-0 flex items-center justify-center bg-white/5 border border-lt-700 text-lt-400 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all"
       >
         ${renderOrderIcon(order)}
       </button>
@@ -280,11 +278,11 @@ export function renderMemberPagination(
 
   return html`
     <div
-      class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-white/10"
+      class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-lt-700"
     >
       <div class="flex items-center gap-2">
         <span
-          class="text-[10px] font-bold text-white/40 uppercase tracking-wider"
+          class="text-[10px] font-bold text-lt-500 uppercase tracking-wider"
         >
           ${translateText("clan_modal.per_page")}
         </span>
@@ -292,10 +290,10 @@ export function renderMemberPagination(
           (opt) => html`
             <button
               @click=${() => onPerPageChange(opt)}
-              class="px-2 py-1 text-xs font-bold rounded-lg transition-all
+              class="px-2 py-1 text-xs font-bold transition-all
                 ${membersPerPage === opt
-                ? "bg-malibu-blue/15 text-aquarius border border-malibu-blue/30"
-                : "text-white/40 hover:text-white/70 border border-transparent"}"
+                ? "bg-lt-accent/15 text-lt-accent border border-malibu-blue/30"
+                : "text-lt-500 hover:text-lt-400 border border-transparent"}"
             >
               ${opt}
             </button>
@@ -320,25 +318,25 @@ export function renderWLBarRow(
   const rateClass = !hasGames
     ? "text-white/25"
     : rate >= 50
-      ? "text-green-400"
-      : "text-red-400/90";
+      ? "text-lt-ok"
+      : "text-lt-bad/90";
   return html`
     <div class="flex items-center gap-2">
       <span
-        class="text-[10px] font-bold uppercase tracking-wider text-white/50 w-14 shrink-0 truncate"
+        class="text-[10px] font-bold uppercase tracking-wider text-lt-500 w-14 shrink-0 truncate"
         title=${label}
       >
         ${label}
       </span>
       <div
-        class="relative flex-1 h-5 rounded-md overflow-hidden bg-white/5"
+        class="relative flex-1 h-5 overflow-hidden bg-white/5"
         role="img"
         aria-label="${wins} wins, ${losses} losses"
       >
         <div class="absolute inset-0 flex">
           ${wins > 0
             ? html`<div
-                class="bg-malibu-blue h-full"
+                class="bg-lt-accent h-full"
                 style="width:${winPct}%"
               ></div>`
             : ""}
@@ -385,17 +383,17 @@ export function renderMemberRow(
   const isMe = member.publicId === myPublicId;
   return html`
     <div
-      class="flex flex-col py-2.5 px-3 rounded-xl border
+      class="flex flex-col py-2.5 px-3 border
         ${isMe
-        ? "bg-malibu-blue/10 border-malibu-blue/20"
-        : "bg-white/5 border-white/10"}"
+        ? "bg-lt-accent/10 border-malibu-blue/20"
+        : "bg-white/5 border-lt-700"}"
     >
       <div class="flex items-center gap-3">
         <div
           class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0
             ${isMe
-            ? "bg-malibu-blue/20 text-aquarius"
-            : "bg-white/10 text-white/50"}"
+            ? "bg-lt-accent/20 text-lt-accent"
+            : "bg-white/10 text-lt-500"}"
         >
           ${renderRoleIcon(member.role)}
         </div>

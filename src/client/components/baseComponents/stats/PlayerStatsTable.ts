@@ -21,29 +21,27 @@ export class PlayerStatsTable extends LitElement {
       <div class="grid grid-cols-1 gap-6 w-full">
         <div class="w-full">
           <div
-            class="text-gray-400 text-sm font-bold uppercase tracking-wider mb-2"
+            class="text-lt-400 text-sm font-bold uppercase tracking-wider mb-2"
           >
             ${translateText("player_stats_table.building_stats")}
           </div>
-          <div
-            class="overflow-x-auto rounded-lg border border-white/5 bg-black/20"
-          >
-            <table class="w-full text-sm text-gray-300">
+          <div class="overflow-x-auto border border-white/5 bg-black/20">
+            <table class="w-full text-sm text-lt-400">
               <thead>
                 <tr class="bg-white/5">
-                  <th class="px-4 py-2 font-semibold text-left text-gray-400">
+                  <th class="px-4 py-2 font-semibold text-left text-lt-400">
                     ${translateText("player_stats_table.building")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.built")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.destroyed")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.captured")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.lost")}
                   </th>
                 </tr>
@@ -56,19 +54,19 @@ export class PlayerStatsTable extends LitElement {
                   const lost = this.stats?.units?.[key]?.[3] ?? 0n;
                   return html`
                     <tr class="hover:bg-white/5 transition-colors">
-                      <td class="px-4 py-2 text-left font-medium text-white/80">
+                      <td class="px-4 py-2 text-left font-medium text-lt-100">
                         ${translateText(`player_stats_table.unit.${key}`)}
                       </td>
-                      <td class="px-3 py-2 text-center text-white/60">
+                      <td class="px-3 py-2 text-center text-lt-400">
                         ${renderNumber(built)}
                       </td>
-                      <td class="px-3 py-2 text-center text-white/60">
+                      <td class="px-3 py-2 text-center text-lt-400">
                         ${renderNumber(destroyed)}
                       </td>
-                      <td class="px-3 py-2 text-center text-white/60">
+                      <td class="px-3 py-2 text-center text-lt-400">
                         ${renderNumber(captured)}
                       </td>
-                      <td class="px-3 py-2 text-center text-white/60">
+                      <td class="px-3 py-2 text-center text-lt-400">
                         ${renderNumber(lost)}
                       </td>
                     </tr>
@@ -81,26 +79,24 @@ export class PlayerStatsTable extends LitElement {
 
         <div class="w-full">
           <div
-            class="text-gray-400 text-sm font-bold uppercase tracking-wider mb-2"
+            class="text-lt-400 text-sm font-bold uppercase tracking-wider mb-2"
           >
             ${translateText("player_stats_table.ship_arrivals")}
           </div>
-          <div
-            class="overflow-x-auto rounded-lg border border-white/5 bg-black/20"
-          >
-            <table class="w-full text-sm text-gray-300">
+          <div class="overflow-x-auto border border-white/5 bg-black/20">
+            <table class="w-full text-sm text-lt-400">
               <thead>
                 <tr class="bg-white/5">
-                  <th class="px-4 py-2 font-semibold text-left text-gray-400">
+                  <th class="px-4 py-2 font-semibold text-left text-lt-400">
                     ${translateText("player_stats_table.ship_type")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.sent")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.destroyed")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.arrived")}
                   </th>
                 </tr>
@@ -112,16 +108,16 @@ export class PlayerStatsTable extends LitElement {
                   const destroyed = this.stats?.boats?.[key]?.[3] ?? 0n;
                   return html`
                     <tr class="hover:bg-white/5 transition-colors">
-                      <td class="px-4 py-2 text-left font-medium text-white/80">
+                      <td class="px-4 py-2 text-left font-medium text-lt-100">
                         ${translateText(`player_stats_table.unit.${key}`)}
                       </td>
-                      <td class="px-3 py-2 text-center text-white/60">
+                      <td class="px-3 py-2 text-center text-lt-400">
                         ${renderNumber(sent)}
                       </td>
-                      <td class="px-3 py-2 text-center text-white/60">
+                      <td class="px-3 py-2 text-center text-lt-400">
                         ${renderNumber(destroyed)}
                       </td>
-                      <td class="px-3 py-2 text-center text-white/60">
+                      <td class="px-3 py-2 text-center text-lt-400">
                         ${renderNumber(arrived)}
                       </td>
                     </tr>
@@ -134,26 +130,24 @@ export class PlayerStatsTable extends LitElement {
 
         <div class="w-full">
           <div
-            class="text-gray-400 text-sm font-bold uppercase tracking-wider mb-2"
+            class="text-lt-400 text-sm font-bold uppercase tracking-wider mb-2"
           >
             ${translateText("player_stats_table.nuke_stats")}
           </div>
-          <div
-            class="overflow-x-auto rounded-lg border border-white/5 bg-black/20"
-          >
-            <table class="w-full text-sm text-gray-300">
+          <div class="overflow-x-auto border border-white/5 bg-black/20">
+            <table class="w-full text-sm text-lt-400">
               <thead>
                 <tr class="bg-white/5">
-                  <th class="px-4 py-2 font-semibold text-left text-gray-400">
+                  <th class="px-4 py-2 font-semibold text-left text-lt-400">
                     ${translateText("player_stats_table.weapon")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.launched")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.landed")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.hits")}
                   </th>
                 </tr>
@@ -165,16 +159,16 @@ export class PlayerStatsTable extends LitElement {
                   const intercepted = this.stats?.bombs?.[bomb]?.[2] ?? 0n;
                   return html`
                     <tr class="hover:bg-white/5 transition-colors">
-                      <td class="px-4 py-2 text-left font-medium text-white/80">
+                      <td class="px-4 py-2 text-left font-medium text-lt-100">
                         ${translateText(`player_stats_table.unit.${bomb}`)}
                       </td>
-                      <td class="px-3 py-2 text-center text-white/60">
+                      <td class="px-3 py-2 text-center text-lt-400">
                         ${renderNumber(launched)}
                       </td>
-                      <td class="px-3 py-2 text-center text-white/60">
+                      <td class="px-3 py-2 text-center text-lt-400">
                         ${renderNumber(landed)}
                       </td>
-                      <td class="px-3 py-2 text-center text-white/60">
+                      <td class="px-3 py-2 text-center text-lt-400">
                         ${renderNumber(intercepted)}
                       </td>
                     </tr>
@@ -187,42 +181,40 @@ export class PlayerStatsTable extends LitElement {
 
         <div class="w-full">
           <div
-            class="text-gray-400 text-sm font-bold uppercase tracking-wider mb-2"
+            class="text-lt-400 text-sm font-bold uppercase tracking-wider mb-2"
           >
             ${translateText("player_stats_table.player_metrics")}
           </div>
-          <div
-            class="overflow-x-auto rounded-lg border border-white/5 bg-black/20 mb-4"
-          >
-            <table class="w-full text-sm text-gray-300">
+          <div class="overflow-x-auto border border-white/5 bg-black/20 mb-4">
+            <table class="w-full text-sm text-lt-400">
               <thead>
                 <tr class="bg-white/5">
-                  <th class="px-4 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-4 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.attack")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.sent")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.received")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.cancelled")}
                   </th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-white/5">
                 <tr class="hover:bg-white/5 transition-colors">
-                  <td class="px-4 py-2 text-center text-white/60">
+                  <td class="px-4 py-2 text-center text-lt-400">
                     ${translateText("player_stats_table.count")}
                   </td>
-                  <td class="px-3 py-2 text-center text-white/60">
+                  <td class="px-3 py-2 text-center text-lt-400">
                     ${renderNumber(this.stats?.attacks?.[0] ?? 0n)}
                   </td>
-                  <td class="px-3 py-2 text-center text-white/60">
+                  <td class="px-3 py-2 text-center text-lt-400">
                     ${renderNumber(this.stats?.attacks?.[1] ?? 0n)}
                   </td>
-                  <td class="px-3 py-2 text-center text-white/60">
+                  <td class="px-3 py-2 text-center text-lt-400">
                     ${renderNumber(this.stats?.attacks?.[2] ?? 0n)}
                   </td>
                 </tr>
@@ -230,44 +222,42 @@ export class PlayerStatsTable extends LitElement {
             </table>
           </div>
 
-          <div
-            class="overflow-x-auto rounded-lg border border-white/5 bg-black/20"
-          >
-            <table class="w-full text-sm text-gray-300">
+          <div class="overflow-x-auto border border-white/5 bg-black/20">
+            <table class="w-full text-sm text-lt-400">
               <thead>
                 <tr class="bg-white/5">
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.gold")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.workers")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.war")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.trade")}
                   </th>
-                  <th class="px-3 py-2 text-center font-semibold text-gray-400">
+                  <th class="px-3 py-2 text-center font-semibold text-lt-400">
                     ${translateText("player_stats_table.steal")}
                   </th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-white/5">
                 <tr class="hover:bg-white/5 transition-colors">
-                  <td class="px-3 py-2 text-center text-white/60">
+                  <td class="px-3 py-2 text-center text-lt-400">
                     ${renderNumber(this.stats?.gold?.[0] ?? 0n)}
                   </td>
-                  <td class="px-3 py-2 text-center text-white/60">
+                  <td class="px-3 py-2 text-center text-lt-400">
                     ${renderNumber(this.stats?.gold?.[1] ?? 0n)}
                   </td>
-                  <td class="px-3 py-2 text-center text-white/60">
+                  <td class="px-3 py-2 text-center text-lt-400">
                     ${renderNumber(this.stats?.gold?.[2] ?? 0n)}
                   </td>
-                  <td class="px-3 py-2 text-center text-white/60">
+                  <td class="px-3 py-2 text-center text-lt-400">
                     ${renderNumber(this.stats?.gold?.[3] ?? 0n)}
                   </td>
-                  <td class="px-3 py-2 text-center text-white/60">
+                  <td class="px-3 py-2 text-center text-lt-400">
                     ${renderNumber(this.stats?.gold?.[4] ?? 0n)}
                   </td>
                 </tr>

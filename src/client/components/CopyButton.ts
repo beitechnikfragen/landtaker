@@ -120,7 +120,7 @@ export class CopyButton extends LitElement {
       return html`
         <button
           @click=${this.handleCopy}
-          class="text-xs text-white/60 font-mono bg-white/5 px-2 py-0.5 rounded border border-white/5 hover:bg-white/10 hover:text-white transition-colors ${disabledClass}"
+          class="text-xs text-lt-400 font-mono bg-white/5 px-2 py-0.5 border border-white/5 hover:bg-white/10 hover:text-white transition-colors ${disabledClass}"
           title="${translateText("common.click_to_copy")}"
           aria-label="${translateText("common.click_to_copy")}"
           ?disabled=${!canCopy}
@@ -133,12 +133,12 @@ export class CopyButton extends LitElement {
 
     return html`
       <div
-        class="flex items-center gap-0.5 bg-white/5 rounded-lg px-2 py-1 border border-white/10 max-w-[220px] flex-nowrap"
+        class="flex items-center gap-0.5 bg-white/5 px-2 py-1 border border-lt-700 max-w-[220px] flex-nowrap"
       >
         ${this.showVisibilityToggle
           ? html`<button
               @click=${this.toggleVisibility}
-              class="p-1.5 rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-colors ${toggleClass}"
+              class="p-1.5 hover:bg-white/10 text-lt-400 hover:text-white transition-colors ${toggleClass}"
               title="${translateText("user_setting.toggle_visibility")}"
               ?disabled=${toggleDisabled}
               type="button"
@@ -191,7 +191,7 @@ export class CopyButton extends LitElement {
         ${this.showCopyIcon
           ? html`<button
               @click=${this.handleCopy}
-              class="p-1.5 rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-colors ${disabledClass}"
+              class="p-1.5 hover:bg-white/10 text-lt-400 hover:text-white transition-colors ${disabledClass}"
               title="${translateText("common.click_to_copy")}"
               aria-label="${translateText("common.click_to_copy")}"
               ?disabled=${!canCopy}

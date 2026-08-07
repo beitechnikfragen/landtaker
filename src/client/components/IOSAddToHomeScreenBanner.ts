@@ -68,7 +68,7 @@ export class IOSAddToHomeScreenBanner extends LitElement {
       >
         <div class="relative w-full max-w-sm">
           <div
-            class="bg-slate-800 border border-slate-600 rounded-2xl w-full p-5 pb-6 flex flex-col gap-4"
+            class="bg-lt-850 border border-lt-600 w-full p-5 pb-6 flex flex-col gap-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby="ios-banner-modal-title"
@@ -81,7 +81,7 @@ export class IOSAddToHomeScreenBanner extends LitElement {
                 ${translateText("ios_banner.modal_title")}
               </h2>
               <button
-                class="text-slate-400 hover:text-white text-2xl leading-none"
+                class="text-lt-400 hover:text-white text-2xl leading-none"
                 @click=${this.closeGuide}
                 aria-label=${translateText("common.close")}
               >
@@ -89,21 +89,21 @@ export class IOSAddToHomeScreenBanner extends LitElement {
               </button>
             </div>
 
-            <p class="text-slate-300 text-sm">
+            <p class="text-lt-400 text-sm">
               ${translateText("ios_banner.modal_desc")}
             </p>
 
             <ol class="flex flex-col gap-3 text-sm text-slate-200">
               <li class="flex items-start gap-3">
                 <span
-                  class="shrink-0 w-6 h-6 rounded-full bg-malibu-blue flex items-center justify-center text-white font-bold text-xs"
+                  class="shrink-0 w-6 h-6 rounded-full bg-lt-accent flex items-center justify-center text-white font-bold text-xs"
                   >1</span
                 >
                 <span>${translateText("ios_banner.step_share")}</span>
               </li>
               <li class="flex items-start gap-3">
                 <span
-                  class="shrink-0 w-6 h-6 rounded-full bg-malibu-blue flex items-center justify-center text-white font-bold text-xs"
+                  class="shrink-0 w-6 h-6 rounded-full bg-lt-accent flex items-center justify-center text-white font-bold text-xs"
                   >2</span
                 >
                 <span
@@ -117,7 +117,7 @@ export class IOSAddToHomeScreenBanner extends LitElement {
               </li>
               <li class="flex items-start gap-3">
                 <span
-                  class="shrink-0 w-6 h-6 rounded-full bg-malibu-blue flex items-center justify-center text-white font-bold text-xs"
+                  class="shrink-0 w-6 h-6 rounded-full bg-lt-accent flex items-center justify-center text-white font-bold text-xs"
                   >3</span
                 >
                 <span>${translateText("ios_banner.step_open")}</span>
@@ -125,7 +125,7 @@ export class IOSAddToHomeScreenBanner extends LitElement {
             </ol>
 
             <button
-              class="w-full py-2.5 rounded-lg bg-malibu-blue hover:bg-aquarius active:bg-malibu-blue/80 text-white font-semibold transition-colors"
+              class="w-full py-2.5 bg-lt-accent hover:bg-lt-accent-hi active:bg-lt-accent/80 text-white font-semibold transition-colors"
               @click=${this.closeGuide}
             >
               ${translateText("ios_banner.got_it")}
@@ -149,12 +149,12 @@ export class IOSAddToHomeScreenBanner extends LitElement {
     return html`
       ${this.renderGuideModal()}
       <div
-        class="flex flex-col gap-3 w-full px-3 py-3 rounded-xl bg-slate-800/90 border border-slate-600 text-sm text-slate-200"
+        class="flex flex-col gap-3 w-full px-3 py-3 bg-lt-850/90 border border-lt-600 text-sm text-slate-200"
       >
         <div class="flex gap-3 items-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="shrink-0 w-8 h-8 text-malibu-blue"
+            class="shrink-0 w-8 h-8 text-lt-accent"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -171,19 +171,19 @@ export class IOSAddToHomeScreenBanner extends LitElement {
 
         <div class="flex flex-col gap-1.5">
           <button
-            class="w-full py-1.5 rounded-lg bg-malibu-blue hover:bg-aquarius active:bg-malibu-blue/80 text-white font-semibold text-sm transition-colors"
+            class="w-full py-1.5 bg-lt-accent hover:bg-lt-accent-hi active:bg-lt-accent/80 text-white font-semibold text-sm transition-colors"
             @click=${this.openGuide}
           >
             ${translateText("ios_banner.how")}
           </button>
           <button
-            class="w-full py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-slate-300 text-sm transition-colors"
+            class="w-full py-1.5 bg-lt-800 hover:bg-slate-600 active:bg-lt-850 text-lt-400 text-sm transition-colors"
             @click=${this.later_}
           >
             ${translateText("ios_banner.later")}
           </button>
           <button
-            class="w-full py-1.5 rounded-lg text-slate-500 hover:text-slate-400 text-xs transition-colors"
+            class="w-full py-1.5 text-slate-500 hover:text-lt-400 text-xs transition-colors"
             @click=${this.never}
           >
             ${translateText("ios_banner.never")}

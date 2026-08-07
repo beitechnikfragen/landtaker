@@ -54,7 +54,7 @@ export class HelpModal extends BaseModal {
   private renderKey(code: string) {
     const label = this.getKeyLabel(code);
     return html`<span
-      class="inline-block min-w-[32px] text-center px-2 py-1 rounded bg-[#2a2a2a] border-b-2 border-[#1a1a1a] text-white font-mono text-xs font-bold mx-0.5"
+      class="inline-block min-w-[32px] text-center px-2 py-1 bg-[#2a2a2a] border-b-2 border-[#1a1a1a] text-white font-mono text-xs font-bold mx-0.5"
       >${label}</span
     >`;
   }
@@ -73,17 +73,17 @@ export class HelpModal extends BaseModal {
     return html`
       <div
         class="prose prose-invert prose-sm max-w-none px-6 py-3
-          [&_a]:text-blue-400 [&_a:hover]:text-blue-300 transition-colors
-          [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:text-white [&_h1]:border-b [&_h1]:border-white/10 [&_h1]:pb-2
+          [&_a]:text-lt-accent [&_a:hover]:text-lt-accent transition-colors
+          [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:text-white [&_h1]:border-b [&_h1]:border-lt-700 [&_h1]:pb-2
           [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-blue-200
           [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-blue-100
           [&_ul]:pl-5 [&_ul]:list-disc [&_ul]:space-y-1
-          [&_li]:text-gray-300 [&_li]:leading-relaxed
-          [&_p]:text-gray-300 [&_p]:mb-3 [&_strong]:text-white [&_strong]:font-bold"
+          [&_li]:text-lt-400 [&_li]:leading-relaxed
+          [&_p]:text-lt-400 [&_p]:mb-3 [&_strong]:text-white [&_strong]:font-bold"
       >
           <!-- Video Tutorial Section -->
           <div class="flex items-center gap-3 mb-3">
-            <div class="text-blue-400">
+            <div class="text-lt-accent">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="w-5 h-5"
@@ -98,7 +98,7 @@ export class HelpModal extends BaseModal {
               </svg>
             </div>
             <h3
-              class="text-xl font-bold uppercase tracking-widest text-white/90"
+              class="text-xl font-bold uppercase tracking-widest text-lt-100"
             >
               ${translateText("help_modal.video_tutorial")}
             </h3>
@@ -107,7 +107,7 @@ export class HelpModal extends BaseModal {
             ></div>
           </div>
           <section
-            class="bg-white/5 rounded-xl border border-white/10 overflow-hidden mb-8"
+            class="bg-white/5 border border-lt-700 overflow-hidden mb-8"
           >
             <div class="relative w-full h-0 pb-[56.25%]">
               <iframe
@@ -124,7 +124,7 @@ export class HelpModal extends BaseModal {
 
           <!-- Troubleshooting Section -->
           <div class="flex items-center gap-3 mb-3">
-            <div class="text-blue-400">
+            <div class="text-lt-accent">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -142,7 +142,7 @@ export class HelpModal extends BaseModal {
               </svg>
             </div>
             <h3
-              class="text-xl font-bold uppercase tracking-widest text-white/90"
+              class="text-xl font-bold uppercase tracking-widest text-lt-100"
             >
               ${translateText("main.troubleshooting")}
             </h3>
@@ -152,12 +152,12 @@ export class HelpModal extends BaseModal {
           </div>
           <section>
             <div class="w-full flex flex-col items-center">
-              <p class="mb-6 text-white/70 text-sm">
+              <p class="mb-6 text-lt-400 text-sm">
                 ${translateText("help_modal.troubleshooting_desc")}
               </p>
               <button
                 id="troubleshooting-button"
-                class="hover:bg-white/5 px-6 py-2 text-xs font-bold transition-all duration-200 rounded-lg uppercase tracking-widest bg-malibu-blue/20 text-aquarius border border-malibu-blue/30 shadow-[var(--shadow-malibu-blue)]"
+                class="hover:bg-white/5 px-6 py-2 text-xs font-bold transition-all duration-200 uppercase tracking-widest bg-lt-accent/20 text-lt-accent border border-malibu-blue/30 shadow-[var(--shadow-malibu-blue)]"
                 data-page="page-troubleshooting"
                 @click="${this.openTroubleshooting}"
                 data-i18n="main.go_to_troubleshooting"
@@ -171,10 +171,10 @@ export class HelpModal extends BaseModal {
           </section>
           <!-- Hotkeys Section -->
           <div class="flex items-center gap-3 mb-3">
-            <div class="text-blue-400">
+            <div class="text-lt-accent">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="w-5 h-5 text-blue-400"
+                class="w-5 h-5 text-lt-accent"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -195,7 +195,7 @@ export class HelpModal extends BaseModal {
               </svg>
             </div>
             <h3
-              class="text-xl font-bold uppercase tracking-widest text-white/90"
+              class="text-xl font-bold uppercase tracking-widest text-lt-100"
             >
               ${translateText("help_modal.hotkeys")}
             </h3>
@@ -204,13 +204,13 @@ export class HelpModal extends BaseModal {
             ></div>
           </div>
           <section
-            class="bg-white/5 rounded-xl border border-white/10 overflow-hidden"
+            class="bg-white/5 border border-lt-700 overflow-hidden"
           >
             <div class="pt-2 pb-4 px-4 overflow-x-auto">
               <table class="w-full text-sm border-separate border-spacing-y-1">
                 <thead>
                   <tr
-                    class="text-white/40 text-xs uppercase tracking-wider text-left"
+                    class="text-lt-500 text-xs uppercase tracking-wider text-left"
                   >
                     <th class="pb-2 pl-4">
                       ${translateText("help_modal.table_key")}
@@ -220,12 +220,12 @@ export class HelpModal extends BaseModal {
                     </th>
                   </tr>
                 </thead>
-                <tbody class="text-white/80">
+                <tbody class="text-lt-100">
                   <tr class="hover:bg-white/5 transition-colors">
                     <td class="py-3 pl-4 border-b border-white/5">
                       ${this.renderKey("Escape")}
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_esc")}
                     </td>
                   </tr>
@@ -233,7 +233,7 @@ export class HelpModal extends BaseModal {
                     <td class="py-3 pl-4 border-b border-white/5">
                       ${this.renderKey("Enter")}
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_enter")}
                     </td>
                   </tr>
@@ -241,7 +241,7 @@ export class HelpModal extends BaseModal {
                     <td class="py-3 pl-4 border-b border-white/5">
                       ${this.renderKey(keybinds.toggleView)}
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_alt_view")}
                     </td>
                   </tr>
@@ -249,7 +249,7 @@ export class HelpModal extends BaseModal {
                     <td class="py-3 pl-4 border-b border-white/5">
                       ${this.renderKey(keybinds.coordinateGrid)}
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_coordinate_grid")}
                     </td>
                   </tr>
@@ -257,7 +257,7 @@ export class HelpModal extends BaseModal {
                     <td class="py-3 pl-4 border-b border-white/5">
                       ${this.renderKey(keybinds.swapDirection)}
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.bomb_direction")}
                     </td>
                   </tr>
@@ -265,12 +265,12 @@ export class HelpModal extends BaseModal {
                     <td class="py-3 pl-4 border-b border-white/5">
                       <div class="inline-flex items-center gap-2">
                         ${this.renderKey(keybinds.shiftKey)}
-                        <span class="text-white/40 font-bold">+</span>
+                        <span class="text-lt-500 font-bold">+</span>
                         <div
                           class="w-5 h-8 border border-white/40 rounded-full relative"
                         >
                           <div
-                            class="absolute top-0 left-0 w-1/2 h-1/2 bg-red-500/80 rounded-tl-full"
+                            class="absolute top-0 left-0 w-1/2 h-1/2 bg-red-500/80 -full"
                           ></div>
                           <div
                             class="w-0.5 h-1.5 bg-white/40 rounded-full absolute top-1.5 left-1/2 -translate-x-1/2"
@@ -278,7 +278,7 @@ export class HelpModal extends BaseModal {
                         </div>
                       </div>
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_attack_altclick")}
                     </td>
                   </tr>
@@ -286,12 +286,12 @@ export class HelpModal extends BaseModal {
                     <td class="py-3 pl-4 border-b border-white/5">
                       <div class="inline-flex items-center gap-2">
                         ${this.renderKey(keybinds.buildMenuModifier)}
-                        <span class="text-white/40 font-bold">+</span>
+                        <span class="text-lt-500 font-bold">+</span>
                         <div
                           class="w-5 h-8 border border-white/40 rounded-full relative"
                         >
                           <div
-                            class="absolute top-0 left-0 w-1/2 h-1/2 bg-red-500/80 rounded-tl-full"
+                            class="absolute top-0 left-0 w-1/2 h-1/2 bg-red-500/80 -full"
                           ></div>
                           <div
                             class="w-0.5 h-1.5 bg-white/40 rounded-full absolute top-1.5 left-1/2 -translate-x-1/2"
@@ -299,7 +299,7 @@ export class HelpModal extends BaseModal {
                         </div>
                       </div>
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_build")}
                     </td>
                   </tr>
@@ -307,12 +307,12 @@ export class HelpModal extends BaseModal {
                     <td class="py-3 pl-4 border-b border-white/5">
                       <div class="inline-flex items-center gap-2">
                         ${this.renderKey(keybinds.emojiMenuModifier)}
-                        <span class="text-white/40 font-bold">+</span>
+                        <span class="text-lt-500 font-bold">+</span>
                         <div
                           class="w-5 h-8 border border-white/40 rounded-full relative"
                         >
                           <div
-                            class="absolute top-0 left-0 w-1/2 h-1/2 bg-red-500/80 rounded-tl-full"
+                            class="absolute top-0 left-0 w-1/2 h-1/2 bg-red-500/80 -full"
                           ></div>
                           <div
                             class="w-0.5 h-1.5 bg-white/40 rounded-full absolute top-1.5 left-1/2 -translate-x-1/2"
@@ -320,7 +320,7 @@ export class HelpModal extends BaseModal {
                         </div>
                       </div>
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_emote")}
                     </td>
                   </tr>
@@ -328,7 +328,7 @@ export class HelpModal extends BaseModal {
                     <td class="py-3 pl-4 border-b border-white/5">
                       ${this.renderKey(keybinds.centerCamera)}
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_center")}
                     </td>
                   </tr>
@@ -336,7 +336,7 @@ export class HelpModal extends BaseModal {
                     <td class="py-3 pl-4 border-b border-white/5">
                       ${this.renderKey(keybinds.pauseGame)}
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_pause_game")}
                     </td>
                   </tr>
@@ -347,7 +347,7 @@ export class HelpModal extends BaseModal {
                         ${this.renderKey(keybinds.gameSpeedUp)}
                       </div>
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_game_speed")}
                     </td>
                   </tr>
@@ -358,7 +358,7 @@ export class HelpModal extends BaseModal {
                         ${this.renderKey(keybinds.zoomIn)}
                       </div>
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_zoom")}
                     </td>
                   </tr>
@@ -371,7 +371,7 @@ export class HelpModal extends BaseModal {
                         ${this.renderKey(keybinds.moveRight)}
                       </div>
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_move_camera")}
                     </td>
                   </tr>
@@ -382,7 +382,7 @@ export class HelpModal extends BaseModal {
                         ${this.renderKey(keybinds.attackRatioUp)}
                       </div>
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_ratio_change")}
                     </td>
                   </tr>
@@ -390,7 +390,7 @@ export class HelpModal extends BaseModal {
                     <td class="py-3 pl-4 border-b border-white/5">
                       <div class="inline-flex items-center gap-2">
                         ${this.renderKey(keybinds.shiftKey)}
-                        <span class="text-white/40 font-bold">+</span>
+                        <span class="text-lt-500 font-bold">+</span>
                         <div class="flex items-center gap-1">
                           <div
                             class="w-5 h-8 border border-white/40 rounded-full relative"
@@ -399,14 +399,14 @@ export class HelpModal extends BaseModal {
                               class="w-0.5 h-2 bg-red-400 rounded-full absolute top-1.5 left-1/2 -translate-x-1/2"
                             ></div>
                           </div>
-                          <div class="flex flex-col text-[10px] text-white/50">
+                          <div class="flex flex-col text-[10px] text-lt-500">
                             <span>↑</span>
                             <span>↓</span>
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_ratio_change")}
                     </td>
                   </tr>
@@ -414,11 +414,11 @@ export class HelpModal extends BaseModal {
                     <td class="py-3 pl-4 border-b border-white/5">
                       <div class="inline-flex items-center gap-2">
                         ${this.renderKey(keybinds.altKey)}
-                        <span class="text-white/40 font-bold">+</span>
+                        <span class="text-lt-500 font-bold">+</span>
                         ${this.renderKey(keybinds.resetGfx)}
                       </div>
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_reset_gfx")}
                     </td>
                   </tr>
@@ -432,7 +432,7 @@ export class HelpModal extends BaseModal {
                         ></div>
                       </div>
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_auto_upgrade")}
                     </td>
                   </tr>
@@ -440,13 +440,13 @@ export class HelpModal extends BaseModal {
                     <td class="py-3 pl-4 border-b border-white/5">
                       <div class="inline-flex items-center gap-2">
                         ${this.renderKey(keybinds.shiftKey)}
-                        <span class="text-white/40 font-bold">+</span>
-                        <span class="text-white/50 text-xs"
+                        <span class="text-lt-500 font-bold">+</span>
+                        <span class="text-lt-500 text-xs"
                           >${translateText("help_modal.drag")}</span
                         >
                       </div>
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_warship_multiselect")}
                     </td>
                   </tr>
@@ -454,7 +454,7 @@ export class HelpModal extends BaseModal {
                     <td class="py-3 pl-4 border-b border-white/5">
                       ${this.renderKey(keybinds.selectAllWarships)}
                     </td>
-                    <td class="py-3 border-b border-white/5 text-white/70">
+                    <td class="py-3 border-b border-white/5 text-lt-400">
                       ${translateText("help_modal.action_warship_selectall")}
                     </td>
                   </tr>
@@ -466,7 +466,7 @@ export class HelpModal extends BaseModal {
           <!-- UI Interface Section -->
           <section class="mb-8 mt-8">
             <div class="flex items-center gap-3 mb-6">
-              <div class="text-blue-400">
+              <div class="text-lt-accent">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -484,7 +484,7 @@ export class HelpModal extends BaseModal {
                 </svg>
               </div>
               <h3
-                class="text-xl font-bold uppercase tracking-widest text-white/90"
+                class="text-xl font-bold uppercase tracking-widest text-lt-100"
               >
                 ${translateText("help_modal.ui_section")}
               </h3>
@@ -496,22 +496,22 @@ export class HelpModal extends BaseModal {
             <div class="grid grid-cols-1 gap-6">
               <!-- Leaderboard -->
               <div
-                class="bg-black/20 rounded-xl border border-white/10 p-6 flex flex-col md:flex-row gap-6 hover:bg-white/5 transition-colors"
+                class="bg-black/20 border border-lt-700 p-6 flex flex-col md:flex-row gap-6 hover:bg-white/5 transition-colors"
               >
                 <div class="flex flex-col items-center gap-3 shrink-0">
                   <span
-                    class="text-xs font-bold uppercase tracking-wider text-blue-300"
+                    class="text-xs font-bold uppercase tracking-wider text-lt-accent"
                     >${translateText("help_modal.ui_leaderboard")}</span
                   >
                   <img
                     src=${assetUrl("images/helpModal/leaderboard2.webp")}
                     alt="Leaderboard"
-                    class="rounded-lg shadow-lg border border-white/20 max-w-[200px]"
+                    class="shadow-lg border border-lt-600 max-w-[200px]"
                     loading="lazy"
                   />
                 </div>
                 <div
-                  class="flex items-center text-white/70 text-sm leading-relaxed"
+                  class="flex items-center text-lt-400 text-sm leading-relaxed"
                 >
                   <p>${translateText("help_modal.ui_leaderboard_desc")}</p>
                 </div>
@@ -519,25 +519,25 @@ export class HelpModal extends BaseModal {
 
               <!-- Control Panel -->
               <div
-                class="bg-black/20 rounded-xl border border-white/10 p-6 flex flex-col md:flex-row gap-6 hover:bg-white/5 transition-colors"
+                class="bg-black/20 border border-lt-700 p-6 flex flex-col md:flex-row gap-6 hover:bg-white/5 transition-colors"
               >
                 <div class="flex flex-col items-center gap-3 shrink-0">
                   <span
-                    class="text-xs font-bold uppercase tracking-wider text-blue-300"
+                    class="text-xs font-bold uppercase tracking-wider text-lt-accent"
                     >${translateText("help_modal.ui_control")}</span
                   >
                   <img
                     src=${assetUrl("images/helpModal/controlPanel.webp")}
                     alt="Control Panel"
-                    class="rounded-lg shadow-lg border border-white/20 max-w-[200px]"
+                    class="shadow-lg border border-lt-600 max-w-[200px]"
                     loading="lazy"
                   />
                 </div>
-                <div class="flex flex-col justify-center text-white/70 text-sm">
+                <div class="flex flex-col justify-center text-lt-400 text-sm">
                   <p class="mb-4 leading-relaxed">
                     ${translateText("help_modal.ui_control_desc")}
                   </p>
-                  <ul class="space-y-2 list-disc pl-4 text-white/60">
+                  <ul class="space-y-2 list-disc pl-4 text-lt-400">
                     <li>${translateText("help_modal.ui_gold")}</li>
                     <li>${translateText("help_modal.ui_attack_ratio")}</li>
                   </ul>
@@ -546,33 +546,33 @@ export class HelpModal extends BaseModal {
 
               <!-- Events Panel -->
               <div
-                class="bg-black/20 rounded-xl border border-white/10 p-6 flex flex-col md:flex-row gap-6 hover:bg-white/5 transition-colors"
+                class="bg-black/20 border border-lt-700 p-6 flex flex-col md:flex-row gap-6 hover:bg-white/5 transition-colors"
               >
                 <div class="flex flex-col items-center gap-3 shrink-0">
                   <span
-                    class="text-xs font-bold uppercase tracking-wider text-blue-300"
+                    class="text-xs font-bold uppercase tracking-wider text-lt-accent"
                     >${translateText("help_modal.ui_events")}</span
                   >
                   <div class="flex flex-col gap-2">
                     <img
                       src=${assetUrl("images/helpModal/eventsPanel.webp")}
                       alt="Events"
-                      class="rounded-lg shadow-lg border border-white/20 max-w-[200px]"
+                      class="shadow-lg border border-lt-600 max-w-[200px]"
                       loading="lazy"
                     />
                     <img
                       src=${assetUrl("images/helpModal/eventsPanelAttack.webp")}
                       alt="Events Attack"
-                      class="rounded-lg shadow-lg border border-white/20 max-w-[200px]"
+                      class="shadow-lg border border-lt-600 max-w-[200px]"
                       loading="lazy"
                     />
                   </div>
                 </div>
-                <div class="flex flex-col justify-center text-white/70 text-sm">
+                <div class="flex flex-col justify-center text-lt-400 text-sm">
                   <p class="mb-4 leading-relaxed">
                     ${translateText("help_modal.ui_events_desc")}
                   </p>
-                  <ul class="space-y-2 list-disc pl-4 text-white/60">
+                  <ul class="space-y-2 list-disc pl-4 text-lt-400">
                     <li>${translateText("help_modal.ui_events_alliance")}</li>
                     <li>${translateText("help_modal.ui_events_attack")}</li>
                     <li>${translateText("help_modal.ui_events_quickchat")}</li>
@@ -582,25 +582,25 @@ export class HelpModal extends BaseModal {
 
               <!-- Options -->
               <div
-                class="bg-black/20 rounded-xl border border-white/10 p-6 flex flex-col md:flex-row gap-6 hover:bg-white/5 transition-colors"
+                class="bg-black/20 border border-lt-700 p-6 flex flex-col md:flex-row gap-6 hover:bg-white/5 transition-colors"
               >
                 <div class="flex flex-col items-center gap-3 shrink-0">
                   <span
-                    class="text-xs font-bold uppercase tracking-wider text-blue-300"
+                    class="text-xs font-bold uppercase tracking-wider text-lt-accent"
                     >${translateText("help_modal.ui_options")}</span
                   >
                   <img
                     src=${assetUrl("images/helpModal/options2.webp")}
                     alt="Options"
-                    class="rounded-lg shadow-lg border border-white/20 max-w-[200px]"
+                    class="shadow-lg border border-lt-600 max-w-[200px]"
                     loading="lazy"
                   />
                 </div>
-                <div class="flex flex-col justify-center text-white/70 text-sm">
+                <div class="flex flex-col justify-center text-lt-400 text-sm">
                   <p class="mb-4 leading-relaxed">
                     ${translateText("help_modal.ui_options_desc")}
                   </p>
-                  <ul class="space-y-2 list-disc pl-4 text-white/60">
+                  <ul class="space-y-2 list-disc pl-4 text-lt-400">
                     <li>${translateText("help_modal.option_timer")}</li>
                     <li>${translateText("help_modal.option_speed")}</li>
                     <li>${translateText("help_modal.option_pause")}</li>
@@ -612,22 +612,22 @@ export class HelpModal extends BaseModal {
 
               <!-- Player Overlay -->
               <div
-                class="bg-black/20 rounded-xl border border-white/10 p-6 flex flex-col md:flex-row gap-6 hover:bg-white/5 transition-colors"
+                class="bg-black/20 border border-lt-700 p-6 flex flex-col md:flex-row gap-6 hover:bg-white/5 transition-colors"
               >
                 <div class="flex flex-col items-center gap-3 shrink-0">
                   <span
-                    class="text-xs font-bold uppercase tracking-wider text-blue-300"
+                    class="text-xs font-bold uppercase tracking-wider text-lt-accent"
                     >${translateText("help_modal.ui_playeroverlay")}</span
                   >
                   <img
                     src=${assetUrl("images/helpModal/playerInfoOverlay.webp")}
                     alt="Player Info"
-                    class="rounded-lg shadow-lg border border-white/20 max-w-[200px]"
+                    class="shadow-lg border border-lt-600 max-w-[200px]"
                     loading="lazy"
                   />
                 </div>
                 <div
-                  class="flex items-center text-white/70 text-sm leading-relaxed"
+                  class="flex items-center text-lt-400 text-sm leading-relaxed"
                 >
                   <p>${translateText("help_modal.ui_playeroverlay_desc")}</p>
                 </div>
@@ -638,7 +638,7 @@ export class HelpModal extends BaseModal {
           <!-- Radial Menu Section -->
           <section class="mb-8">
             <div class="flex items-center gap-3 mb-6">
-              <div class="text-blue-400">
+              <div class="text-lt-accent">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -655,7 +655,7 @@ export class HelpModal extends BaseModal {
                 </svg>
               </div>
               <h3
-                class="text-xl font-bold uppercase tracking-widest text-white/90"
+                class="text-xl font-bold uppercase tracking-widest text-lt-100"
               >
                 ${translateText("help_modal.radial_title")}
               </h3>
@@ -665,23 +665,23 @@ export class HelpModal extends BaseModal {
             </div>
 
             <div
-              class="bg-black/20 rounded-xl border border-white/10 p-6 flex flex-col md:flex-row gap-6 hover:bg-white/5 transition-colors"
+              class="bg-black/20 border border-lt-700 p-6 flex flex-col md:flex-row gap-6 hover:bg-white/5 transition-colors"
             >
               <div class="flex flex-col gap-4 shrink-0">
                 <img
                   src=${assetUrl("images/helpModal/radialMenu2.webp")}
                   alt="Radial Menu"
-                  class="rounded-lg shadow-lg border border-white/20 max-w-[200px]"
+                  class="shadow-lg border border-lt-600 max-w-[200px]"
                   loading="lazy"
                 />
                 <img
                   src=${assetUrl("images/helpModal/radialMenuAlly.webp")}
                   alt="Radial Menu Ally"
-                  class="rounded-lg shadow-lg border border-white/20 max-w-[200px]"
+                  class="shadow-lg border border-lt-600 max-w-[200px]"
                   loading="lazy"
                 />
               </div>
-              <div class="text-white/70 text-sm">
+              <div class="text-lt-400 text-sm">
                 <p class="mb-4 leading-relaxed">
                   ${translateText("help_modal.radial_desc")}
                 </p>
@@ -747,7 +747,7 @@ export class HelpModal extends BaseModal {
           <!-- Info/Ally Panels Section -->
           <section class="mb-8">
             <div class="flex items-center gap-3 mb-6">
-              <div class="text-blue-400">
+              <div class="text-lt-accent">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -765,7 +765,7 @@ export class HelpModal extends BaseModal {
                 </svg>
               </div>
               <h3
-                class="text-xl font-bold uppercase tracking-widest text-white/90"
+                class="text-xl font-bold uppercase tracking-widest text-lt-100"
               >
                 ${translateText("help_modal.info_title")}
               </h3>
@@ -777,21 +777,21 @@ export class HelpModal extends BaseModal {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- Enemy Info -->
               <div
-                class="bg-black/20 rounded-xl border border-white/10 p-6 flex flex-col gap-6 hover:bg-white/5 transition-colors"
+                class="bg-black/20 border border-lt-700 p-6 flex flex-col gap-6 hover:bg-white/5 transition-colors"
               >
                 <div class="flex flex-col items-center gap-3">
                   <span
-                    class="text-xs font-bold uppercase tracking-wider text-blue-300"
+                    class="text-xs font-bold uppercase tracking-wider text-lt-accent"
                     >${translateText("help_modal.info_enemy_panel")}</span
                   >
                   <img
                     src=${assetUrl("images/helpModal/infoMenu2.webp")}
                     alt="Enemy Info"
-                    class="rounded-lg shadow-lg border border-white/20 max-w-[240px]"
+                    class="shadow-lg border border-lt-600 max-w-[240px]"
                     loading="lazy"
                   />
                 </div>
-                <div class="text-white/70 text-sm">
+                <div class="text-lt-400 text-sm">
                   <p class="mb-4 leading-relaxed">
                     ${translateText("help_modal.info_enemy_desc")}
                   </p>
@@ -838,21 +838,21 @@ export class HelpModal extends BaseModal {
 
               <!-- Ally Info -->
               <div
-                class="bg-black/20 rounded-xl border border-white/10 p-6 flex flex-col gap-6 hover:bg-white/5 transition-colors"
+                class="bg-black/20 border border-lt-700 p-6 flex flex-col gap-6 hover:bg-white/5 transition-colors"
               >
                 <div class="flex flex-col items-center gap-3">
                   <span
-                    class="text-xs font-bold uppercase tracking-wider text-blue-300"
+                    class="text-xs font-bold uppercase tracking-wider text-lt-accent"
                     >${translateText("help_modal.info_ally_panel")}</span
                   >
                   <img
                     src=${assetUrl("images/helpModal/infoMenu2Ally.webp")}
                     alt="Ally Info"
-                    class="rounded-lg shadow-lg border border-white/20 max-w-[240px]"
+                    class="shadow-lg border border-lt-600 max-w-[240px]"
                     loading="lazy"
                   />
                 </div>
-                <div class="text-white/70 text-sm">
+                <div class="text-lt-400 text-sm">
                   <p class="mb-4 leading-relaxed">
                     ${translateText("help_modal.info_ally_desc")}
                   </p>
@@ -889,7 +889,7 @@ export class HelpModal extends BaseModal {
           <!-- Build Menu Section -->
           <section class="mb-8">
             <div class="flex items-center gap-3 mb-6">
-              <div class="text-blue-400">
+              <div class="text-lt-accent">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -907,7 +907,7 @@ export class HelpModal extends BaseModal {
                 </svg>
               </div>
               <h3
-                class="text-xl font-bold uppercase tracking-widest text-white/90"
+                class="text-xl font-bold uppercase tracking-widest text-lt-100"
               >
                 ${translateText("help_modal.build_menu_title")}
               </h3>
@@ -916,32 +916,32 @@ export class HelpModal extends BaseModal {
               ></div>
             </div>
 
-            <p class="mb-4 text-white/70 text-sm">
+            <p class="mb-4 text-lt-400 text-sm">
               ${translateText("help_modal.build_menu_desc")}
             </p>
 
-            <div class="overflow-hidden rounded-xl border border-white/10">
+            <div class="overflow-hidden border border-lt-700">
               <table class="w-full border-collapse">
                 <thead class="bg-white/10">
                   <tr>
                     <th
-                      class="py-3 pl-4 text-left text-xs font-bold uppercase tracking-wider text-blue-300 w-[20%]"
+                      class="py-3 pl-4 text-left text-xs font-bold uppercase tracking-wider text-lt-accent w-[20%]"
                     >
                       ${translateText("help_modal.build_name")}
                     </th>
                     <th
-                      class="py-3 text-left text-xs font-bold uppercase tracking-wider text-blue-300 w-[8%]"
+                      class="py-3 text-left text-xs font-bold uppercase tracking-wider text-lt-accent w-[8%]"
                     >
                       ${translateText("help_modal.build_icon")}
                     </th>
                     <th
-                      class="py-3 text-left text-xs font-bold uppercase tracking-wider text-blue-300"
+                      class="py-3 text-left text-xs font-bold uppercase tracking-wider text-lt-accent"
                     >
                       ${translateText("help_modal.build_desc")}
                     </th>
                   </tr>
                 </thead>
-                <tbody class="text-white/80">
+                <tbody class="text-lt-100">
                   <tr class="bg-white/5 hover:bg-white/10 transition-colors">
                     <td class="py-3 pl-4 border-b border-white/5 font-medium">
                       ${translateText("help_modal.build_city")}
@@ -953,7 +953,7 @@ export class HelpModal extends BaseModal {
                       />
                     </td>
                     <td
-                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                      class="py-3 border-b border-white/5 text-lt-400 text-sm"
                     >
                       ${translateText("help_modal.build_city_desc")}
                     </td>
@@ -969,7 +969,7 @@ export class HelpModal extends BaseModal {
                       />
                     </td>
                     <td
-                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                      class="py-3 border-b border-white/5 text-lt-400 text-sm"
                     >
                       ${translateText("help_modal.build_defense_desc")}
                     </td>
@@ -985,7 +985,7 @@ export class HelpModal extends BaseModal {
                       />
                     </td>
                     <td
-                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                      class="py-3 border-b border-white/5 text-lt-400 text-sm"
                     >
                       ${translateText("help_modal.build_port_desc")}
                     </td>
@@ -1001,7 +1001,7 @@ export class HelpModal extends BaseModal {
                       />
                     </td>
                     <td
-                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                      class="py-3 border-b border-white/5 text-lt-400 text-sm"
                     >
                       ${translateText("help_modal.build_factory_desc")}
                     </td>
@@ -1017,7 +1017,7 @@ export class HelpModal extends BaseModal {
                       />
                     </td>
                     <td
-                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                      class="py-3 border-b border-white/5 text-lt-400 text-sm"
                     >
                       ${translateText("help_modal.build_warship_desc")}
                     </td>
@@ -1033,7 +1033,7 @@ export class HelpModal extends BaseModal {
                       />
                     </td>
                     <td
-                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                      class="py-3 border-b border-white/5 text-lt-400 text-sm"
                     >
                       ${translateText("help_modal.build_silo_desc")}
                     </td>
@@ -1049,7 +1049,7 @@ export class HelpModal extends BaseModal {
                       />
                     </td>
                     <td
-                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                      class="py-3 border-b border-white/5 text-lt-400 text-sm"
                     >
                       ${translateText("help_modal.build_sam_desc")}
                     </td>
@@ -1065,7 +1065,7 @@ export class HelpModal extends BaseModal {
                       />
                     </td>
                     <td
-                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                      class="py-3 border-b border-white/5 text-lt-400 text-sm"
                     >
                       ${translateText("help_modal.build_atom_desc")}
                     </td>
@@ -1081,7 +1081,7 @@ export class HelpModal extends BaseModal {
                       />
                     </td>
                     <td
-                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                      class="py-3 border-b border-white/5 text-lt-400 text-sm"
                     >
                       ${translateText("help_modal.build_hydrogen_desc")}
                     </td>
@@ -1097,7 +1097,7 @@ export class HelpModal extends BaseModal {
                       />
                     </td>
                     <td
-                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                      class="py-3 border-b border-white/5 text-lt-400 text-sm"
                     >
                       ${translateText("help_modal.build_mirv_desc")}
                     </td>
@@ -1110,7 +1110,7 @@ export class HelpModal extends BaseModal {
           <!-- Player Icons Section -->
           <section class="mb-4">
             <div class="flex items-center gap-3 mb-6">
-              <div class="text-blue-400">
+              <div class="text-lt-accent">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -1127,7 +1127,7 @@ export class HelpModal extends BaseModal {
                 </svg>
               </div>
               <h3
-                class="text-xl font-bold uppercase tracking-widest text-white/90"
+                class="text-xl font-bold uppercase tracking-widest text-lt-100"
               >
                 ${translateText("help_modal.player_icons")}
               </h3>
@@ -1136,19 +1136,19 @@ export class HelpModal extends BaseModal {
               ></div>
             </div>
 
-            <p class="mb-6 text-white/70 text-sm">
+            <p class="mb-6 text-lt-400 text-sm">
               ${translateText("help_modal.icon_desc")}
             </p>
 
             <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
               <!-- Crown -->
               <div
-                class="bg-black/20 rounded-xl border border-white/10 p-4 flex flex-col items-center gap-3 hover:bg-white/5 transition-colors"
+                class="bg-black/20 border border-lt-700 p-4 flex flex-col items-center gap-3 hover:bg-white/5 transition-colors"
               >
                 <img
                   src=${assetUrl("images/helpModal/crown.webp")}
                   alt="Rank 1"
-                  class="rounded shadow-lg border border-white/10 h-24 w-auto object-contain"
+                  class="shadow-lg border border-lt-700 h-24 w-auto object-contain"
                   loading="lazy"
                 />
                 <span
@@ -1160,12 +1160,12 @@ export class HelpModal extends BaseModal {
 
               <!-- Traitor -->
               <div
-                class="bg-black/20 rounded-xl border border-white/10 p-4 flex flex-col items-center gap-3 hover:bg-white/5 transition-colors"
+                class="bg-black/20 border border-lt-700 p-4 flex flex-col items-center gap-3 hover:bg-white/5 transition-colors"
               >
                 <img
                   src=${assetUrl("images/helpModal/traitor2.webp")}
                   alt="Traitor"
-                  class="rounded shadow-lg border border-white/10 h-24 w-auto object-contain"
+                  class="shadow-lg border border-lt-700 h-24 w-auto object-contain"
                   loading="lazy"
                 />
                 <span
@@ -1177,12 +1177,12 @@ export class HelpModal extends BaseModal {
 
               <!-- Ally -->
               <div
-                class="bg-black/20 rounded-xl border border-white/10 p-4 flex flex-col items-center gap-3 hover:bg-white/5 transition-colors"
+                class="bg-black/20 border border-lt-700 p-4 flex flex-col items-center gap-3 hover:bg-white/5 transition-colors"
               >
                 <img
                   src=${assetUrl("images/helpModal/ally2.webp")}
                   alt="Ally"
-                  class="rounded shadow-lg border border-white/10 h-24 w-auto object-contain"
+                  class="shadow-lg border border-lt-700 h-24 w-auto object-contain"
                   loading="lazy"
                 />
                 <span
@@ -1194,12 +1194,12 @@ export class HelpModal extends BaseModal {
 
               <!-- Embargo -->
               <div
-                class="bg-black/20 rounded-xl border border-white/10 p-4 flex flex-col items-center gap-3 hover:bg-white/5 transition-colors"
+                class="bg-black/20 border border-lt-700 p-4 flex flex-col items-center gap-3 hover:bg-white/5 transition-colors"
               >
                 <img
                   src=${assetUrl("images/helpModal/embargo.webp")}
                   alt="Embargo"
-                  class="rounded shadow-lg border border-white/10 h-24 w-auto object-contain"
+                  class="shadow-lg border border-lt-700 h-24 w-auto object-contain"
                   loading="lazy"
                 />
                 <span
@@ -1211,12 +1211,12 @@ export class HelpModal extends BaseModal {
 
               <!-- Alliance Request -->
               <div
-                class="bg-black/20 rounded-xl border border-white/10 p-4 flex flex-col items-center gap-3 hover:bg-white/5 transition-colors"
+                class="bg-black/20 border border-lt-700 p-4 flex flex-col items-center gap-3 hover:bg-white/5 transition-colors"
               >
                 <img
                   src=${assetUrl("images/helpModal/allianceRequest.webp")}
                   alt="Request"
-                  class="rounded shadow-lg border border-white/10 h-24 w-auto object-contain"
+                  class="shadow-lg border border-lt-700 h-24 w-auto object-contain"
                   loading="lazy"
                 />
                 <span

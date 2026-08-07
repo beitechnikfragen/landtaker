@@ -37,7 +37,7 @@ export class SettingSelect extends LitElement {
   render() {
     return html`
       <div
-        class="flex flex-col w-full p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all gap-3"
+        class="flex flex-col w-full p-4 bg-white/5 border border-lt-700 hover:bg-white/10 transition-all gap-3"
       >
         <div class="flex flex-col min-w-0">
           <label
@@ -45,14 +45,14 @@ export class SettingSelect extends LitElement {
             for="setting-select-input"
             >${this.label}</label
           >
-          <div class="text-white/50 text-sm leading-snug">
+          <div class="text-lt-500 text-sm leading-snug">
             ${this.description}
           </div>
         </div>
         <div class="relative w-full">
           <select
             id="setting-select-input"
-            class="w-full appearance-none py-2 pl-3 pr-9 border border-white/20 rounded-lg bg-black/40 text-white font-mono text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+            class="w-full appearance-none py-2 pl-3 pr-9 border border-lt-600 bg-black/40 text-white font-mono text-sm focus:outline-none focus:border-lt-accent focus:ring-1 focus:ring-blue-500 transition-all"
             .value=${String(this.value)}
             @change=${this.handleChange}
           >
@@ -67,7 +67,7 @@ export class SettingSelect extends LitElement {
             )}
           </select>
           <span
-            class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/60"
+            class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-lt-400"
             aria-hidden="true"
           >
             <svg

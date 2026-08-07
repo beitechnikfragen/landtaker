@@ -168,8 +168,8 @@ export class EffectsGrid extends LitElement {
           const active = this.activeNukeType === nt;
           return html`<button
             class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-colors ${active
-              ? "bg-blue-600 text-white"
-              : "bg-white/5 text-white/50 hover:text-white/80 hover:bg-white/10"}"
+              ? "bg-lt-accent text-white"
+              : "bg-white/5 text-lt-500 hover:text-lt-100 hover:bg-white/10"}"
             @click=${() => (this.activeNukeType = nt)}
           >
             ${translateText(`effects.nukeType.${nt}`)}
@@ -184,14 +184,14 @@ export class EffectsGrid extends LitElement {
   private renderTabBar(): TemplateResult {
     return html`
       <div
-        class="flex items-center justify-center gap-6 border-b border-white/10 px-4"
+        class="flex items-center justify-center gap-6 border-b border-lt-700 px-4"
       >
         ${EFFECT_TYPES.map((type) => {
           const active = this.activeType === type;
           return html`<button
             class="-mb-px border-b-2 px-2 py-3 text-sm font-black uppercase tracking-wider transition-colors ${active
-              ? "border-blue-500 text-blue-400"
-              : "border-transparent text-white/50 hover:text-white/80"}"
+              ? "border-lt-accent text-lt-accent"
+              : "border-transparent text-lt-500 hover:text-lt-100"}"
             @click=${() => (this.activeType = type)}
           >
             ${translateText(`effects.type.${type}`)}
@@ -238,7 +238,7 @@ export class EffectsGrid extends LitElement {
       panel = activeType
         ? html`<div class="p-4"></div>`
         : html`<div
-            class="text-white/40 text-sm font-bold uppercase tracking-wider text-center py-8"
+            class="text-lt-500 text-sm font-bold uppercase tracking-wider text-center py-8"
           >
             ${translateText("store.no_effects")}
           </div>`;
@@ -251,7 +251,7 @@ export class EffectsGrid extends LitElement {
                 ${activeType
                   ? nothing
                   : html`<h3
-                      class="text-white/70 text-sm font-black uppercase tracking-wider px-2 pb-2 mb-2 border-b border-white/10"
+                      class="text-lt-400 text-sm font-black uppercase tracking-wider px-2 pb-2 mb-2 border-b border-lt-700"
                     >
                       ${translateText(`effects.type.${s.type}`)}
                     </h3>`}

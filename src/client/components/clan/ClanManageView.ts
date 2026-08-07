@@ -335,15 +335,13 @@ export class ClanManageView extends LitElement {
     return html`
       <div class="space-y-6">
         <!-- Edit Settings -->
-        <div
-          class="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-5"
-        >
-          <h3 class="text-sm font-bold text-white/60 uppercase tracking-wider">
+        <div class="bg-white/5 border border-lt-700 p-6 space-y-5">
+          <h3 class="text-sm font-bold text-lt-400 uppercase tracking-wider">
             ${translateText("clan_modal.clan_settings")}
           </h3>
           <div>
             <label
-              class="block text-[10px] font-bold text-white/40 uppercase tracking-wider mb-2"
+              class="block text-[10px] font-bold text-lt-500 uppercase tracking-wider mb-2"
               >${translateText("clan_modal.clan_name")}</label
             >
             <input
@@ -352,12 +350,12 @@ export class ClanManageView extends LitElement {
               @input=${(e: Event) =>
                 (this.manageName = (e.target as HTMLInputElement).value)}
               maxlength="35"
-              class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 text-sm"
+              class="w-full px-4 py-3 bg-white/5 border border-lt-700 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 text-sm"
             />
           </div>
           <div>
             <label
-              class="block text-[10px] font-bold text-white/40 uppercase tracking-wider mb-2"
+              class="block text-[10px] font-bold text-lt-500 uppercase tracking-wider mb-2"
               >${translateText("clan_modal.description")}</label
             >
             <textarea
@@ -368,14 +366,14 @@ export class ClanManageView extends LitElement {
                 ).value)}
               maxlength="200"
               rows="3"
-              class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 text-sm resize-none"
+              class="w-full px-4 py-3 bg-white/5 border border-lt-700 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 text-sm resize-none"
             ></textarea>
           </div>
           ${this.myRole === "leader"
             ? html`
                 <div>
                   <label
-                    class="block text-[10px] font-bold text-white/40 uppercase tracking-wider mb-2"
+                    class="block text-[10px] font-bold text-lt-500 uppercase tracking-wider mb-2"
                     >${translateText("clan_modal.discord_url_label")}</label
                   >
                   <input
@@ -387,9 +385,9 @@ export class ClanManageView extends LitElement {
                       ).value)}
                     placeholder="https://discord.gg/..."
                     maxlength="255"
-                    class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 text-sm"
+                    class="w-full px-4 py-3 bg-white/5 border border-lt-700 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 text-sm"
                   />
-                  <p class="text-white/40 text-xs mt-2">
+                  <p class="text-lt-500 text-xs mt-2">
                     ${translateText("clan_modal.discord_url_hint")}
                   </p>
                 </div>
@@ -400,7 +398,7 @@ export class ClanManageView extends LitElement {
               <div class="text-white text-sm font-bold">
                 ${translateText("clan_modal.open_clan")}
               </div>
-              <div class="text-white/40 text-xs">
+              <div class="text-lt-500 text-xs">
                 ${translateText("clan_modal.open_clan_desc")}
               </div>
             </div>
@@ -411,7 +409,7 @@ export class ClanManageView extends LitElement {
               @click=${() => (this.manageIsOpen = !this.manageIsOpen)}
               class="relative w-12 h-7 rounded-full transition-all ${this
                 .manageIsOpen
-                ? "bg-malibu-blue"
+                ? "bg-lt-accent"
                 : "bg-white/20"}"
             >
               <div
@@ -425,7 +423,7 @@ export class ClanManageView extends LitElement {
           <button
             @click=${() => this.handleSaveSettings()}
             ?disabled=${this.saving}
-            class="w-full px-6 py-3 text-sm font-bold text-white uppercase tracking-wider bg-malibu-blue hover:bg-aquarius active:bg-malibu-blue/80 rounded-xl transition-all disabled:opacity-50"
+            class="w-full px-6 py-3 text-sm font-bold text-white uppercase tracking-wider bg-lt-accent hover:bg-lt-accent-hi active:bg-lt-accent/80 transition-all disabled:opacity-50"
           >
             ${this.saving
               ? translateText("clan_modal.saving")
@@ -434,10 +432,8 @@ export class ClanManageView extends LitElement {
         </div>
 
         <!-- Member Management -->
-        <div
-          class="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-4"
-        >
-          <h3 class="text-sm font-bold text-white/60 uppercase tracking-wider">
+        <div class="bg-white/5 border border-lt-700 p-6 space-y-4">
+          <h3 class="text-sm font-bold text-lt-400 uppercase tracking-wider">
             ${translateText("clan_modal.members")} (${clan.memberCount ?? 0})
           </h3>
           ${renderMemberSearchInput(
@@ -474,12 +470,8 @@ export class ClanManageView extends LitElement {
         </div>
 
         <!-- Danger Zone -->
-        <div
-          class="bg-red-500/5 rounded-2xl border border-red-500/20 p-6 space-y-4"
-        >
-          <h3
-            class="text-sm font-bold text-red-400/80 uppercase tracking-wider"
-          >
+        <div class="bg-red-500/5 border border-lt-bad/20 p-6 space-y-4">
+          <h3 class="text-sm font-bold text-lt-bad/80 uppercase tracking-wider">
             ${translateText("clan_modal.danger_zone")}
           </h3>
           <button
@@ -490,7 +482,7 @@ export class ClanManageView extends LitElement {
                   composed: true,
                 }),
               )}
-            class="w-full px-6 py-3 text-sm font-bold text-red-400 uppercase tracking-wider bg-red-600/20 hover:bg-red-600/30 rounded-xl transition-all border border-red-500/30"
+            class="w-full px-6 py-3 text-sm font-bold text-lt-bad uppercase tracking-wider bg-lt-bad/20 hover:bg-lt-bad/30 transition-all border border-lt-bad/30"
           >
             ${translateText("clan_modal.banned_players")}
           </button>
@@ -504,7 +496,7 @@ export class ClanManageView extends LitElement {
                         composed: true,
                       }),
                     )}
-                  class="w-full px-6 py-3 text-sm font-bold text-amber-400 uppercase tracking-wider bg-amber-600/20 hover:bg-amber-600/30 rounded-xl transition-all border border-amber-500/30"
+                  class="w-full px-6 py-3 text-sm font-bold text-lt-gold uppercase tracking-wider bg-amber-600/20 hover:bg-amber-600/30 transition-all border border-amber-500/30"
                 >
                   ${translateText("clan_modal.transfer_leadership")}
                 </button>
@@ -514,7 +506,7 @@ export class ClanManageView extends LitElement {
                     this.confirmTargetId = null;
                   }}
                   ?disabled=${this.confirmAction === "disband"}
-                  class="w-full px-6 py-3 text-sm font-bold text-red-400 uppercase tracking-wider bg-red-600/20 hover:bg-red-600/30 rounded-xl transition-all border border-red-500/30 disabled:opacity-50 disabled:pointer-events-none"
+                  class="w-full px-6 py-3 text-sm font-bold text-lt-bad uppercase tracking-wider bg-lt-bad/20 hover:bg-lt-bad/30 transition-all border border-lt-bad/30 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   ${translateText("clan_modal.disband_clan")}
                 </button>
@@ -540,17 +532,17 @@ export class ClanManageView extends LitElement {
 
     return html`
       <div
-        class="flex flex-col py-2.5 px-3 rounded-xl border
+        class="flex flex-col py-2.5 px-3 border
         ${isMe
-          ? "bg-malibu-blue/10 border-malibu-blue/20"
-          : "bg-white/5 border-white/10"}"
+          ? "bg-lt-accent/10 border-malibu-blue/20"
+          : "bg-white/5 border-lt-700"}"
       >
         <div class="flex items-center flex-wrap gap-1.5">
           <div
             class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0
           ${isMe
-              ? "bg-malibu-blue/20 text-aquarius"
-              : "bg-white/10 text-white/50"}"
+              ? "bg-lt-accent/20 text-lt-accent"
+              : "bg-white/10 text-lt-500"}"
           >
             ${renderRoleIcon(member.role)}
           </div>
@@ -574,7 +566,7 @@ export class ClanManageView extends LitElement {
               ? html`<button
                   @click=${() => this.handleDemote(member.publicId)}
                   ?disabled=${this.memberActionPending}
-                  class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 hover:text-white/60 transition-all disabled:opacity-50 disabled:pointer-events-none"
+                  class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/5 text-lt-500 border border-lt-700 hover:bg-white/10 hover:text-lt-400 transition-all disabled:opacity-50 disabled:pointer-events-none"
                 >
                   ${translateText("clan_modal.demote")}
                 </button>`
@@ -588,7 +580,7 @@ export class ClanManageView extends LitElement {
                     }}
                     ?disabled=${this.memberActionPending ||
                     this.confirmAction !== null}
-                    class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/10 text-red-400/70 border border-red-500/20 hover:bg-red-500/20 hover:text-red-400 transition-all disabled:opacity-50 disabled:pointer-events-none"
+                    class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/10 text-lt-bad/70 border border-lt-bad/20 hover:bg-lt-bad/20 hover:text-lt-bad transition-all disabled:opacity-50 disabled:pointer-events-none"
                   >
                     ${translateText("clan_modal.kick")}
                   </button>
@@ -599,7 +591,7 @@ export class ClanManageView extends LitElement {
                     }}
                     ?disabled=${this.memberActionPending ||
                     this.confirmAction !== null}
-                    class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/10 text-red-400/70 border border-red-500/20 hover:bg-red-500/20 hover:text-red-400 transition-all disabled:opacity-50 disabled:pointer-events-none"
+                    class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/10 text-lt-bad/70 border border-lt-bad/20 hover:bg-lt-bad/20 hover:text-lt-bad transition-all disabled:opacity-50 disabled:pointer-events-none"
                   >
                     ${translateText("clan_modal.ban")}
                   </button>

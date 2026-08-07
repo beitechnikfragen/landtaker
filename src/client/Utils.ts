@@ -524,11 +524,11 @@ export function getTranslatedPlayerTeamLabel(team: Team | null): string {
  * Severity colors mapping for message types
  */
 export const severityColors: Record<string, string> = {
-  fail: "text-red-400",
-  warn: "text-yellow-400",
-  success: "text-green-400",
+  fail: "text-lt-bad",
+  warn: "text-lt-gold",
+  success: "text-lt-ok",
   info: "text-gray-200",
-  blue: "text-blue-400",
+  blue: "text-lt-accent",
   white: "text-white",
 };
 

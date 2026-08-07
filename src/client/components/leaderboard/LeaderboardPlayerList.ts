@@ -295,10 +295,10 @@ export class LeaderboardPlayerList extends LitElement {
 
     return html`
       <tfoot class="sticky bottom-0 z-20">
-        <tr class="bg-blue-600 border-t border-blue-400/30 shadow-2xl">
+        <tr class="bg-lt-accent border-t border-lt-accent/30 shadow-2xl">
           <td class="py-3 px-4 text-center">
             <div
-              class="w-10 h-10 mx-auto flex items-center justify-center rounded-lg font-bold font-mono text-lg bg-white/20 text-white"
+              class="w-10 h-10 mx-auto flex items-center justify-center font-bold font-mono text-lg bg-white/20 text-white"
             >
               ${entry.rank}
             </div>
@@ -345,10 +345,10 @@ export class LeaderboardPlayerList extends LitElement {
 
     const rankColor =
       {
-        1: "text-yellow-400 bg-yellow-400/10 ring-1 ring-yellow-400/20",
-        2: "text-slate-300 bg-slate-400/10 ring-1 ring-slate-400/20",
+        1: "text-lt-gold bg-yellow-400/10 ring-1 ring-yellow-400/20",
+        2: "text-lt-400 bg-slate-400/10 ring-1 ring-slate-400/20",
         3: "text-amber-600 bg-amber-600/10 ring-1 ring-amber-600/20",
-      }?.[displayRank] ?? "text-white/40 bg-white/5";
+      }?.[displayRank] ?? "text-lt-500 bg-white/5";
 
     const rankIcon =
       {
@@ -361,12 +361,12 @@ export class LeaderboardPlayerList extends LitElement {
       <tr
         data-current-user=${isCurrentUser ? "true" : "false"}
         class="border-b border-white/5 hover:bg-white/[0.07] transition-colors group ${isCurrentUser
-          ? "bg-blue-500/15"
+          ? "bg-lt-accent/15"
           : ""}"
       >
         <td class="py-3 px-4 text-center">
           <div
-            class="w-10 h-10 mx-auto flex items-center justify-center rounded-lg font-bold font-mono text-lg ${rankColor}"
+            class="w-10 h-10 mx-auto flex items-center justify-center font-bold font-mono text-lg ${rankColor}"
           >
             ${rankIcon}
           </div>
@@ -376,7 +376,7 @@ export class LeaderboardPlayerList extends LitElement {
             <player-name
               .username=${player.accountUsername}
               .publicId=${player.playerId}
-              .nameClass=${"font-bold text-blue-300 truncate text-base hover:underline"}
+              .nameClass=${"font-bold text-lt-accent truncate text-base hover:underline"}
               .onNameClick=${() => this.openProfile(player.playerId)}
             ></player-name>
           </div>
@@ -391,8 +391,8 @@ export class LeaderboardPlayerList extends LitElement {
           <div class="inline-flex flex-col items-end">
             <span
               class="font-mono font-bold ${player.winRate >= 0.5
-                ? "text-green-400"
-                : "text-red-400"}"
+                ? "text-lt-ok"
+                : "text-lt-bad"}"
               >${(player.winRate * 100).toFixed(1)}%</span
             >
             <span
@@ -408,9 +408,9 @@ export class LeaderboardPlayerList extends LitElement {
   private renderPlayerFooter() {
     if (this.isLoadingMore) {
       return html`
-        <div class="flex items-center justify-center py-4 text-white/50">
+        <div class="flex items-center justify-center py-4 text-lt-500">
           <div
-            class="w-4 h-4 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mr-2"
+            class="w-4 h-4 border-2 border-lt-accent/30 border-t-blue-500 rounded-full animate-spin mr-2"
           ></div>
           <span class="text-[10px] font-bold uppercase tracking-widest">
             ${translateText("leaderboard_modal.loading")}
@@ -423,7 +423,7 @@ export class LeaderboardPlayerList extends LitElement {
       return html`
         <div class="flex items-center justify-center py-4">
           <button
-            class="px-6 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-xl text-xs font-bold uppercase transition-all active:scale-95"
+            class="px-6 py-2 bg-red-500/10 hover:bg-lt-bad/20 border border-lt-bad/30 text-xs font-bold uppercase transition-all active:scale-95"
             @click=${() => this.loadPlayerLeaderboard()}
           >
             ${translateText("leaderboard_modal.try_again")}
@@ -441,7 +441,7 @@ export class LeaderboardPlayerList extends LitElement {
         class="flex flex-col items-center justify-center p-12 text-white h-full"
       >
         <div
-          class="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-6"
+          class="w-12 h-12 border-4 border-lt-accent/30 border-t-blue-500 rounded-full animate-spin mb-6"
         ></div>
         <p class="text-blue-200/80 text-sm font-bold tracking-widest uppercase">
           ${translateText("leaderboard_modal.loading")}
@@ -456,7 +456,7 @@ export class LeaderboardPlayerList extends LitElement {
         class="flex flex-col items-center justify-center p-12 text-white h-full"
       >
         <div
-          class="bg-red-500/10 p-6 rounded-full mb-6 border border-red-500/20 shadow-lg shadow-red-500/10"
+          class="bg-red-500/10 p-6 rounded-full mb-6 border border-lt-bad/20 shadow-lg shadow-red-500/10"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -477,7 +477,7 @@ export class LeaderboardPlayerList extends LitElement {
           ${this.error ?? translateText("leaderboard_modal.error")}
         </p>
         <button
-          class="px-8 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-xl text-sm font-bold uppercase transition-all active:scale-95"
+          class="px-8 py-3 bg-red-500/10 hover:bg-lt-bad/20 border border-lt-bad/30 text-sm font-bold uppercase transition-all active:scale-95"
           @click=${() => this.loadPlayerLeaderboard(true)}
         >
           ${translateText("leaderboard_modal.try_again")}
@@ -491,7 +491,7 @@ export class LeaderboardPlayerList extends LitElement {
   private renderNoData() {
     return html`
       <div
-        class="flex flex-col items-center justify-center p-12 text-white/40 h-full"
+        class="flex flex-col items-center justify-center p-12 text-lt-500 h-full"
       >
         <div class="bg-white/5 p-6 rounded-full mb-6 border border-white/5">
           <svg
@@ -509,7 +509,7 @@ export class LeaderboardPlayerList extends LitElement {
             />
           </svg>
         </div>
-        <h3 class="text-xl font-bold text-white/60 mb-2">
+        <h3 class="text-xl font-bold text-lt-400 mb-2">
           ${translateText("leaderboard_modal.no_data_yet")}
         </h3>
         <p class="text-white/30 text-sm">
@@ -550,7 +550,7 @@ export class LeaderboardPlayerList extends LitElement {
               </colgroup>
               <thead class="sticky top-0 z-10">
                 <tr
-                  class="text-white/40 text-[10px] uppercase tracking-wider border-b border-white/5 bg-[#1e2433]"
+                  class="text-lt-500 text-[10px] uppercase tracking-wider border-b border-white/5 bg-[#1e2433]"
                 >
                   <th class="py-4 px-4 text-center font-bold">
                     ${translateText("leaderboard_modal.rank")}

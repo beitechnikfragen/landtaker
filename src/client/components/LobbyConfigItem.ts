@@ -13,10 +13,9 @@ export class LobbyConfigItem extends LitElement {
   render() {
     return html`
       <div
-        class="bg-white/5 border border-white/10 rounded-lg p-3 flex flex-col items-center justify-center gap-1 text-center min-w-[100px]"
+        class="bg-white/5 border border-lt-700 p-3 flex flex-col items-center justify-center gap-1 text-center min-w-[100px]"
       >
-        <span
-          class="text-white/40 text-[10px] font-bold uppercase tracking-wider"
+        <span class="text-lt-500 text-[10px] font-bold uppercase tracking-wider"
           >${this.label}</span
         >
         <span

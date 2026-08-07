@@ -205,9 +205,7 @@ export class CosmeticsModal extends BaseModal {
 
   protected renderHeaderSlot() {
     return html`
-      <div
-        class="relative flex flex-col border-b border-white/10 pb-4 shrink-0"
-      >
+      <div class="relative flex flex-col border-b border-lt-700 pb-4 shrink-0">
         ${modalHeader({
           title: translateText("cosmetics.title"),
           onBack: () => this.close(),
@@ -217,9 +215,9 @@ export class CosmeticsModal extends BaseModal {
 
         <div class="md:flex items-center gap-2 justify-center mt-4">
           <input
-            class="h-12 w-full max-w-md border border-white/10 bg-black/60
-              rounded-xl shadow-inner text-xl text-center focus:outline-none
-              focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-white placeholder-white/30 transition-all"
+            class="h-12 w-full max-w-md border border-lt-700 bg-black/60
+              shadow-inner text-xl text-center focus:outline-none
+              focus:ring-2 focus:ring-blue-500/50 focus:border-lt-accent text-white placeholder-white/30 transition-all"
             type="text"
             placeholder=${translateText("cosmetics.search")}
             .value=${this.search}

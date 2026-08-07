@@ -25,7 +25,7 @@ export function renderPatternPreview(
 function renderBlankPreview(): TemplateResult {
   return html`
     <div
-      class="md:hidden flex items-center justify-center h-full w-full bg-white rounded overflow-hidden relative border border-[#ccc] box-border"
+      class="md:hidden flex items-center justify-center h-full w-full bg-white overflow-hidden relative border border-[#ccc] box-border"
     >
       <div
         class="grid grid-cols-2 grid-rows-2 gap-0 w-[calc(100%-1px)] h-[calc(100%-2px)] box-border"
@@ -37,10 +37,10 @@ function renderBlankPreview(): TemplateResult {
       </div>
     </div>
     <div
-      class="hidden md:flex items-center justify-center h-full w-full rounded overflow-hidden relative text-center p-1"
+      class="hidden md:flex items-center justify-center h-full w-full overflow-hidden relative text-center p-1"
     >
       <span
-        class="text-[10px] font-black text-white/40 uppercase leading-none break-words w-full"
+        class="text-[10px] font-black text-lt-500 uppercase leading-none break-words w-full"
       >
         ${translateText("territory_patterns.select_skin")}
       </span>

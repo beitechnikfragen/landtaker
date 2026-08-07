@@ -122,7 +122,7 @@ export class StoreModal extends BaseModal {
 
     if (items.length === 0) {
       return html`<div
-        class="text-white/40 text-sm font-bold uppercase tracking-wider text-center py-8"
+        class="text-lt-500 text-sm font-bold uppercase tracking-wider text-center py-8"
       >
         ${translateText("store.no_skins")}
       </div>`;
@@ -161,7 +161,7 @@ export class StoreModal extends BaseModal {
 
     if (items.length === 0) {
       return html`<div
-        class="text-white/40 text-sm font-bold uppercase tracking-wider text-center py-8"
+        class="text-lt-500 text-sm font-bold uppercase tracking-wider text-center py-8"
       >
         ${translateText("store.no_flags")}
       </div>`;
@@ -199,7 +199,7 @@ export class StoreModal extends BaseModal {
 
     if (items.length === 0) {
       return html`<div
-        class="text-white/40 text-sm font-bold uppercase tracking-wider text-center py-8"
+        class="text-lt-500 text-sm font-bold uppercase tracking-wider text-center py-8"
       >
         ${translateText("store.no_crowns")}
       </div>`;
@@ -236,14 +236,14 @@ export class StoreModal extends BaseModal {
     }
     return html`
       <div
-        class="flex items-center justify-center gap-6 border-b border-white/10 px-4"
+        class="flex items-center justify-center gap-6 border-b border-lt-700 px-4"
       >
         ${COSMETICS_SUB_TABS.map((tab) => {
           const active = this.cosmeticsSubTab === tab;
           return html`<button
             class="-mb-px border-b-2 px-2 py-3 text-sm font-black uppercase tracking-wider transition-colors ${active
-              ? "border-blue-500 text-blue-400"
-              : "border-transparent text-white/50 hover:text-white/80"}"
+              ? "border-lt-accent text-lt-accent"
+              : "border-transparent text-lt-500 hover:text-lt-100"}"
             @click=${() => {
               this.cosmeticsSubTab = tab;
               this.requestUpdate();
@@ -262,14 +262,14 @@ export class StoreModal extends BaseModal {
       <div
         class="flex flex-col items-center justify-center gap-6 p-12 min-h-[300px]"
       >
-        <p class="text-white/70 text-lg text-center">
+        <p class="text-lt-400 text-lg text-center">
           ${translateText("store.merch_blurb")}
         </p>
         <a
           href="https://merch.openfront.io"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center justify-center gap-3 rounded-xl bg-malibu-blue hover:bg-aquarius text-white font-bold uppercase tracking-wider py-4 px-8 text-lg lg:text-xl transition-all duration-300 transform hover:-translate-y-px"
+          class="inline-flex items-center justify-center gap-3 bg-lt-accent hover:bg-lt-accent-hi text-white font-bold uppercase tracking-wider py-4 px-8 text-lg lg:text-xl transition-all duration-300 transform hover:-translate-y-px"
         >
           ${translateText("store.merch_visit_store")}
           <svg
@@ -344,7 +344,7 @@ export class StoreModal extends BaseModal {
 
     if (items.length === 0) {
       return html`<div
-        class="text-white/40 text-sm font-bold uppercase tracking-wider text-center py-8"
+        class="text-lt-500 text-sm font-bold uppercase tracking-wider text-center py-8"
       >
         ${translateText("store.no_subscriptions")}
       </div>`;
@@ -421,7 +421,7 @@ export class StoreModal extends BaseModal {
 
     if (items.length === 0) {
       return html`<div
-        class="text-white/40 text-sm font-bold uppercase tracking-wider text-center py-8"
+        class="text-lt-500 text-sm font-bold uppercase tracking-wider text-center py-8"
       >
         ${translateText("store.no_skins")}
       </div>`;

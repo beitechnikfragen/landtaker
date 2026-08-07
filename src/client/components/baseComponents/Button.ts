@@ -23,24 +23,28 @@ export class OButton extends LitElement {
     return this;
   }
 
+  // Landtaker chrome: hard edges, the display face, colour changes on hover
+  // instead of lift-and-glow. Danger/warning keep their semantic colours but
+  // as flat plates.
   private readonly BASE =
-    "font-bold uppercase tracking-wider rounded-xl border border-transparent " +
-    "transition-all duration-300 transform hover:-translate-y-px " +
-    "outline-none text-center whitespace-normal break-words leading-tight overflow-hidden relative " +
-    "disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:opacity-70";
+    "font-[family-name:var(--font-lt-display)] font-semibold uppercase tracking-[0.14em] border " +
+    "transition-colors duration-150 " +
+    "outline-none focus-visible:outline-2 focus-visible:outline-lt-accent focus-visible:-outline-offset-2 " +
+    "text-center whitespace-normal break-words leading-tight overflow-hidden relative " +
+    "disabled:cursor-not-allowed disabled:opacity-40";
 
   private variantClasses(): string {
     switch (this.variant) {
       case "primary":
-        return "bg-malibu-blue hover:bg-aquarius text-white disabled:bg-gray-600 disabled:text-gray-300";
+        return "bg-lt-accent border-lt-accent text-lt-accent-ink hover:bg-lt-accent-hi hover:border-lt-accent-hi disabled:hover:bg-lt-accent";
       case "secondary":
-        return "bg-gray-700 hover:bg-gray-600 text-white disabled:bg-gray-800 disabled:text-gray-400";
+        return "bg-lt-800 border-lt-600 text-lt-100 hover:bg-lt-750 hover:border-lt-500 disabled:hover:bg-lt-800";
       case "danger":
-        return "bg-red-600 hover:bg-red-500 text-white disabled:bg-red-900 disabled:text-gray-300";
+        return "bg-lt-bad/15 border-lt-bad/60 text-lt-bad hover:bg-lt-bad hover:text-lt-100 disabled:hover:bg-lt-bad/15 disabled:hover:text-lt-bad";
       case "warning":
-        return "bg-cyber-yellow hover:brightness-110 text-gray-900 disabled:bg-yellow-900 disabled:text-gray-300";
+        return "bg-lt-gold/15 border-lt-gold/60 text-lt-gold hover:bg-lt-gold hover:text-lt-accent-ink disabled:hover:bg-lt-gold/15 disabled:hover:text-lt-gold";
       case "ghost":
-        return "bg-transparent hover:bg-white/10 text-malibu-blue disabled:text-gray-500 disabled:hover:bg-transparent";
+        return "bg-transparent border-transparent text-lt-400 hover:text-lt-100 hover:bg-white/5 disabled:hover:bg-transparent disabled:hover:text-lt-400";
     }
   }
 

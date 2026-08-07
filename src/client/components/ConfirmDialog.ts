@@ -71,11 +71,11 @@ export class ConfirmDialog extends LitElement {
 
   private renderOverlay() {
     const isDanger = this.variant === "danger";
-    const borderColor = isDanger ? "border-red-500/50" : "border-amber-500/50";
+    const borderColor = isDanger ? "border-lt-bad/50" : "border-amber-500/50";
     const cardBg = "bg-surface";
-    const textColor = isDanger ? "text-red-300" : "text-amber-300";
+    const textColor = isDanger ? "text-lt-bad" : "text-amber-300";
     const btnClass = isDanger
-      ? "bg-red-600 text-white hover:bg-red-700"
+      ? "bg-lt-bad text-white hover:bg-lt-bad"
       : "bg-amber-600 text-white hover:bg-amber-700";
 
     return html`
@@ -88,12 +88,12 @@ export class ConfirmDialog extends LitElement {
         <div
           class="relative mx-4 w-full ${this.wide
             ? "max-w-md"
-            : "max-w-sm"} p-6 rounded-2xl border ${borderColor} ${cardBg} shadow-2xl"
+            : "max-w-sm"} p-6 border ${borderColor} ${cardBg} shadow-2xl"
         >
           ${this.showClose
             ? html`<button
                 @click=${() => this.handleCancel()}
-                class="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-lg text-xl leading-none text-white/50 hover:bg-white/10 hover:text-white transition-all"
+                class="absolute top-3 right-3 flex h-8 w-8 items-center justify-center text-xl leading-none text-lt-500 hover:bg-white/10 hover:text-white transition-all"
               >
                 ×
               </button>`
@@ -112,7 +112,7 @@ export class ConfirmDialog extends LitElement {
                 maxlength="200"
                 rows="2"
                 placeholder="${this.textareaPlaceholder}"
-                class="w-full px-3 py-2 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm resize-none"
+                class="w-full px-3 py-2 mb-4 bg-white/5 border border-lt-700 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm resize-none"
               ></textarea>`
             : ""}
           ${this.buttons === "none"
@@ -122,7 +122,7 @@ export class ConfirmDialog extends LitElement {
                   ? html`<button
                       @click=${() => this.handleCancel()}
                       ?disabled=${this.disabled}
-                      class="flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80 transition-all disabled:opacity-50 disabled:pointer-events-none"
+                      class="flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider bg-white/5 text-lt-400 border border-lt-700 hover:bg-white/10 hover:text-lt-100 transition-all disabled:opacity-50 disabled:pointer-events-none"
                     >
                       ${translateText("common.cancel")}
                     </button>`
@@ -130,7 +130,7 @@ export class ConfirmDialog extends LitElement {
                 <button
                   @click=${() => this.handleConfirm()}
                   ?disabled=${this.disabled}
-                  class="flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl ${btnClass} transition-all disabled:opacity-50 disabled:pointer-events-none border-0"
+                  class="flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider ${btnClass} transition-all disabled:opacity-50 disabled:pointer-events-none border-0"
                 >
                   ${this.confirmText || translateText("common.confirm")}
                 </button>

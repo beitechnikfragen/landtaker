@@ -55,7 +55,7 @@ export class CustomCurrencyCard extends LitElement {
         .name=${translateText("store.custom_amount")}
       >
         <div
-          class="relative flex flex-col items-center justify-center gap-1 w-full aspect-square bg-white/5 rounded-lg p-2 border border-white/10 overflow-hidden"
+          class="relative flex flex-col items-center justify-center gap-1 w-full aspect-square bg-white/5 p-2 border border-lt-700 overflow-hidden"
         >
           <plutonium-icon .size=${64}></plutonium-icon>
           <label for="custom-plutonium-amount" class="sr-only"
@@ -64,7 +64,7 @@ export class CustomCurrencyCard extends LitElement {
           <input
             id="custom-plutonium-amount"
             type="number"
-            class="custom-plutonium-input w-24 text-center bg-black/30 border border-green-500/30 rounded px-1 py-0.5 text-lg font-black text-green-400 outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400/40"
+            class="custom-plutonium-input w-24 text-center bg-black/30 border border-green-500/30 px-1 py-0.5 text-lg font-black text-lt-ok outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400/40"
             aria-label=${translateText("store.plutonium_amount")}
             min=${MIN_PLUTONIUM}
             max=${MAX_PLUTONIUM}
@@ -72,7 +72,7 @@ export class CustomCurrencyCard extends LitElement {
             .value=${String(this.amount)}
             @change=${this.onInputChange}
           />
-          <span class="text-[10px] font-bold text-white/50 uppercase"
+          <span class="text-[10px] font-bold text-lt-500 uppercase"
             >${translateText("cosmetics.hard")}</span
           >
           <input

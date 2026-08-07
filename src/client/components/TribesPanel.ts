@@ -46,7 +46,7 @@ const STATE_META: Record<
   },
   rejected: {
     labelKey: "store.tribe_status_rejected",
-    classes: "bg-red-500/20 text-red-300 border-red-500/30",
+    classes: "bg-red-500/20 text-lt-bad border-lt-bad/30",
   },
 };
 
@@ -270,11 +270,11 @@ export class TribesPanel extends LitElement {
     return html`<div
       class="flex flex-col items-center justify-center gap-4 py-16 text-center"
     >
-      <p class="text-white/60 font-medium">
+      <p class="text-lt-400 font-medium">
         ${translateText("store.tribes_login_required")}
       </p>
       <button
-        class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-wider text-sm transition-colors cursor-pointer"
+        class="px-5 py-2 bg-lt-accent hover:bg-lt-accent-hi text-white font-bold uppercase tracking-wider text-sm transition-colors cursor-pointer"
         @click=${() => window.showPage?.("page-account")}
       >
         ${translateText("main.sign_in")}
@@ -285,12 +285,12 @@ export class TribesPanel extends LitElement {
   private renderPurchaseCard(): TemplateResult {
     const price = this.price;
     return html`<section
-      class="bg-surface rounded-xl border border-white/10 p-6 flex flex-col gap-3"
+      class="bg-surface border border-lt-700 p-6 flex flex-col gap-3"
     >
       <h3 class="text-lg font-bold text-white">
         ${translateText("store.tribes_purchase_heading")}
       </h3>
-      <p class="text-white/60 text-sm leading-relaxed">
+      <p class="text-lt-400 text-sm leading-relaxed">
         ${translateText("store.tribes_purchase_description")}
       </p>
       <form class="flex flex-col sm:flex-row gap-2" @submit=${this.submit}>
@@ -302,12 +302,12 @@ export class TribesPanel extends LitElement {
           type="text"
           maxlength=${MAX_TRIBE_NAME_LENGTH}
           placeholder=${translateText("store.tribe_name_placeholder")}
-          class="flex-1 min-w-0 bg-black/30 border border-white/10 rounded px-3 py-2 text-white outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40"
+          class="flex-1 min-w-0 bg-black/30 border border-lt-700 px-3 py-2 text-white outline-none focus:border-lt-accent focus:ring-1 focus:ring-blue-400/40"
           ?disabled=${this.purchasing}
         />
         <button
           type="submit"
-          class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded px-4 py-2 whitespace-nowrap transition-colors cursor-pointer"
+          class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-4 py-2 whitespace-nowrap transition-colors cursor-pointer"
           ?disabled=${this.purchasing || price === null}
         >
           ${translateText("store.purchase_tribe_button")}
@@ -321,8 +321,8 @@ export class TribesPanel extends LitElement {
       ${this.notice
         ? html`<p
             class="text-sm font-medium ${this.notice.kind === "success"
-              ? "text-green-400"
-              : "text-red-400"}"
+              ? "text-lt-ok"
+              : "text-lt-bad"}"
           >
             ${this.notice.text}
           </p>`
@@ -366,7 +366,7 @@ export class TribesPanel extends LitElement {
       return nothing;
     }
     return html`<button
-      class="shrink-0 flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider rounded px-2.5 py-1.5 transition-colors cursor-pointer"
+      class="shrink-0 flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider px-2.5 py-1.5 transition-colors cursor-pointer"
       ?disabled=${this.boostingId !== null}
       @click=${() => this.boost(tribe)}
     >
@@ -382,7 +382,7 @@ export class TribesPanel extends LitElement {
   private renderStatsButton(tribe: TribeName): TemplateResult | typeof nothing {
     if (DISPLAY_STATE[tribe.status] !== "active") return nothing;
     return html`<button
-      class="shrink-0 bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-bold uppercase tracking-wider rounded px-2.5 py-1.5 transition-colors cursor-pointer"
+      class="shrink-0 bg-white/10 hover:bg-white/20 text-lt-100 hover:text-white text-xs font-bold uppercase tracking-wider px-2.5 py-1.5 transition-colors cursor-pointer"
       @click=${() => (this.statsName = tribe.displayName)}
     >
       ${translateText("store.tribe_stats_button")}
@@ -392,13 +392,13 @@ export class TribesPanel extends LitElement {
   private renderTribeRow(tribe: TribeName): TemplateResult {
     const meta = STATE_META[DISPLAY_STATE[tribe.status]];
     return html`<div
-      class="flex items-center justify-between gap-3 bg-surface rounded-lg border border-white/10 px-4 py-3"
+      class="flex items-center justify-between gap-3 bg-surface border border-lt-700 px-4 py-3"
     >
       <div class="flex flex-col min-w-0">
         <span class="font-bold text-white truncate">${tribe.displayName}</span>
         ${this.renderBoostStatus(tribe)}
         ${tribe.reviewReason
-          ? html`<span class="text-xs text-white/50 mt-0.5"
+          ? html`<span class="text-xs text-lt-500 mt-0.5"
               >${tribe.reviewReason}</span
             >`
           : ""}
@@ -406,7 +406,7 @@ export class TribesPanel extends LitElement {
       <div class="shrink-0 flex items-center gap-2">
         ${this.renderStatsButton(tribe)} ${this.renderBoostButton(tribe)}
         <span
-          class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded border ${meta.classes}"
+          class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 border ${meta.classes}"
         >
           ${translateText(meta.labelKey)}
         </span>
@@ -420,7 +420,7 @@ export class TribesPanel extends LitElement {
     }
     if (this.data === false) {
       return html`<p
-        class="text-white/40 text-sm font-bold uppercase tracking-wider text-center py-8"
+        class="text-lt-500 text-sm font-bold uppercase tracking-wider text-center py-8"
       >
         ${translateText("store.tribes_load_failed")}
       </p>`;
@@ -433,7 +433,7 @@ export class TribesPanel extends LitElement {
     );
     if (names.length === 0) {
       return html`<p
-        class="text-white/40 text-sm font-bold uppercase tracking-wider text-center py-8"
+        class="text-lt-500 text-sm font-bold uppercase tracking-wider text-center py-8"
       >
         ${translateText("store.no_tribes")}
       </p>`;
@@ -464,17 +464,15 @@ export class TribesPanel extends LitElement {
     >
       ${this.renderPurchaseCard()}
       <section class="flex flex-col gap-3">
-        <h3
-          class="text-sm font-bold uppercase tracking-wider text-white/60 px-1"
-        >
+        <h3 class="text-sm font-bold uppercase tracking-wider text-lt-400 px-1">
           ${translateText("store.your_tribes_heading")}
         </h3>
         ${this.boostNotice
           ? html`<p
               class="text-sm font-medium px-1 ${this.boostNotice.kind ===
               "success"
-                ? "text-green-400"
-                : "text-red-400"}"
+                ? "text-lt-ok"
+                : "text-lt-bad"}"
             >
               ${this.boostNotice.text}
             </p>`

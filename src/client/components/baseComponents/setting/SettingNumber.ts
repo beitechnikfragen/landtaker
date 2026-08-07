@@ -35,7 +35,7 @@ export class SettingNumber extends LitElement {
 
     return html`
       <div
-        class="flex flex-row items-center justify-between w-full p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all gap-4 ${rainbowClass}"
+        class="flex flex-row items-center justify-between w-full p-4 bg-white/5 border border-lt-700 hover:bg-white/10 transition-all gap-4 ${rainbowClass}"
       >
         <div class="flex flex-col flex-1 min-w-0 mr-4">
           <label
@@ -43,14 +43,14 @@ export class SettingNumber extends LitElement {
             for="setting-number-input"
             >${this.label}</label
           >
-          <div class="text-white/50 text-sm leading-snug">
+          <div class="text-lt-500 text-sm leading-snug">
             ${this.description}
           </div>
         </div>
         <input
           type="number"
           id="setting-number-input"
-          class="shrink-0 w-[100px] py-2 px-3 border border-white/20 rounded-lg bg-black/60 text-white font-mono text-center focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+          class="shrink-0 w-[100px] py-2 px-3 border border-lt-600 bg-black/60 text-white font-mono text-center focus:outline-none focus:border-lt-accent focus:ring-1 focus:ring-blue-500 transition-all"
           .value=${String(this.value ?? 0)}
           min=${this.min}
           max=${this.max}

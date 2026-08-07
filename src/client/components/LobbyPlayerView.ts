@@ -76,11 +76,9 @@ export class LobbyTeamView extends LitElement {
 
   render() {
     return html`
-      <div class="border-t border-white/10 pt-6">
+      <div class="border-t border-lt-700 pt-6">
         <div class="flex justify-between items-center mb-4">
-          <div
-            class="text-xs font-bold text-white/40 uppercase tracking-widest"
-          >
+          <div class="text-xs font-bold text-lt-500 uppercase tracking-widest">
             ${this.clients.length}
             ${this.clients.length === 1
               ? translateText("host_modal.player")
@@ -92,9 +90,7 @@ export class LobbyTeamView extends LitElement {
               : translateText("host_modal.nation_players")}
           </div>
         </div>
-        <div
-          class="players-list block rounded-lg border border-white/10 bg-white/5 p-2"
-        >
+        <div class="players-list block border border-lt-700 bg-white/5 p-2">
           ${this.gameMode === GameMode.Team
             ? this.renderTeamMode()
             : this.renderFreeForAll()}
@@ -117,10 +113,8 @@ export class LobbyTeamView extends LitElement {
     return html` <div
       class="flex flex-col md:flex-row gap-3 md:gap-4 items-stretch"
     >
-      <div
-        class="w-full md:w-60 bg-gray-800 p-2 border border-gray-700 rounded-lg"
-      >
-        <div class="font-bold mb-1.5 text-gray-300 text-sm">
+      <div class="w-full md:w-60 bg-lt-850 p-2 border border-lt-700 ">
+        <div class="font-bold mb-1.5 text-lt-400 text-sm">
           ${translateText("host_modal.players")}
         </div>
         ${repeat(
@@ -129,10 +123,10 @@ export class LobbyTeamView extends LitElement {
           (client) => {
             const displayName = this.getClientDisplayName(client);
             return html`<div
-              class="px-2 py-1 rounded-sm mb-1 text-xs text-white border
+              class="px-2 py-1 mb-1 text-xs text-white border
                 ${this.isCurrentPlayer(client)
-                ? "bg-malibu-blue/20 border-sky-500/40"
-                : "bg-gray-700/70 border-transparent"}"
+                ? "bg-lt-accent/20 border-sky-500/40"
+                : "bg-lt-800/70 border-transparent"}"
             >
               ${displayName} ${this.renderVerifiedBadge(client)}
             </div>`;
@@ -235,13 +229,13 @@ export class LobbyTeamView extends LitElement {
 
     return html`
       <div
-        class="bg-gray-800 border rounded-xl flex flex-col
+        class="bg-lt-850 border flex flex-col
           ${this.teamContainsCurrentPlayer(preview)
           ? "border-sky-500/60"
-          : "border-gray-700"}"
+          : "border-lt-700"}"
       >
         <div
-          class="px-2 py-1 font-bold flex items-center justify-between text-white rounded-t-xl text-[13px] gap-2 bg-gray-700/70"
+          class="px-2 py-1 font-bold flex items-center justify-between text-white text-[13px] gap-2 bg-lt-800/70"
         >
           ${this.showTeamColors
             ? html` <span
@@ -250,11 +244,11 @@ export class LobbyTeamView extends LitElement {
               ></span>`
             : null}
           <span class="truncate">${teamLabel}</span>
-          <span class="text-white/90">${displayCount}/${maxTeamSize}</span>
+          <span class="text-lt-100">${displayCount}/${maxTeamSize}</span>
         </div>
         <div class="p-2 ${isEmpty ? "" : "flex flex-col gap-1.5"}">
           ${isEmpty
-            ? html`<div class="text-[11px] italic text-gray-400">
+            ? html`<div class="text-[11px] italic text-lt-400">
                 ${translateText("host_modal.empty_team")}
               </div>`
             : repeat(
@@ -263,10 +257,10 @@ export class LobbyTeamView extends LitElement {
                 (p) => {
                   const displayName = this.getClientDisplayName(p);
                   return html` <div
-                    class="px-2 py-1 rounded-sm text-xs flex items-center justify-between border
+                    class="px-2 py-1 text-xs flex items-center justify-between border
                       ${this.isCurrentPlayer(p)
-                      ? "bg-malibu-blue/20 border-sky-500/40"
-                      : "bg-gray-700/70 border-transparent"}"
+                      ? "bg-lt-accent/20 border-sky-500/40"
+                      : "bg-lt-800/70 border-transparent"}"
                   >
                     <span class="truncate text-white"
                       >${displayName} ${this.renderVerifiedBadge(p)}</span
@@ -439,7 +433,7 @@ export class LobbyTeamView extends LitElement {
     if (client.verified !== true || anonymized) return html``;
     return html`<svg
       viewBox="0 0 24 24"
-      class="inline-block w-3.5 h-3.5 align-[-2px] text-blue-400 shrink-0"
+      class="inline-block w-3.5 h-3.5 align-[-2px] text-lt-accent shrink-0"
       aria-label=${translateText("username.verified_heading")}
     >
       <circle cx="12" cy="12" r="10" fill="currentColor"></circle>

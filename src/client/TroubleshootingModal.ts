@@ -39,7 +39,7 @@ export class TroubleshootingModal extends BaseModal {
           class="text-white text-xl sm:text-2xl md:text-3xl font-bold uppercase tracking-widest break-words hyphens-auto"
         >
           <a
-            class="hover:text-blue-200 text-blue-400 cursor-pointer"
+            class="hover:text-lt-accent-hi text-lt-accent cursor-pointer"
             @click=${this.close}
             >${translateText("main.help")}</a
           >
@@ -149,7 +149,7 @@ export class TroubleshootingModal extends BaseModal {
       <div
         class="mt-2 ${warning
           ? "bg-orange-500/10"
-          : "bg-white/10"} flex gap-2 text-white py-1 px-3 rounded-sm  border-1 ${warning
+          : "bg-white/10"} flex gap-2 text-white py-1 px-3  border-1 ${warning
           ? "border-orange-400"
           : "border-white/40"}"
       >
@@ -170,7 +170,7 @@ export class TroubleshootingModal extends BaseModal {
     return html`
       <div class="px-4 py-3">
         <h4
-          class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400"
+          class="mb-2 text-xs font-semibold uppercase tracking-wide text-lt-400"
         >
           ${title}
         </h4>
@@ -182,7 +182,7 @@ export class TroubleshootingModal extends BaseModal {
   private row(label: string, value: unknown) {
     return html`
       <div class="flex justify-between gap-4 text-sm">
-        <span class="text-slate-400">${label}</span>
+        <span class="text-lt-400">${label}</span>
         <span class="text-right text-white max-w-100">${value}</span>
       </div>
     `;

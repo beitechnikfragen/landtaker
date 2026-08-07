@@ -141,11 +141,11 @@ export class ClanTransferView extends LitElement {
     return html`
       <div class="space-y-6">
         ${this.errorMsg
-          ? html`<p class="text-red-400 text-sm">${this.errorMsg}</p>`
+          ? html`<p class="text-lt-bad text-sm">${this.errorMsg}</p>`
           : ""}
 
-        <div class="bg-amber-500/10 rounded-xl border border-amber-500/20 p-4">
-          <p class="text-amber-400/80 text-sm">
+        <div class="bg-amber-500/10 border border-amber-500/20 p-4">
+          <p class="text-lt-gold/80 text-sm">
             ${translateText("clan_modal.transfer_warning")}
           </p>
         </div>
@@ -156,20 +156,20 @@ export class ClanTransferView extends LitElement {
           ${filterMembersBySearch(nonLeaders, this.memberSearch).map(
             (m) => html`
               <div
-                class="relative w-full flex items-center gap-3 py-2.5 px-3 rounded-xl border transition-all text-left
+                class="relative w-full flex items-center gap-3 py-2.5 px-3 border transition-all text-left
                       ${this.transferTarget === m.publicId
                   ? "bg-amber-500/10 border-amber-500/20"
-                  : "bg-white/5 border-white/10 hover:bg-white/10"}"
+                  : "bg-white/5 border-lt-700 hover:bg-white/10"}"
               >
                 <button
                   type="button"
                   @click=${() => (this.transferTarget = m.publicId)}
                   aria-pressed=${this.transferTarget === m.publicId}
                   aria-labelledby=${`transfer-target-${m.publicId}`}
-                  class="absolute inset-0 w-full h-full rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  class="absolute inset-0 w-full h-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/50"
                 ></button>
                 <div
-                  class="relative pointer-events-none w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/50 text-xs font-bold shrink-0"
+                  class="relative pointer-events-none w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-lt-500 text-xs font-bold shrink-0"
                 >
                   ${renderRoleIcon(m.role)}
                 </div>
@@ -187,14 +187,14 @@ export class ClanTransferView extends LitElement {
                   class="relative pointer-events-none text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0
                         ${m.role === "officer"
                     ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
-                    : "bg-white/10 text-white/40 border border-white/10"}"
+                    : "bg-white/10 text-lt-500 border border-lt-700"}"
                 >
                   ${translateClanRole(m.role)}
                 </span>
                 ${this.transferTarget === m.publicId
                   ? html`<svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="relative pointer-events-none w-5 h-5 text-amber-400 shrink-0"
+                      class="relative pointer-events-none w-5 h-5 text-lt-gold shrink-0"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -220,10 +220,10 @@ export class ClanTransferView extends LitElement {
 
         <button
           @click=${() => (this.confirmAction = "transfer")}
-          class="w-full px-6 py-3 text-sm font-bold text-white uppercase tracking-wider rounded-xl transition-all border disabled:opacity-50 disabled:pointer-events-none
+          class="w-full px-6 py-3 text-sm font-bold text-white uppercase tracking-wider transition-all border disabled:opacity-50 disabled:pointer-events-none
                 ${this.transferTarget && !this.actionPending
             ? "bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 shadow-lg hover:shadow-amber-900/40 border-white/5"
-            : "bg-white/5 border-white/10 text-white/30 cursor-not-allowed"}"
+            : "bg-white/5 border-lt-700 text-white/30 cursor-not-allowed"}"
           ?disabled=${!this.transferTarget || this.actionPending}
         >
           ${this.transferTarget

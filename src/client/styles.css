@@ -5,7 +5,7 @@
 
 @theme {
   --default-ring-width: 3px;
-  --default-ring-color: var(--color-malibu-blue);
+  --default-ring-color: var(--color-lt-accent);
   --font-display: "OpenFront", Inter, Arial, sans-serif;
 
   /* Openfront.io brand palette — see Openfront_Brand_Guidelines.pdf §4 */

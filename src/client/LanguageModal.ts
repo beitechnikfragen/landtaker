@@ -49,16 +49,16 @@ export class LanguageModal extends BaseModal {
             const isDebug = lang.code === "debug";
 
             let buttonClasses =
-              "relative group rounded-xl border transition-all duration-200 flex items-center p-3 gap-3 w-full cursor-pointer";
+              "relative group border transition-all duration-200 flex items-center p-3 gap-3 w-full cursor-pointer";
 
             if (isDebug) {
               buttonClasses +=
                 " animate-pulse font-bold text-white border-2 border-dashed border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.2)] bg-gradient-to-r from-red-600 via-yellow-600 via-green-600 via-blue-600 to-purple-600";
             } else if (isActive) {
-              buttonClasses += " bg-malibu-blue/20 border-malibu-blue/50";
+              buttonClasses += " bg-lt-accent/20 border-malibu-blue/50";
             } else {
               buttonClasses +=
-                " bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20";
+                " bg-white/5 border-lt-700 hover:bg-white/10 hover:border-lt-600";
             }
 
             return html`
@@ -68,7 +68,7 @@ export class LanguageModal extends BaseModal {
               >
                 <img
                   src=${assetUrl(`flags/${lang.svg}.svg`)}
-                  class="w-8 h-6 object-contain rounded-sm shrink-0"
+                  class="w-8 h-6 object-contain shrink-0"
                   alt="${lang.code}"
                 />
                 <div class="flex flex-col items-start min-w-0">
@@ -79,14 +79,14 @@ export class LanguageModal extends BaseModal {
                     >${lang.native}</span
                   >
                   <span
-                    class="text-xs text-white/40 uppercase tracking-widest group-hover:text-white/60 transition-colors whitespace-normal break-words w-full text-left"
+                    class="text-xs text-lt-500 uppercase tracking-widest group-hover:text-lt-400 transition-colors whitespace-normal break-words w-full text-left"
                     >${lang.en}</span
                   >
                 </div>
 
                 ${isActive
                   ? html`
-                      <div class="ml-auto text-blue-400 shrink-0">
+                      <div class="ml-auto text-lt-accent shrink-0">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           viewBox="0 0 24 24"

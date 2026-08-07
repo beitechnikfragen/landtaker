@@ -101,10 +101,10 @@ export class ToggleInputCard extends LitElement {
           class="w-full h-full p-3 flex flex-col items-center justify-between gap-2 focus:outline-none"
         >
           <div
-            class="w-5 h-5 rounded border flex items-center justify-center transition-colors mt-1 ${this
+            class="w-5 h-5 border flex items-center justify-center transition-colors mt-1 ${this
               .checked
-              ? "bg-blue-500 border-blue-500"
-              : "border-white/20 bg-white/5"}"
+              ? "bg-lt-accent border-lt-accent"
+              : "border-lt-600 bg-white/5"}"
           >
             ${this.checked
               ? html`<svg
@@ -124,12 +124,12 @@ export class ToggleInputCard extends LitElement {
 
           ${this.checked
             ? html`<div class="h-[30px] my-1"></div>`
-            : html`<div class="h-[2px] w-4 rounded my-3 bg-white/10"></div>`}
+            : html`<div class="h-[2px] w-4 my-3 bg-white/10"></div>`}
 
           <span
             class="${CARD_LABEL_CLASS} text-center ${this.checked
               ? "text-white"
-              : "text-white/60"}"
+              : "text-lt-400"}"
           >
             ${translateText(this.labelKey)}
           </span>
@@ -164,7 +164,7 @@ export class ToggleInputCard extends LitElement {
           this.zeroLabel !== undefined &&
           this.toOptionalNumber(this.inputValue) === 0
             ? html`<div
-                class="pointer-events-none absolute left-0 right-0 top-full mt-0.5 text-center text-[10px] leading-none text-white/70"
+                class="pointer-events-none absolute left-0 right-0 top-full mt-0.5 text-center text-[10px] leading-none text-lt-400"
               >
                 ${this.zeroLabel}
               </div>`

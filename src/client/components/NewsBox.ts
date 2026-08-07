@@ -168,7 +168,7 @@ export class NewsBox extends LitElement {
             : nothing}
           <button
             @click=${() => this.dismiss(item.id)}
-            class="shrink-0 p-0.5 text-white/30 hover:text-white/70 transition-colors"
+            class="shrink-0 p-0.5 text-white/30 hover:text-lt-400 transition-colors"
             aria-label="${translateText("news_box.dismiss")}"
           >
             <svg

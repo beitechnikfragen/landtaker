@@ -28,15 +28,15 @@ import "./FluentSlider";
 import "./map/MapPicker";
 
 const ACTIVE_CARD =
-  "bg-malibu-blue/20 border-malibu-blue/50 shadow-[var(--shadow-malibu-blue)]";
+  "bg-lt-accent/20 border-malibu-blue/50 shadow-[var(--shadow-malibu-blue)]";
 const INACTIVE_CARD =
-  "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20";
+  "bg-white/5 border-lt-700 hover:bg-white/10 hover:border-lt-600";
 
 const DISABLED_CARD =
-  "w-full rounded-xl border transition-all duration-200 opacity-30 grayscale cursor-not-allowed bg-white/5 border-white/5";
+  "w-full border transition-all duration-200 opacity-30 grayscale cursor-not-allowed bg-white/5 border-white/5";
 
 function cardClass(active: boolean, extra = ""): string {
-  return `w-full rounded-xl border cursor-pointer transition-all duration-200 active:scale-95 ${extra} ${active ? ACTIVE_CARD : INACTIVE_CARD}`;
+  return `w-full border cursor-pointer transition-all duration-200 active:scale-95 ${extra} ${active ? ACTIVE_CARD : INACTIVE_CARD}`;
 }
 
 const CARD_LABEL_CLASS =
@@ -59,7 +59,7 @@ const TEAM_COUNT_OPTIONS: TeamCountConfig[] = [
 ];
 
 function stateTextClass(active: boolean): string {
-  return active ? "text-white" : "text-white/60";
+  return active ? "text-white" : "text-lt-400";
 }
 
 function renderTextCardButton(
@@ -160,9 +160,9 @@ function renderSectionHeader(
   headerAction?: TemplateResult,
 ): TemplateResult {
   return html`
-    <div class="flex items-center gap-4 pb-2 border-b border-white/10">
+    <div class="flex items-center gap-4 pb-2 border-b border-lt-700">
       <div
-        class="w-8 h-8 rounded-lg flex items-center justify-center ${bgClass} ${colorClass}"
+        class="w-8 h-8 flex items-center justify-center ${bgClass} ${colorClass}"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -356,7 +356,7 @@ export class GameConfigSettings extends LitElement {
         ${toggle.checked
           ? html`
               <select
-                class="bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-white text-xs"
+                class="bg-white/10 border border-lt-600 px-2 py-1 text-white text-xs"
                 @click=${(e: Event) => e.stopPropagation()}
                 @change=${this.handleDoomsdayClockSpeedChange}
               >
@@ -398,10 +398,10 @@ export class GameConfigSettings extends LitElement {
         placeholder="${translateText("map_component.search_maps")}"
         .value=${this.mapSearchQuery}
         @input=${this.handleMapSearchInput}
-        class="w-48 px-3 py-1.5 pl-8 pr-7 rounded-lg text-sm bg-transparent border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-malibu-blue/50 transition-all"
+        class="w-48 px-3 py-1.5 pl-8 pr-7 text-sm bg-transparent border border-lt-700 text-white placeholder-white/40 focus:outline-none focus:border-malibu-blue/50 transition-all"
       />
       <svg
-        class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40"
+        class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-lt-500"
         viewBox="0 0 20 20"
         fill="currentColor"
       >
@@ -415,7 +415,7 @@ export class GameConfigSettings extends LitElement {
         ? html`<button
             type="button"
             @click=${this.clearMapSearch}
-            class="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-all"
+            class="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full text-lt-500 hover:text-white hover:bg-white/10 transition-all"
           >
             <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
               <path
@@ -435,8 +435,8 @@ export class GameConfigSettings extends LitElement {
       <div class=${this.sectionGapClass}>
         ${renderSection(
           MAP_ICON,
-          "text-aquarius",
-          "bg-malibu-blue/20",
+          "text-lt-accent",
+          "bg-lt-accent/20",
           "map.map",
           html`<map-picker
             .selectedMap=${settings.map.selected}
@@ -453,7 +453,7 @@ export class GameConfigSettings extends LitElement {
         )}
         ${renderSection(
           DIFFICULTY_ICON,
-          "text-green-400",
+          "text-lt-ok",
           "bg-green-500/20",
           "difficulty.difficulty",
           html`
@@ -523,7 +523,7 @@ export class GameConfigSettings extends LitElement {
           : html`
               <section class="space-y-6">
                 <div
-                  class="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 pl-2"
+                  class="text-xs font-bold text-lt-500 uppercase tracking-widest mb-4 pl-2"
                 >
                   ${translateText("host_modal.team_count")}
                 </div>
@@ -559,7 +559,7 @@ export class GameConfigSettings extends LitElement {
           html`
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div
-                class="col-span-2 rounded-xl p-4 flex flex-col justify-center border transition-all duration-200 ${settings
+                class="col-span-2 p-4 flex flex-col justify-center border transition-all duration-200 ${settings
                   .options.bots.value > 0
                   ? ACTIVE_CARD
                   : INACTIVE_CARD}"
@@ -577,7 +577,7 @@ export class GameConfigSettings extends LitElement {
 
               ${settings.options.nations && !settings.options.nations.hidden
                 ? html`<div
-                    class="col-span-2 rounded-xl p-4 flex flex-col justify-center border transition-all duration-200 ${settings
+                    class="col-span-2 p-4 flex flex-col justify-center border transition-all duration-200 ${settings
                       .options.nations.value > 0
                       ? ACTIVE_CARD
                       : INACTIVE_CARD}"
@@ -605,7 +605,7 @@ export class GameConfigSettings extends LitElement {
         ${settings.hostCheats?.visible
           ? renderSection(
               HOST_CHEATS_ICON,
-              "text-yellow-400",
+              "text-lt-gold",
               "bg-yellow-500/20",
               settings.hostCheats.titleKey,
               html`

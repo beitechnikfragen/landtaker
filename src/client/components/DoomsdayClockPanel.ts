@@ -139,17 +139,17 @@ export class DoomsdayClockPanel extends LitElement {
       status = translateText("doomsday_clock.collapsing", {
         rate: renderTroops(Math.max(0, Math.min(me.troops() - floor, chunk))),
       });
-      statusClass = "text-red-400 font-bold";
+      statusClass = "text-lt-bad font-bold";
     } else if (live && flagged) {
       // Caught below a wave: count down the cooldown before decay begins.
       status = translateText("doomsday_clock.unstable");
-      statusClass = "text-red-400 font-bold";
+      statusClass = "text-lt-bad font-bold";
       detail = translateText("doomsday_clock.decay_in", {
         secs: Math.max(0, sd.warnSeconds - secondsUnder),
       });
     } else if (live) {
       status = translateText("doomsday_clock.stable");
-      statusClass = nearDanger ? "text-orange-300 font-bold" : "text-green-400";
+      statusClass = nearDanger ? "text-orange-300 font-bold" : "text-lt-ok";
     }
 
     // Panel edge cue: red pulse when in/near danger, orange pulse in the 10s
@@ -160,7 +160,7 @@ export class DoomsdayClockPanel extends LitElement {
         ? "sd-pulse-orange"
         : "";
     const panel =
-      "w-fit flex flex-col gap-1.5 py-2 px-4 bg-gray-800/92 backdrop-blur-sm shadow-xs min-[1200px]:rounded-lg rounded-bl-lg text-white text-sm";
+      "w-fit flex flex-col gap-1.5 py-2 px-4 bg-lt-850/92 backdrop-blur-sm shadow-xs min-[1200px]:text-white text-sm";
 
     return html`
       <style>
@@ -192,14 +192,14 @@ export class DoomsdayClockPanel extends LitElement {
       <div class="${panel} ${edge}">
         <div class="flex items-center justify-between gap-3">
           <span
-            class="flex items-center gap-1.5 font-bold tracking-wide text-red-400"
+            class="flex items-center gap-1.5 font-bold tracking-wide text-lt-bad"
           >
             <img src=${doomsdayClockIcon} alt="" width="20" height="20" />
             ${translateText("doomsday_clock.title")}
           </span>
           <span class=${statusClass}>${status}</span>
         </div>
-        <div class="relative h-2.5 w-52 overflow-hidden rounded bg-gray-600/60">
+        <div class="relative h-2.5 w-52 overflow-hidden bg-lt-750/60">
           <!-- your held share (green) vs the target threshold (red bar): the gap
                between them shows how far you are from safe. -->
           <div
@@ -211,7 +211,7 @@ export class DoomsdayClockPanel extends LitElement {
             style="left:${Math.min(100, requiredPct)}%"
           ></div>
         </div>
-        <div class="flex items-center justify-between gap-3 text-gray-300">
+        <div class="flex items-center justify-between gap-3 text-lt-400">
           <span>
             ${translateText("doomsday_clock.hold", {
               pct: requiredPct.toFixed(1),
@@ -225,18 +225,14 @@ export class DoomsdayClockPanel extends LitElement {
                     pct: yourPct.toFixed(1),
                   })}
                 </span>`
-              : html`<span
-                  class=${redAlert ? "text-red-300" : "text-green-300"}
-                >
+              : html`<span class=${redAlert ? "text-lt-bad" : "text-green-300"}>
                   ${translateText("doomsday_clock.you", {
                     pct: yourPct.toFixed(1),
                   })}
                 </span>`
             : ""}
         </div>
-        ${detail
-          ? html`<div class="text-xs text-gray-400">${detail}</div>`
-          : ""}
+        ${detail ? html`<div class="text-xs text-lt-400">${detail}</div>` : ""}
       </div>
     `;
   }

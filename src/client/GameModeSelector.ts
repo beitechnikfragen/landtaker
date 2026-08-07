@@ -427,7 +427,7 @@ export class GameModeSelector extends LitElement {
                 ${mapName}
               </p>`
             : ""}
-          <h3 class="text-xs text-white/70 uppercase tracking-wider text-left">
+          <h3 class="text-xs text-lt-400 uppercase tracking-wider text-left">
             ${titleContent}
           </h3>
         </div>

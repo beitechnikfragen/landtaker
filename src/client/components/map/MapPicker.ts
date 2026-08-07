@@ -136,7 +136,7 @@ export class MapPicker extends LitElement {
 
   private renderSectionHeading(label: string) {
     return html`<h4
-      class="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 pl-2"
+      class="text-xs font-bold text-lt-500 uppercase tracking-widest mb-4 pl-2"
     >
       ${label}
     </h4>`;
@@ -149,9 +149,9 @@ export class MapPicker extends LitElement {
         type="button"
         aria-expanded=${expanded}
         @click=${() => this.toggleCategory(categoryKey)}
-        class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border transition-all duration-200 active:scale-[0.99] ${expanded
-          ? "bg-malibu-blue/20 border-malibu-blue/50"
-          : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"}"
+        class="w-full flex items-center justify-between gap-3 px-4 py-3 border transition-all duration-200 active:scale-[0.99] ${expanded
+          ? "bg-lt-accent/20 border-malibu-blue/50"
+          : "bg-white/5 border-lt-700 hover:bg-white/10 hover:border-lt-600"}"
       >
         <span
           class="flex items-center gap-3 text-sm font-bold text-white uppercase tracking-wider"
@@ -168,7 +168,7 @@ export class MapPicker extends LitElement {
           </svg>
           ${translateText(`map_categories.${categoryKey}`)}
         </span>
-        <span class="text-xs font-bold text-white/40">${mapList.length}</span>
+        <span class="text-xs font-bold text-lt-500">${mapList.length}</span>
       </button>
       ${expanded
         ? html`<div class="mt-4">${this.renderMapGrid(mapList)}</div>`
@@ -202,9 +202,7 @@ export class MapPicker extends LitElement {
 
   private renderExpandToggle() {
     const anyExpanded = this.expandedCategories.size > 0;
-    return html`<div
-      class="shrink-0 rounded-xl border border-white/10 bg-black/20 p-1"
-    >
+    return html`<div class="shrink-0 border border-lt-700 bg-black/20 p-1">
       <button
         type="button"
         aria-expanded=${anyExpanded}
@@ -212,7 +210,7 @@ export class MapPicker extends LitElement {
           ? translateText("map_component.collapse_all")
           : translateText("map_component.expand_all")}
         @click=${() => this.toggleExpandAll()}
-        class="h-full flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white transition-all active:scale-95"
+        class="h-full flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-lt-400 hover:text-white transition-all active:scale-95"
       >
         <svg
           class="w-3 h-3 shrink-0 transition-transform duration-200 ${anyExpanded
@@ -236,10 +234,10 @@ export class MapPicker extends LitElement {
   private renderFavoritesTab() {
     if (this.favorites.length === 0) {
       return html`<div
-        class="w-full flex flex-col items-center justify-center gap-3 py-12 px-4 text-center rounded-xl border border-dashed border-white/10 bg-black/20"
+        class="w-full flex flex-col items-center justify-center gap-3 py-12 px-4 text-center border border-dashed border-lt-700 bg-black/20"
       >
         <div class="text-white/30">${starIcon(false, "w-8 h-8")}</div>
-        <p class="text-sm text-white/50 leading-relaxed max-w-xs">
+        <p class="text-sm text-lt-500 leading-relaxed max-w-xs">
           ${translateText("map_component.favorites_empty")}
         </p>
       </div>`;
@@ -268,7 +266,7 @@ export class MapPicker extends LitElement {
     const results = this.filteredMaps;
     if (results.length === 0) {
       return html`<div
-        class="w-full flex flex-col items-center justify-center gap-3 py-12 px-4 text-center rounded-xl border border-dashed border-white/10 bg-black/20"
+        class="w-full flex flex-col items-center justify-center gap-3 py-12 px-4 text-center border border-dashed border-lt-700 bg-black/20"
       >
         <svg
           class="w-8 h-8 text-white/30"
@@ -281,7 +279,7 @@ export class MapPicker extends LitElement {
             clip-rule="evenodd"
           />
         </svg>
-        <p class="text-sm text-white/50 leading-relaxed max-w-xs">
+        <p class="text-sm text-lt-500 leading-relaxed max-w-xs">
           ${translateText("map_component.no_results")}
         </p>
       </div>`;
@@ -300,9 +298,9 @@ export class MapPicker extends LitElement {
       type="button"
       role="tab"
       aria-selected=${isActive}
-      class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all active:scale-95 ${isActive
-        ? "bg-malibu-blue/20 text-white shadow-[var(--shadow-malibu-blue-soft)]"
-        : "text-white/60 hover:text-white"}"
+      class="px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all active:scale-95 ${isActive
+        ? "bg-lt-accent/20 text-white shadow-[var(--shadow-malibu-blue-soft)]"
+        : "text-lt-400 hover:text-white"}"
       @click=${() => (this.activeTab = tab)}
     >
       ${label}
@@ -319,7 +317,7 @@ export class MapPicker extends LitElement {
             : html`<div
                   role="tablist"
                   aria-label="${translateText("map.map")}"
-                  class="flex-1 grid grid-cols-3 gap-2 rounded-xl border border-white/10 bg-black/20 p-1"
+                  class="flex-1 grid grid-cols-3 gap-2 border border-lt-700 bg-black/20 p-1"
                 >
                   ${this.renderTabButton(
                     "featured",
@@ -343,14 +341,14 @@ export class MapPicker extends LitElement {
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <button
               type="button"
-              class="w-full h-full p-3 flex flex-col items-center justify-between rounded-xl border cursor-pointer transition-all duration-200 active:scale-95 gap-3 group ${this
+              class="w-full h-full p-3 flex flex-col items-center justify-between border cursor-pointer transition-all duration-200 active:scale-95 gap-3 group ${this
                 .useRandomMap
-                ? "bg-malibu-blue/20 border-malibu-blue/50 shadow-[var(--shadow-malibu-blue-strong)]"
-                : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:-translate-y-1"}"
+                ? "bg-lt-accent/20 border-malibu-blue/50 shadow-[var(--shadow-malibu-blue-strong)]"
+                : "bg-white/5 border-lt-700 hover:bg-white/10 hover:border-lt-600 hover:-translate-y-1"}"
               @click=${this.handleSelectRandomMap}
             >
               <div
-                class="w-full aspect-[2/1] relative overflow-hidden rounded-lg bg-black/20"
+                class="w-full aspect-[2/1] relative overflow-hidden bg-black/20"
               >
                 <img
                   src=${randomMap}

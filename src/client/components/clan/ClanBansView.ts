@@ -106,7 +106,7 @@ export class ClanBansView extends LitElement {
     return html`
       <div>
         <div
-          class="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2"
+          class="text-[10px] font-bold uppercase tracking-wider text-lt-500 mb-2"
         >
           ${translateText("clan_modal.banned_players_count", {
             count: this.bansTotal,
@@ -120,7 +120,7 @@ export class ClanBansView extends LitElement {
           ? html`<div
               class="flex flex-col items-center justify-center p-12 text-center"
             >
-              <p class="text-white/40 text-sm">
+              <p class="text-lt-500 text-sm">
                 ${translateText("clan_modal.no_bans")}
               </p>
             </div>`
@@ -128,16 +128,14 @@ export class ClanBansView extends LitElement {
               <div class="space-y-3">
                 ${filtered.map(
                   (ban) => html`
-                    <div
-                      class="bg-white/5 rounded-xl border border-white/10 p-4 space-y-2"
-                    >
+                    <div class="bg-white/5 border border-lt-700 p-4 space-y-2">
                       <div class="flex items-center gap-2">
                         <div
                           class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4 text-red-400"
+                            class="w-4 h-4 text-lt-bad"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -166,13 +164,13 @@ export class ClanBansView extends LitElement {
                         <button
                           @click=${() => this.handleUnban(ban.publicId)}
                           ?disabled=${this.memberActionPending}
-                          class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 transition-all disabled:opacity-50 disabled:pointer-events-none shrink-0"
+                          class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-green-500/20 text-lt-ok border border-green-500/30 hover:bg-green-500/30 transition-all disabled:opacity-50 disabled:pointer-events-none shrink-0"
                         >
                           ${translateText("clan_modal.unban")}
                         </button>
                       </div>
                       ${ban.reason
-                        ? html`<div class="text-white/50 text-xs pl-10">
+                        ? html`<div class="text-lt-500 text-xs pl-10">
                             ${translateText("clan_modal.ban_reason", {
                               reason: ban.reason,
                             })}

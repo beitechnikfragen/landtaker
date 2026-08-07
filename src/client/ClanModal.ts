@@ -177,7 +177,7 @@ export class ClanModal extends BaseModal {
 
   private tagPill(tag: string) {
     return html`<span
-      class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-white/10 text-white/50 border border-white/10"
+      class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-white/10 text-lt-500 border border-lt-700"
       >[${tag}]</span
     >`;
   }
@@ -695,12 +695,12 @@ export class ClanModal extends BaseModal {
     if (!hasClans && !hasRequests) {
       return html`
         <div class="flex flex-col items-center justify-center p-12 text-center">
-          <p class="text-white/40 text-sm mb-4">
+          <p class="text-lt-500 text-sm mb-4">
             ${translateText("clan_modal.no_clans")}
           </p>
           <button
             @click=${() => this.setActiveTab("browse")}
-            class="px-6 py-2 text-sm font-bold text-white uppercase tracking-wider bg-malibu-blue hover:bg-aquarius active:bg-malibu-blue/80 rounded-lg transition-all"
+            class="px-6 py-2 text-sm font-bold text-white uppercase tracking-wider bg-lt-accent hover:bg-lt-accent-hi active:bg-lt-accent/80 transition-all"
           >
             ${translateText("clan_modal.browse")}
           </button>
@@ -730,15 +730,15 @@ export class ClanModal extends BaseModal {
     return html`
       <button
         @click=${() => (this.view = "my-requests")}
-        class="w-full flex items-center justify-between bg-amber-500/10 hover:bg-amber-500/15 rounded-xl border border-amber-500/20 p-4 transition-all cursor-pointer group"
+        class="w-full flex items-center justify-between bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 p-4 transition-all cursor-pointer group"
       >
         <div class="flex items-center gap-3">
           <div
-            class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center"
+            class="w-10 h-10 bg-amber-500/20 flex items-center justify-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="w-5 h-5 text-amber-400"
+              class="w-5 h-5 text-lt-gold"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -752,10 +752,10 @@ export class ClanModal extends BaseModal {
             </svg>
           </div>
           <div class="text-left">
-            <span class="text-amber-400 text-sm font-bold">
+            <span class="text-lt-gold text-sm font-bold">
               ${translateText("clan_modal.pending_applications")}
             </span>
-            <span class="text-amber-400/60 text-xs block">
+            <span class="text-lt-gold/60 text-xs block">
               ${translateText("clan_modal.pending_requests_count", {
                 count,
               })}
@@ -764,13 +764,13 @@ export class ClanModal extends BaseModal {
         </div>
         <div class="flex items-center gap-2">
           <span
-            class="px-2.5 py-1 text-xs font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30"
+            class="px-2.5 py-1 text-xs font-bold rounded-full bg-amber-500/20 text-lt-gold border border-amber-500/30"
           >
             ${count}
           </span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="w-5 h-5 text-amber-400/40 group-hover:text-amber-400/70 transition-colors"
+            class="w-5 h-5 text-lt-gold/40 group-hover:text-lt-gold/70 transition-colors"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

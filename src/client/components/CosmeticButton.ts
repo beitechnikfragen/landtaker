@@ -167,7 +167,7 @@ export class CosmeticButton extends LitElement {
       if (c === null) {
         // "Default" tile — visually consistent with pattern's default tile.
         return html`<div
-          class="w-full h-full flex items-center justify-center text-white/40 text-xs uppercase"
+          class="w-full h-full flex items-center justify-center text-lt-500 text-xs uppercase"
         >
           ${translateText("territory_patterns.pattern.default")}
         </div>`;
@@ -186,7 +186,7 @@ export class CosmeticButton extends LitElement {
       if (c === null) {
         // "Default" tile — selecting it clears the effect for that type.
         return html`<div
-          class="w-full h-full flex items-center justify-center text-white/40 text-xs uppercase"
+          class="w-full h-full flex items-center justify-center text-lt-500 text-xs uppercase"
         >
           ${translateText("territory_patterns.pattern.default")}
         </div>`;
@@ -218,7 +218,7 @@ export class CosmeticButton extends LitElement {
       if (c === null) {
         // "Default" (none) tile — selecting it clears the crown.
         return html`<div
-          class="w-full h-full flex items-center justify-center text-white/40 text-xs uppercase"
+          class="w-full h-full flex items-center justify-center text-lt-500 text-xs uppercase"
         >
           ${translateText("territory_patterns.pattern.default")}
         </div>`;
@@ -244,7 +244,7 @@ export class CosmeticButton extends LitElement {
             class="flex-1 flex items-center"
             .size=${100}
           ></cap-icon>`;
-      const colorClass = isHard ? "text-green-400" : "text-amber-700";
+      const colorClass = isHard ? "text-lt-ok" : "text-amber-700";
       const currencyKey = isHard ? "cosmetics.hard" : "cosmetics.soft";
       return html`<div
         class="relative flex flex-col items-center justify-end h-full w-full text-center gap-1 pb-1"
@@ -253,7 +253,7 @@ export class CosmeticButton extends LitElement {
         <span class="text-lg font-black ${colorClass}"
           >${pack.amount.toLocaleString()}</span
         >
-        <span class="text-[10px] font-bold text-white/50 uppercase"
+        <span class="text-[10px] font-bold text-lt-500 uppercase"
           >${translateText(currencyKey)}</span
         >
         ${pack.bonusAmount > 0
@@ -276,32 +276,32 @@ export class CosmeticButton extends LitElement {
         <div class="flex flex-col items-center gap-1 w-full">
           <div class="self-start flex items-center gap-1.5">
             <plutonium-icon .size=${24}></plutonium-icon>
-            <span class="text-sm font-bold text-green-400"
+            <span class="text-sm font-bold text-lt-ok"
               >${sub.hardCurrencySignupBonus.toLocaleString()}</span
             >
-            <span class="text-[10px] text-white/50 uppercase"
+            <span class="text-[10px] text-lt-500 uppercase"
               >${translateText("cosmetics.signup_bonus")}</span
             >
           </div>
           <div class="self-start flex items-center gap-1.5">
             <plutonium-icon .size=${24}></plutonium-icon>
-            <span class="text-sm font-bold text-green-400"
+            <span class="text-sm font-bold text-lt-ok"
               >${sub.dailyHardCurrency.toLocaleString()}</span
             >
-            <span class="text-[10px] text-white/50 uppercase"
+            <span class="text-[10px] text-lt-500 uppercase"
               >${translateText("cosmetics.per_day")}</span
             >
           </div>
           <span
             class="self-start text-left text-[10px] font-bold text-purple-300 uppercase tracking-wide"
-            ><span class="text-green-400">✓</span> ${translateText(
+            ><span class="text-lt-ok">✓</span> ${translateText(
               "cosmetics.verified_name",
             )}</span
           >
           ${sub.unlimitedRanked
             ? html`<span
                 class="self-start text-left text-[10px] font-bold text-purple-300 uppercase tracking-wide"
-                ><span class="text-green-400">✓</span> ${translateText(
+                ><span class="text-lt-ok">✓</span> ${translateText(
                   "cosmetics.unlimited_ranked",
                 )}</span
               >`
@@ -309,7 +309,7 @@ export class CosmeticButton extends LitElement {
           ${sub.canCreatePublicLobbies
             ? html`<span
                 class="self-start text-left text-[10px] font-bold text-purple-300 uppercase tracking-wide"
-                ><span class="text-green-400">✓</span> ${translateText(
+                ><span class="text-lt-ok">✓</span> ${translateText(
                   "cosmetics.public_lobbies",
                 )}</span
               >`
@@ -417,7 +417,7 @@ export class CosmeticButton extends LitElement {
           class="group relative flex flex-col items-center w-full ${isPattern ||
           isSkin
             ? "gap-2"
-            : "gap-1"} rounded-lg cursor-pointer transition-all duration-200 ${hasColorRow
+            : "gap-1"} cursor-pointer transition-all duration-200 ${hasColorRow
             ? ""
             : "flex-1"}"
           @click=${() => this.handleClick()}
@@ -434,7 +434,7 @@ export class CosmeticButton extends LitElement {
             : nothing}
 
           <div
-            class="w-full aspect-square flex items-center justify-center bg-white/5 rounded-lg p-2 border border-white/10 group-hover:border-white/20 transition-colors duration-200 overflow-hidden"
+            class="w-full aspect-square flex items-center justify-center bg-white/5 p-2 border border-lt-700 group-hover:border-lt-600 transition-colors duration-200 overflow-hidden"
           >
             ${this.renderPreview()}
           </div>
@@ -442,7 +442,7 @@ export class CosmeticButton extends LitElement {
         ${this.renderColorSwatches()}
         ${isOwnedSubscription
           ? html`<div
-              class="w-full mt-2 px-2 py-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded-lg text-base font-bold text-center"
+              class="w-full mt-2 px-2 py-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-base font-bold text-center"
             >
               ${translateText("store.subscribed")}
             </div>`

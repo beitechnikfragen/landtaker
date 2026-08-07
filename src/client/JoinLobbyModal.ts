@@ -144,9 +144,9 @@ export class JoinLobbyModal extends BaseModal {
                   class="min-h-[240px] flex flex-col items-center justify-center gap-4"
                 >
                   <div
-                    class="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin"
+                    class="w-12 h-12 border-4 border-lt-600 border-t-white rounded-full animate-spin"
                   ></div>
-                  <p class="text-center text-white/80 text-sm">
+                  <p class="text-center text-lt-100 text-sm">
                     ${translateText("public_lobby.connecting")}
                   </p>
                 </div>
@@ -176,14 +176,14 @@ export class JoinLobbyModal extends BaseModal {
 
         ${html`
           <div
-            class="p-6 lg:p-6 border-t border-white/10 bg-black/60 backdrop-blur-md shrink-0 sticky bottom-0 z-10"
+            class="p-6 lg:p-6 border-t border-lt-700 bg-black/60 backdrop-blur-md shrink-0 sticky bottom-0 z-10"
           >
             <div
-              class="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 flex items-center justify-between gap-3"
+              class="w-full px-4 py-3 border border-lt-700 bg-white/5 flex items-center justify-between gap-3"
             >
               <div class="flex flex-col">
                 <span
-                  class="text-[10px] font-bold uppercase tracking-widest text-white/40"
+                  class="text-[10px] font-bold uppercase tracking-widest text-lt-500"
                   >${translateText("public_lobby.status")}</span
                 >
                 <span class="text-sm font-bold text-white">${statusLabel}</span>
@@ -191,7 +191,7 @@ export class JoinLobbyModal extends BaseModal {
               ${maxPlayers > 0
                 ? html`
                     <div
-                      class="flex items-center gap-2 text-white/80 text-xs font-bold uppercase tracking-widest"
+                      class="flex items-center gap-2 text-lt-100 text-xs font-bold uppercase tracking-widest"
                     >
                       <span>${playerCount}/${maxPlayers}</span>
                       <svg
@@ -224,7 +224,7 @@ export class JoinLobbyModal extends BaseModal {
                 id="lobbyIdInput"
                 placeholder=${translateText("private_lobby.enter_id")}
                 @keyup=${this.handleChange}
-                class="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono text-sm tracking-wider"
+                class="flex-1 px-4 py-3 bg-white/5 border border-lt-700 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono text-sm tracking-wider"
               />
               <o-button
                 variant="ghost"
@@ -264,11 +264,11 @@ export class JoinLobbyModal extends BaseModal {
     if (!this.hostedLobbiesLoaded) {
       content = html`<div class="flex justify-center py-3">
         <div
-          class="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"
+          class="w-6 h-6 border-2 border-lt-600 border-t-white rounded-full animate-spin"
         ></div>
       </div>`;
     } else if (this.hostedLobbies.length === 0) {
-      content = html`<p class="text-sm text-white/50">
+      content = html`<p class="text-sm text-lt-500">
         ${translateText("private_lobby.no_open_lobbies")}
       </p>`;
     } else {
@@ -279,7 +279,7 @@ export class JoinLobbyModal extends BaseModal {
     return html`
       <div class="pt-2">
         <div
-          class="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2"
+          class="text-[10px] font-bold uppercase tracking-widest text-lt-500 mb-2"
         >
           ${translateText("private_lobby.open_lobbies")}
         </div>
@@ -305,19 +305,19 @@ export class JoinLobbyModal extends BaseModal {
       <button
         type="button"
         @click=${() => this.joinHostedLobby(lobby)}
-        class="w-full px-3 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 active:bg-white/15 transition-all flex items-center gap-3 text-left"
+        class="w-full px-3 py-2 border border-lt-700 bg-white/5 hover:bg-white/10 active:bg-white/15 transition-all flex items-center gap-3 text-left"
       >
         <img
           src=${thumbnailUrl}
           alt=${mapName}
-          class="w-12 h-12 rounded-lg object-cover border border-white/10 shrink-0"
+          class="w-12 h-12 object-cover border border-lt-700 shrink-0"
           @error=${(e: Event) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}
         />
         <div class="flex flex-col flex-1 min-w-0">
           <span class="text-sm font-bold text-white truncate">${mapName}</span>
-          <span class="text-xs text-white/60"
+          <span class="text-xs text-lt-400"
             >${c ? this.modeSubtitle(c) : ""}</span
           >
           ${settings.length > 0 || disabledUnitCount > 0
@@ -326,7 +326,7 @@ export class JoinLobbyModal extends BaseModal {
                   // Some labels (e.g. host_modal.bots) already end with ": ".
                   const label = s.label.replace(/[:\s]+$/, "");
                   return html`<span
-                    class="px-1.5 py-0.5 bg-white/10 text-white/70 text-[10px] rounded font-bold"
+                    class="px-1.5 py-0.5 bg-white/10 text-lt-400 text-[10px] font-bold"
                     >${s.value === enabled
                       ? label
                       : `${label}: ${s.value}`}</span
@@ -334,7 +334,7 @@ export class JoinLobbyModal extends BaseModal {
                 })}
                 ${disabledUnitCount > 0
                   ? html`<span
-                      class="px-1.5 py-0.5 bg-red-500/20 text-red-200 text-[10px] rounded font-bold border border-red-500/30"
+                      class="px-1.5 py-0.5 bg-red-500/20 text-red-200 text-[10px] font-bold border border-lt-bad/30"
                       >${translateText("private_lobby.disabled_units")}:
                       ${disabledUnitCount}</span
                     >`
@@ -343,7 +343,7 @@ export class JoinLobbyModal extends BaseModal {
             : ""}
         </div>
         <div
-          class="flex items-center gap-1 text-white/80 text-xs font-bold shrink-0"
+          class="flex items-center gap-1 text-lt-100 text-xs font-bold shrink-0"
         >
           ${lobby.numClients}${c?.maxPlayers ? `/${c.maxPlayers}` : ""}
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -723,14 +723,14 @@ export class JoinLobbyModal extends BaseModal {
         <img
           src=${thumbnailUrl}
           alt=${mapName ?? c.gameMap}
-          class="w-20 h-20 rounded-lg object-cover border border-white/10 shrink-0"
+          class="w-20 h-20 object-cover border border-lt-700 shrink-0"
           @error=${(e: Event) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}
         />
         <div class="flex flex-col gap-1">
           <span class="text-lg font-bold text-white">${mapName}</span>
-          <span class="text-sm text-white/60">${modeSubtitle}</span>
+          <span class="text-sm text-lt-400">${modeSubtitle}</span>
         </div>
       </div>
       ${cards.length > 0
@@ -768,11 +768,9 @@ export class JoinLobbyModal extends BaseModal {
     };
 
     return html`
-      <div
-        class="mt-4 mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg"
-      >
+      <div class="mt-4 mb-6 p-3 bg-red-500/10 border border-lt-bad/20 ">
         <div
-          class="text-xs font-bold text-red-400 uppercase tracking-widest mb-2"
+          class="text-xs font-bold text-lt-bad uppercase tracking-widest mb-2"
         >
           ${translateText("private_lobby.disabled_units")}
         </div>
@@ -782,7 +780,7 @@ export class JoinLobbyModal extends BaseModal {
             const name = key ? translateText(key) : unit;
             return html`
               <span
-                class="px-2 py-1 bg-red-500/20 text-red-200 text-xs rounded font-bold border border-red-500/30"
+                class="px-2 py-1 bg-red-500/20 text-red-200 text-xs font-bold border border-lt-bad/30"
               >
                 ${name}
               </span>
@@ -804,7 +802,7 @@ export class JoinLobbyModal extends BaseModal {
     if (hc.infiniteGold)
       items.push(
         html`<span
-          class="px-2 py-1 bg-yellow-500/20 text-yellow-200 text-xs rounded font-bold border border-yellow-500/30"
+          class="px-2 py-1 bg-yellow-500/20 text-yellow-200 text-xs font-bold border border-yellow-500/30"
         >
           ${translateText("host_modal.infinite_gold")}
         </span>`,
@@ -812,7 +810,7 @@ export class JoinLobbyModal extends BaseModal {
     if (hc.infiniteTroops)
       items.push(
         html`<span
-          class="px-2 py-1 bg-yellow-500/20 text-yellow-200 text-xs rounded font-bold border border-yellow-500/30"
+          class="px-2 py-1 bg-yellow-500/20 text-yellow-200 text-xs font-bold border border-yellow-500/30"
         >
           ${translateText("host_modal.infinite_troops")}
         </span>`,
@@ -820,7 +818,7 @@ export class JoinLobbyModal extends BaseModal {
     if (hc.goldMultiplier)
       items.push(
         html`<span
-          class="px-2 py-1 bg-yellow-500/20 text-yellow-200 text-xs rounded font-bold border border-yellow-500/30"
+          class="px-2 py-1 bg-yellow-500/20 text-yellow-200 text-xs font-bold border border-yellow-500/30"
         >
           ${translateText("host_modal.gold_multiplier")}: x${hc.goldMultiplier}
         </span>`,
@@ -828,7 +826,7 @@ export class JoinLobbyModal extends BaseModal {
     if (hc.startingGold)
       items.push(
         html`<span
-          class="px-2 py-1 bg-yellow-500/20 text-yellow-200 text-xs rounded font-bold border border-yellow-500/30"
+          class="px-2 py-1 bg-yellow-500/20 text-yellow-200 text-xs font-bold border border-yellow-500/30"
         >
           ${translateText("private_lobby.starting_gold")}:
           ${parseFloat((hc.startingGold / 1_000_000).toPrecision(12))}M
@@ -838,11 +836,9 @@ export class JoinLobbyModal extends BaseModal {
     if (items.length === 0) return html``;
 
     return html`
-      <div
-        class="mt-4 mb-6 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg"
-      >
+      <div class="mt-4 mb-6 p-3 bg-yellow-500/10 border border-yellow-500/20 ">
         <div
-          class="text-xs font-bold text-yellow-400 uppercase tracking-widest mb-2"
+          class="text-xs font-bold text-lt-gold uppercase tracking-widest mb-2"
         >
           ${translateText("private_lobby.host_cheats")}
         </div>

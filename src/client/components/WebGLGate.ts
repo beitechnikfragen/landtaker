@@ -110,7 +110,7 @@ export class WebGLGate extends LitElement {
         class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/85 p-5"
       >
         <div
-          class="w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 sm:p-8 rounded-xl bg-surface text-white shadow-2xl"
+          class="w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 sm:p-8 bg-surface text-white shadow-2xl"
         >
           <h2 class="text-xl font-bold mb-3">${title}</h2>
           <p class="text-sm leading-relaxed text-white/85 mb-5">${intro}</p>
@@ -139,7 +139,7 @@ export class WebGLGate extends LitElement {
           ${limited
             ? html`
                 <button
-                  class="mt-5 w-full py-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-bold text-white transition-colors"
+                  class="mt-5 w-full py-2.5 bg-white/10 hover:bg-white/20 text-sm font-bold text-white transition-colors"
                   @click=${() => this.remove()}
                 >
                   Continue anyway

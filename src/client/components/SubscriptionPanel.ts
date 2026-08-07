@@ -71,7 +71,7 @@ export class SubscriptionPanel extends LitElement {
 
     if (this.sub.cancelAtPeriodEnd) {
       return html`<div
-        class="text-xs font-bold text-amber-400 uppercase tracking-wider"
+        class="text-xs font-bold text-lt-gold uppercase tracking-wider"
       >
         ${periodEnd
           ? translateText("account_modal.sub_status_canceling_on", {
@@ -83,7 +83,7 @@ export class SubscriptionPanel extends LitElement {
 
     const isActive =
       this.sub.status === "active" || this.sub.status === "trialing";
-    const colorClass = isActive ? "text-green-400" : "text-white/60";
+    const colorClass = isActive ? "text-lt-ok" : "text-lt-400";
     const translatedStatus = translateText(
       `account_modal.sub_status_${this.sub.status}`,
     );
@@ -96,7 +96,7 @@ export class SubscriptionPanel extends LitElement {
         >${statusLabel}</span
       >
       ${periodEnd
-        ? html`<span class="text-white/50"
+        ? html`<span class="text-lt-500"
             >${translateText("account_modal.sub_renews_on", {
               date: periodEnd,
             })}</span
@@ -108,13 +108,13 @@ export class SubscriptionPanel extends LitElement {
   render() {
     const { sub, cosmetic } = this;
     return html`
-      <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+      <div class="bg-white/5 border border-lt-700 p-6">
         <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <span class="text-amber-400">⭐</span>
+          <span class="text-lt-gold">⭐</span>
           ${translateText("account_modal.your_subscription")}
         </h3>
         <div
-          class="flex flex-wrap items-start justify-between gap-4 p-4 rounded-lg bg-white/5 border border-white/10"
+          class="flex flex-wrap items-start justify-between gap-4 p-4 bg-white/5 border border-lt-700"
         >
           <div class="flex flex-col gap-3 flex-1 min-w-0">
             <div class="flex items-baseline gap-2 flex-wrap">
@@ -125,7 +125,7 @@ export class SubscriptionPanel extends LitElement {
                 )}
               </div>
               ${cosmetic?.product?.price
-                ? html`<div class="text-xs text-white/60">
+                ? html`<div class="text-xs text-lt-400">
                     ${translateText("account_modal.sub_price_monthly", {
                       price: cosmetic.product.price,
                     })}
@@ -133,7 +133,7 @@ export class SubscriptionPanel extends LitElement {
                 : ""}
             </div>
             ${cosmetic?.description
-              ? html`<div class="text-sm text-white/70">
+              ? html`<div class="text-sm text-lt-400">
                   ${cosmetic.description}
                 </div>`
               : ""}
@@ -141,19 +141,19 @@ export class SubscriptionPanel extends LitElement {
               ? html`<div class="flex flex-wrap gap-4 mt-1">
                   <div class="flex items-center gap-1.5">
                     <plutonium-icon .size=${20}></plutonium-icon>
-                    <span class="text-sm font-bold text-green-400"
+                    <span class="text-sm font-bold text-lt-ok"
                       >${cosmetic.hardCurrencySignupBonus.toLocaleString()}</span
                     >
-                    <span class="text-[10px] text-white/50 uppercase"
+                    <span class="text-[10px] text-lt-500 uppercase"
                       >${translateText("cosmetics.signup_bonus")}</span
                     >
                   </div>
                   <div class="flex items-center gap-1.5">
                     <plutonium-icon .size=${20}></plutonium-icon>
-                    <span class="text-sm font-bold text-green-400"
+                    <span class="text-sm font-bold text-lt-ok"
                       >${cosmetic.dailyHardCurrency.toLocaleString()}</span
                     >
-                    <span class="text-[10px] text-white/50 uppercase"
+                    <span class="text-[10px] text-lt-500 uppercase"
                       >${translateText("cosmetics.per_day")}</span
                     >
                   </div>
