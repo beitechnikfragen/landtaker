@@ -60,17 +60,17 @@ describe("computeHistoryMetrics", () => {
     expect(m.winRate).toBeNull();
   });
 
-  it("averages duration ignoring null durations", () => {
+  it("includes zero-second games in duration average", () => {
     const m = computeHistoryMetrics([
       game({ durationSeconds: 100 }),
       game({ durationSeconds: 200 }),
       game({ durationSeconds: 0 }),
     ]);
-    expect(m.avgDurationSeconds).toBe(150);
+    expect(m.avgDurationSeconds).toBe(100);
   });
 
-  it("returns null average when no game has a duration", () => {
-    const m = computeHistoryMetrics([game({ durationSeconds: 0 })]);
+  it("returns null average when no games exist", () => {
+    const m = computeHistoryMetrics([]);
     expect(m.avgDurationSeconds).toBeNull();
   });
 
@@ -115,7 +115,7 @@ describe("computeHistoryMetrics", () => {
     expect(m.bestMap).toBeNull();
   });
 
-  it("ignores games with no map", () => {
+  it("names a best map once the threshold is met", () => {
     const m = computeHistoryMetrics([
       game({ map: "Africa", result: "victory" }),
       game({ map: "Africa", result: "victory" }),
@@ -126,6 +126,15 @@ describe("computeHistoryMetrics", () => {
       winRate: 1,
       games: 3,
     });
+  });
+
+  it("excludes empty-string maps from best map calculation", () => {
+    const m = computeHistoryMetrics([
+      game({ map: "", result: "victory" }),
+      game({ map: "", result: "victory" }),
+      game({ map: "", result: "victory" }),
+    ]);
+    expect(m.bestMap).toBeNull();
   });
 
   it("caps the form list at 10, preserving input order", () => {

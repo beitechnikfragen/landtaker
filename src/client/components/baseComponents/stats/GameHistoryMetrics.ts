@@ -38,10 +38,11 @@ export function computeHistoryMetrics(
       if (game.result === "victory") wins++;
     }
 
-    if (game.durationSeconds > 0) {
-      durationSum += game.durationSeconds;
-      durationCount++;
-    }
+    // The schema makes durationSeconds non-nullable (z.number().int().nonnegative()),
+    // so every value is treated as recorded data, including 0. Zero is a legitimate
+    // duration rather than a missing-data marker.
+    durationSum += game.durationSeconds;
+    durationCount++;
 
     if (game.map && decided) {
       const entry = perMap.get(game.map) ?? { wins: 0, decided: 0 };
@@ -65,8 +66,7 @@ export function computeHistoryMetrics(
     decidedGames,
     wins,
     winRate: decidedGames === 0 ? null : wins / decidedGames,
-    avgDurationSeconds:
-      durationCount === 0 ? null : durationSum / durationCount,
+    avgDurationSeconds: games.length === 0 ? null : durationSum / durationCount,
     bestMap,
     form: games.slice(0, FORM_LENGTH).map((g) => g.result),
   };
