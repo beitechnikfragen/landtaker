@@ -3,6 +3,7 @@ import { customElement } from "lit/decorators.js";
 import { assetUrl } from "../../core/AssetUrls";
 import { crazyGamesSDK } from "../CrazyGamesSDK";
 import "./CosmeticBackground";
+import "./HomeHero";
 import "./NewsBox";
 import "./SteamWishlist";
 import "./StreamingNow";
@@ -31,7 +32,7 @@ export class PlayPage extends LitElement {
           >
             <button
               id="hamburger-btn"
-              class="col-start-1 justify-self-start h-10 shrink-0 aspect-[4/3] flex text-white/90 rounded-md items-center justify-center transition-colors"
+              class="col-start-1 justify-self-start h-10 shrink-0 aspect-[4/3] flex text-lt-100 items-center justify-center transition-colors"
               data-i18n-aria-label="main.menu"
               aria-expanded="false"
               aria-controls="sidebar-menu"
@@ -54,11 +55,9 @@ export class PlayPage extends LitElement {
               </svg>
             </button>
 
-            <div
-              class="col-start-2 flex items-center justify-center text-malibu-blue min-w-0"
-            >
+            <div class="col-start-2 flex items-center justify-center min-w-0">
               <img
-                src=${assetUrl("images/LandtakerLogo.svg")}
+                src=${assetUrl("images/LandtakerLogoDark.svg")}
                 alt="Landtaker"
                 class="h-full w-auto"
               />
@@ -69,13 +68,13 @@ export class PlayPage extends LitElement {
                   <button
                     id="crazygames-account-btn"
                     data-page="page-account"
-                    class="nav-menu-item col-start-3 justify-self-end h-10 shrink-0 flex items-center justify-center rounded-full overflow-hidden text-white/90 cursor-pointer"
+                    class="nav-menu-item col-start-3 justify-self-end h-10 shrink-0 flex items-center justify-center overflow-hidden text-lt-100 cursor-pointer"
                     data-i18n-aria-label="main.account"
                     data-i18n-title="main.account"
                   >
                     <img
                       id="crazygames-account-avatar"
-                      class="hidden w-8 h-8 rounded-full object-cover"
+                      class="hidden w-8 h-8 object-cover border border-lt-600"
                       alt=""
                       referrerpolicy="no-referrer"
                     />
@@ -105,17 +104,19 @@ export class PlayPage extends LitElement {
           </div>
         </div>
 
+        <!-- Mobile: spacer for fixed top bar -->
+        <div class="lg:hidden h-[calc(env(safe-area-inset-top)+56px)]"></div>
+
+        <!-- Hero: the mark plus live server state, with the player's own
+             standing alongside it when they are signed in. -->
+        <home-hero class="hidden lg:block w-full"></home-hero>
+
         <!-- Top strip: news + identity on the left, Streaming Now on the right. The 2fr/1fr
              split only exists while the panel is live (.streaming-live via has-[]) —
              otherwise the left column takes the full row. -->
         <div
           class="w-full pb-4 lg:pb-0 flex flex-col gap-4 sm:-mx-4 sm:w-[calc(100%+2rem)] lg:mx-0 lg:w-full lg:grid lg:grid-cols-1 lg:has-[.streaming-live]:grid-cols-[2fr_1fr] lg:gap-4 lg:items-stretch"
         >
-          <!-- Mobile: spacer for fixed top bar -->
-          <div
-            class="lg:hidden h-[calc(env(safe-area-inset-top)+56px)] -mb-4"
-          ></div>
-
           <!-- Left column: news banner + identity row, stacked tight. -->
           <div class="flex flex-col gap-2 min-w-0">
             <news-box></news-box>

@@ -133,6 +133,104 @@
   margin-top: 3px;
 }
 
+/* ------------------------------------------------------------ home layout */
+
+/* Hero + commander rail. The rail only exists for signed-in players (there is
+   no rank or match history to put in it otherwise), so the grid collapses to a
+   single column when it is absent rather than leaving a dead gutter. */
+.lt-home {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  align-items: stretch;
+}
+
+@media (min-width: 1024px) {
+  .lt-home:has(.lt-rail) {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+}
+
+.lt-rail {
+  border-left: 1px solid var(--color-lt-700);
+  background: rgb(16 20 24 / 0.72);
+  backdrop-filter: blur(6px);
+}
+
+@media (max-width: 1023px) {
+  .lt-rail {
+    border-left: 0;
+    border-top: 1px solid var(--color-lt-700);
+  }
+}
+
+.lt-rail-h {
+  font-family: var(--font-lt-util);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-lt-700);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-lt-500);
+}
+
+/* Key/value rows inside the rail. */
+.lt-kv {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--color-lt-700);
+  font-size: 14px;
+}
+
+.lt-kv:last-child {
+  border-bottom: 0;
+}
+
+.lt-kv > span:first-child {
+  font-family: var(--font-lt-util);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-lt-400);
+}
+
+.lt-kv > :last-child {
+  font-family: var(--font-lt-util);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The live status line above the hero: a dot, then facts about the servers. */
+.lt-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-lt-util);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-lt-400);
+}
+
+.lt-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex: none;
+  background: var(--color-lt-ok);
+}
+
+.lt-status b {
+  color: var(--color-lt-100);
+  font-variant-numeric: tabular-nums;
+}
+
 /* --------------------------------------------------------------- nav items */
 
 /* Top-bar tabs. The active tab is marked by an underline in the accent rather

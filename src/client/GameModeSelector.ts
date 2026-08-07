@@ -164,14 +164,14 @@ export class GameModeSelector extends LitElement {
         <!-- Game cards grid -->
         ${this.lobbies === null
           ? html`<div
-              class="flex items-center justify-center h-44 sm:h-[min(24rem,40vh)]"
+              class="flex items-center justify-center h-44 sm:h-[clamp(20rem,42vh,30rem)]"
             >
               <span
                 class="w-16 h-16 border-4 border-lt-700 border-t-lt-accent rounded-full animate-spin"
               ></span>
             </div>`
           : html`<div
-              class="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4 sm:h-[min(24rem,40vh)]"
+              class="grid grid-cols-1 sm:grid-cols-[1.75fr_1fr] gap-3 sm:h-[clamp(20rem,42vh,30rem)]"
             >
               <!-- Left col: main card (desktop only) -->
               ${ffa
@@ -181,7 +181,7 @@ export class GameModeSelector extends LitElement {
                 : nothing}
 
               <!-- Right col: special + teams (desktop only) -->
-              <div class="hidden sm:flex sm:flex-col sm:gap-4">
+              <div class="hidden sm:flex sm:flex-col sm:gap-3">
                 ${special
                   ? html`<div class="flex-1 min-h-0">
                       ${this.renderSpecialLobbyCard(special)}
