@@ -43,6 +43,13 @@ export type FriendEvent =
       username: string | null;
       body: string;
       createdAt: string;
+    }
+  | {
+      type: "party_invite";
+      from: string;
+      username: string | null;
+      inviteCode: string;
+      createdAt: string;
     };
 
 type AddressedEvent = { to: string; event: FriendEvent };
@@ -243,7 +250,12 @@ export async function broadcastPresence(
 // Messages
 // ---------------------------------------------------------------------------
 
-async function findFriend(userId: string, publicId: string) {
+/**
+ * Resolves a publicId to a user, but only when a friendship with the caller
+ * exists. Exported for party invites, which are friends-only by design —
+ * strangers get the invite code instead.
+ */
+export async function findFriend(userId: string, publicId: string) {
   const target = await db.query.users.findFirst({
     where: eq(users.publicId, publicId),
   });

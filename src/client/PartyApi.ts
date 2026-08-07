@@ -135,6 +135,23 @@ export async function sendPartyChat(body: string): Promise<boolean> {
   }
 }
 
+/**
+ * Invites a friend into the caller's party. The recipient gets the invite
+ * over their event stream; accepting is a normal join-by-code on their side.
+ */
+export async function invitePartyMember(publicId: string): Promise<boolean> {
+  try {
+    const res = await partyFetch("/parties/@me/invite", {
+      method: "POST",
+      body: JSON.stringify({ publicId }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn("invitePartyMember: request failed", err);
+    return false;
+  }
+}
+
 export interface PartyFit {
   fits: boolean;
   partySize: number;

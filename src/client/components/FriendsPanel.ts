@@ -22,6 +22,7 @@ import {
 import {
   connectPartyStream,
   createParty,
+  invitePartyMember,
   joinParty,
   kickFromParty,
   leaveParty,
@@ -40,6 +41,14 @@ interface PartyChatLine {
 
 /** Cap the in-memory party chat; older lines scroll out of existence. */
 const PARTY_CHAT_CAP = 100;
+
+/** A pending "join my party" invite from a friend, newest per sender wins. */
+interface PartyInvite {
+  from: string;
+  username: string | null;
+  inviteCode: string;
+  createdAt: string;
+}
 
 /**
  * The always-there social dock: a collapsible panel pinned to the bottom-right
@@ -70,6 +79,9 @@ export class FriendsPanel extends LitElement {
   @state() private joinCode = "";
   @state() private partyNote: string | null = null;
   @state() private codeCopied = false;
+  @state() private partyInvites: PartyInvite[] = [];
+  /** Friends already invited this session, for the "Invited" feedback. */
+  @state() private invitedFriends: Set<string> = new Set();
 
   private stream: FriendsStreamHandle | null = null;
   private partyStream: PartyStreamHandle | null = null;
@@ -178,6 +190,16 @@ export class FriendsPanel extends LitElement {
       const watching = this.open && this.tab === "party";
       if (!watching && event.from !== this.myPublicId()) this.partyUnread++;
       if (watching) this.scrollDown(".party-chat-scroll");
+      return;
+    }
+
+    if (event.type === "party_invite") {
+      if (event.from === this.myPublicId()) return;
+      // Newest invite per sender wins; a spammed friend still shows one card.
+      this.partyInvites = [
+        ...this.partyInvites.filter((invite) => invite.from !== event.from),
+        event,
+      ];
       return;
     }
 
@@ -343,6 +365,78 @@ export class FriendsPanel extends LitElement {
     if (result.ok) this.party = result.value;
   }
 
+  /** Sends a direct party invite to one friend, with inline feedback. */
+  private async handleInviteFriend(publicId: string) {
+    const ok = await invitePartyMember(publicId);
+    if (ok) {
+      const next = new Set(this.invitedFriends);
+      next.add(publicId);
+      this.invitedFriends = next;
+    }
+  }
+
+  /** Accepting an invite is an ordinary join with the carried code. */
+  private async handleAcceptInvite(invite: PartyInvite) {
+    this.partyInvites = this.partyInvites.filter(
+      (candidate) => candidate.from !== invite.from,
+    );
+    const result = await joinParty(invite.inviteCode);
+    if (result.ok) {
+      this.party = result.value;
+      this.partyNote = null;
+      this.connectPartyStream();
+      this.switchTab("party");
+    } else {
+      this.tab = "party";
+      this.partyNote = translateText(
+        result.error === "not_found"
+          ? "party.error_not_found"
+          : result.error === "party_full"
+            ? "party.error_full"
+            : result.error === "already_in_party"
+              ? "party.error_already_in_party"
+              : "party.error_generic",
+      );
+    }
+  }
+
+  private dismissInvite(invite: PartyInvite) {
+    this.partyInvites = this.partyInvites.filter(
+      (candidate) => candidate.from !== invite.from,
+    );
+  }
+
+  /** The pending invite cards, shown on both tabs so they can't be missed. */
+  private renderInviteCards() {
+    return this.partyInvites.map(
+      (invite) => html`
+        <div
+          class="flex items-center gap-2 px-2.5 py-2 border-b border-lt-700 bg-lt-accent/10 [box-shadow:inset_2px_0_0_var(--color-lt-accent)]"
+        >
+          <span class="flex-1 min-w-0 text-[14px] text-lt-100 leading-snug"
+            >${translateText("party.invites_you", {
+              name: invite.username ?? invite.from,
+            })}</span
+          >
+          <button
+            class="lt-num text-[12px] font-bold uppercase bg-lt-accent text-lt-accent-ink px-2 py-0.5 hover:bg-lt-accent-hi cursor-pointer"
+            @click=${() => void this.handleAcceptInvite(invite)}
+          >
+            ${translateText("party.join")}
+          </button>
+          <button
+            class="text-lt-500 hover:text-lt-100 cursor-pointer px-1"
+            aria-label=${translateText("party.dismiss")}
+            title=${translateText("party.dismiss")}
+            @click=${() => this.dismissInvite(invite)}
+          >
+            ✕
+          </button>
+        </div>
+      `,
+    );
+  }
+
   private copyInviteCode() {
     if (this.party === null) return;
     void navigator.clipboard?.writeText(this.party.inviteCode).then(() => {
@@ -398,10 +492,10 @@ export class FriendsPanel extends LitElement {
                 >${unreadTotal}</span
               >`
             : nothing}
-          ${this.incoming.length > 0
+          ${this.incoming.length + this.partyInvites.length > 0
             ? html`<span
                 class="lt-num min-w-[18px] h-[16px] px-1 grid place-items-center border border-lt-accent/60 text-lt-accent text-[11px] font-bold"
-                >${this.incoming.length}</span
+                >${this.incoming.length + this.partyInvites.length}</span
               >`
             : nothing}
           <span class="ml-auto text-lt-400" aria-hidden="true"
@@ -437,6 +531,8 @@ export class FriendsPanel extends LitElement {
                   `,
                 )}
               </div>
+              <!-- Party invites float above whatever view is open. -->
+              ${this.renderInviteCards()}
               ${this.tab === "party"
                 ? this.renderParty()
                 : this.activeChat !== null
@@ -536,36 +632,62 @@ export class FriendsPanel extends LitElement {
               )
               .map((friend) => {
                 const unreadCount = this.unread.get(friend.publicId) ?? 0;
+                // Party invite action only when there IS a party to invite
+                // into and the friend isn't already sitting in it.
+                const canInvite =
+                  this.party !== null &&
+                  !this.party.members.some(
+                    (member) => member.publicId === friend.publicId,
+                  );
+                const alreadyInvited = this.invitedFriends.has(friend.publicId);
                 return html`
-                  <button
-                    class="w-full flex items-center gap-2 px-2.5 py-2 border-b border-lt-700/45 cursor-pointer text-left ${unreadCount >
+                  <div
+                    class="flex items-center gap-2 px-2.5 border-b border-lt-700/45 ${unreadCount >
                     0
                       ? "bg-lt-accent/10 [box-shadow:inset_2px_0_0_var(--color-lt-accent)] hover:bg-lt-accent/15"
                       : "lt-row"}"
-                    @click=${() => void this.openChat(friend.publicId)}
                   >
-                    <span
-                      class="w-2 h-2 shrink-0 rounded-full ${friend.online ===
-                      true
-                        ? "bg-lt-ok"
-                        : "bg-lt-600"}"
-                    ></span>
-                    <span
-                      class="flex-1 min-w-0 truncate text-[14px] ${unreadCount >
-                      0
-                        ? "text-lt-100 font-semibold"
-                        : friend.online === true
-                          ? "text-lt-100"
-                          : "text-lt-400"}"
-                      >${this.nameOf(friend)}</span
+                    <button
+                      class="flex-1 min-w-0 flex items-center gap-2 py-2 cursor-pointer text-left"
+                      @click=${() => void this.openChat(friend.publicId)}
                     >
-                    ${unreadCount > 0
-                      ? html`<span
-                          class="lt-num min-w-[20px] h-[18px] px-1 grid place-items-center bg-lt-accent text-lt-accent-ink text-[12px] font-bold"
-                          >${unreadCount}</span
-                        >`
+                      <span
+                        class="w-2 h-2 shrink-0 rounded-full ${friend.online ===
+                        true
+                          ? "bg-lt-ok"
+                          : "bg-lt-600"}"
+                      ></span>
+                      <span
+                        class="flex-1 min-w-0 truncate text-[14px] ${unreadCount >
+                        0
+                          ? "text-lt-100 font-semibold"
+                          : friend.online === true
+                            ? "text-lt-100"
+                            : "text-lt-400"}"
+                        >${this.nameOf(friend)}</span
+                      >
+                      ${unreadCount > 0
+                        ? html`<span
+                            class="lt-num min-w-[20px] h-[18px] px-1 grid place-items-center bg-lt-accent text-lt-accent-ink text-[12px] font-bold"
+                            >${unreadCount}</span
+                          >`
+                        : nothing}
+                    </button>
+                    ${canInvite
+                      ? alreadyInvited
+                        ? html`<span class="lt-label !text-[10px] !text-lt-ok"
+                            >${translateText("party.invited")}</span
+                          >`
+                        : html`<button
+                            class="lt-label !text-[11px] border border-lt-600 px-1.5 py-px hover:!text-lt-accent hover:border-lt-accent/50 cursor-pointer shrink-0"
+                            title=${translateText("party.invite")}
+                            @click=${() =>
+                              void this.handleInviteFriend(friend.publicId)}
+                          >
+                            ${translateText("party.invite")}
+                          </button>`
                       : nothing}
-                  </button>
+                  </div>
                 `;
               })}
       </div>

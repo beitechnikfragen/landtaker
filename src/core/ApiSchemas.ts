@@ -631,6 +631,15 @@ export const FriendStreamEventSchema = z.discriminatedUnion("type", [
     body: z.string(),
     createdAt: z.iso.datetime(),
   }),
+  // A friend inviting the recipient into their party. Carries the invite
+  // code so accepting is one ordinary join — no server-side invite state.
+  z.object({
+    type: z.literal("party_invite"),
+    from: z.string(),
+    username: z.string().nullable(),
+    inviteCode: z.string(),
+    createdAt: z.iso.datetime(),
+  }),
 ]);
 export type FriendStreamEvent = z.infer<typeof FriendStreamEventSchema>;
 
