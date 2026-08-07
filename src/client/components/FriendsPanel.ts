@@ -369,7 +369,7 @@ export class FriendsPanel extends LitElement {
 
     return html`
       <div
-        class="hidden lg:block in-[.in-game]:!hidden fixed bottom-0 right-[max(96px,calc((100vw-1300px)/2+28px))] z-[900] w-[340px] pointer-events-auto"
+        class="hidden lg:block in-[.in-game]:!hidden fixed bottom-0 right-[72px] z-[900] w-[340px] pointer-events-auto"
       >
         <!-- Collapsed bar / panel header -->
         <button
@@ -379,15 +379,15 @@ export class FriendsPanel extends LitElement {
             : ""} cursor-pointer"
           @click=${() => this.toggleOpen()}
         >
-          <span class="lt-label !text-[11px] !text-lt-100"
+          <span class="lt-label !text-[12px] !text-lt-100"
             >${translateText("friends.social")}</span
           >
-          <span class="lt-label !text-[10px]"
+          <span class="lt-label !text-[11px]"
             >${onlineCount}/${this.friends.length}
             ${translateText("friends.online")}</span
           >
           ${this.party !== null
-            ? html`<span class="lt-label !text-[10px] !text-lt-accent"
+            ? html`<span class="lt-label !text-[11px] !text-lt-accent"
                 >${translateText("party.title")}
                 ${this.party.members.length}/${this.party.maxMembers}</span
               >`
@@ -418,7 +418,7 @@ export class FriendsPanel extends LitElement {
                 ${(["friends", "party"] as const).map(
                   (tab) => html`
                     <button
-                      class="flex-1 flex items-center justify-center gap-1.5 py-1.5 lt-label !text-[11px] cursor-pointer ${this
+                      class="flex-1 flex items-center justify-center gap-1.5 py-2 lt-label !text-[12px] cursor-pointer ${this
                         .tab === tab
                         ? "!text-lt-accent [box-shadow:inset_0_-2px_0_var(--color-lt-accent)]"
                         : "hover:!text-lt-100"}"
@@ -456,7 +456,7 @@ export class FriendsPanel extends LitElement {
         @submit=${(e: Event) => void this.handleAdd(e)}
       >
         <input
-          class="flex-1 min-w-0 bg-lt-800 border border-lt-600 px-2 py-1 text-[13px] text-lt-100 placeholder:text-lt-500 outline-none focus:border-lt-accent"
+          class="flex-1 min-w-0 bg-lt-800 border border-lt-600 px-2.5 py-1.5 text-[14px] text-lt-100 placeholder:text-lt-500 outline-none focus:border-lt-accent"
           .value=${this.addValue}
           @input=${(e: Event) => {
             this.addValue = (e.target as HTMLInputElement).value;
@@ -464,12 +464,29 @@ export class FriendsPanel extends LitElement {
           }}
           placeholder=${translateText("friends.public_id_placeholder")}
         />
-        <button class="lt-btn !py-1 !px-2.5 text-[12px]" type="submit">
-          ${translateText("friends.add_friend")}
+        <!-- Accent plus square: the primary action of this row, without a
+             full-width word eating the input's space. -->
+        <button
+          class="shrink-0 w-[34px] grid place-items-center bg-lt-accent text-lt-accent-ink hover:bg-lt-accent-hi transition-colors cursor-pointer"
+          type="submit"
+          title=${translateText("friends.add_friend")}
+          aria-label=${translateText("friends.add_friend")}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            class="w-4.5 h-4.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
         </button>
       </form>
       ${this.addNote !== null
-        ? html`<div class="px-2.5 py-1 lt-label !text-[10px] !text-lt-400">
+        ? html`<div class="px-2.5 py-1 lt-label !text-[11px] !text-lt-400">
             ${this.addNote}
           </div>`
         : nothing}
@@ -485,18 +502,18 @@ export class FriendsPanel extends LitElement {
                     class="flex items-center gap-2 px-2.5 py-1.5 border-b border-lt-700/45"
                   >
                     <span
-                      class="flex-1 min-w-0 truncate text-[13px] text-lt-100"
+                      class="flex-1 min-w-0 truncate text-[14px] text-lt-100"
                       >${this.nameOf(request)}</span
                     >
                     <button
-                      class="lt-label !text-[10px] border border-lt-600 px-1.5 py-px hover:!text-lt-ok hover:border-lt-ok/50"
+                      class="lt-label !text-[11px] border border-lt-600 px-1.5 py-px hover:!text-lt-ok hover:border-lt-ok/50"
                       @click=${() =>
                         void this.handleRequest(request.publicId, true)}
                     >
                       ${translateText("friends.accept")}
                     </button>
                     <button
-                      class="lt-label !text-[10px] border border-lt-600 px-1.5 py-px hover:!text-lt-bad hover:border-lt-bad/50"
+                      class="lt-label !text-[11px] border border-lt-600 px-1.5 py-px hover:!text-lt-bad hover:border-lt-bad/50"
                       @click=${() =>
                         void this.handleRequest(request.publicId, false)}
                     >
@@ -510,17 +527,21 @@ export class FriendsPanel extends LitElement {
 
         <!-- Friends, online first -->
         ${this.friends.length === 0
-          ? html`<div class="px-2.5 py-4 lt-label !text-[10px] !text-lt-500">
+          ? html`<div class="px-2.5 py-4 lt-label !text-[11px] !text-lt-500">
               ${translateText("friends.no_friends")}
             </div>`
           : [...this.friends]
               .sort(
                 (a, b) => Number(b.online === true) - Number(a.online === true),
               )
-              .map(
-                (friend) => html`
+              .map((friend) => {
+                const unreadCount = this.unread.get(friend.publicId) ?? 0;
+                return html`
                   <button
-                    class="w-full flex items-center gap-2 px-2.5 py-2 border-b border-lt-700/45 lt-row cursor-pointer text-left"
+                    class="w-full flex items-center gap-2 px-2.5 py-2 border-b border-lt-700/45 cursor-pointer text-left ${unreadCount >
+                    0
+                      ? "bg-lt-accent/10 [box-shadow:inset_2px_0_0_var(--color-lt-accent)] hover:bg-lt-accent/15"
+                      : "lt-row"}"
                     @click=${() => void this.openChat(friend.publicId)}
                   >
                     <span
@@ -530,21 +551,23 @@ export class FriendsPanel extends LitElement {
                         : "bg-lt-600"}"
                     ></span>
                     <span
-                      class="flex-1 min-w-0 truncate text-[13px] ${friend.online ===
-                      true
-                        ? "text-lt-100"
-                        : "text-lt-400"}"
+                      class="flex-1 min-w-0 truncate text-[14px] ${unreadCount >
+                      0
+                        ? "text-lt-100 font-semibold"
+                        : friend.online === true
+                          ? "text-lt-100"
+                          : "text-lt-400"}"
                       >${this.nameOf(friend)}</span
                     >
-                    ${(this.unread.get(friend.publicId) ?? 0) > 0
+                    ${unreadCount > 0
                       ? html`<span
-                          class="lt-num min-w-[18px] h-[16px] px-1 grid place-items-center bg-lt-accent text-lt-accent-ink text-[11px] font-bold"
-                          >${this.unread.get(friend.publicId)}</span
+                          class="lt-num min-w-[20px] h-[18px] px-1 grid place-items-center bg-lt-accent text-lt-accent-ink text-[12px] font-bold"
+                          >${unreadCount}</span
                         >`
                       : nothing}
                   </button>
-                `,
-              )}
+                `;
+              })}
       </div>
     `;
   }
@@ -570,14 +593,14 @@ export class FriendsPanel extends LitElement {
             ? "bg-lt-ok"
             : "bg-lt-600"}"
         ></span>
-        <span class="flex-1 min-w-0 truncate text-[13px] text-lt-100"
+        <span class="flex-1 min-w-0 truncate text-[14px] text-lt-100"
           >${friend ? this.nameOf(friend) : (this.activeChat ?? "")}</span
         >
       </div>
 
       <div class="friends-chat-scroll flex-1 overflow-y-auto px-2.5 py-2">
         ${this.messages.length === 0
-          ? html`<div class="lt-label !text-[10px] !text-lt-500 py-2">
+          ? html`<div class="lt-label !text-[11px] !text-lt-500 py-2">
               ${translateText("friends.no_messages")}
             </div>`
           : this.messages.map(
@@ -588,7 +611,7 @@ export class FriendsPanel extends LitElement {
                     : "justify-start"} mb-1.5"
                 >
                   <span
-                    class="max-w-[85%] px-2 py-1 text-[13px] leading-snug break-words ${message.from ===
+                    class="max-w-[85%] px-2 py-1 text-[14px] leading-snug break-words ${message.from ===
                     me
                       ? "bg-lt-accent/15 border border-lt-accent/35 text-lt-100"
                       : "bg-lt-800 border border-lt-700 text-lt-100"}"
@@ -604,7 +627,7 @@ export class FriendsPanel extends LitElement {
         @submit=${(e: Event) => void this.handleSendMessage(e)}
       >
         <input
-          class="friends-chat-input flex-1 min-w-0 bg-lt-800 border border-lt-600 px-2 py-1 text-[13px] text-lt-100 placeholder:text-lt-500 outline-none focus:border-lt-accent"
+          class="friends-chat-input flex-1 min-w-0 bg-lt-800 border border-lt-600 px-2 py-1 text-[14px] text-lt-100 placeholder:text-lt-500 outline-none focus:border-lt-accent"
           maxlength="500"
           placeholder=${translateText("friends.chat_placeholder")}
           autocomplete="off"
@@ -621,7 +644,7 @@ export class FriendsPanel extends LitElement {
       return html`
         <div class="p-3 flex flex-col gap-2">
           <button
-            class="lt-btn-primary w-full py-2 text-[13px]"
+            class="lt-btn-primary w-full py-2 text-[14px]"
             @click=${() => void this.handleCreateParty()}
           >
             ${translateText("party.create")}
@@ -636,7 +659,7 @@ export class FriendsPanel extends LitElement {
             @submit=${(e: Event) => void this.handleJoinParty(e)}
           >
             <input
-              class="flex-1 min-w-0 bg-lt-800 border border-lt-600 px-2 py-1 text-[13px] text-lt-100 placeholder:text-lt-500 outline-none focus:border-lt-accent uppercase"
+              class="flex-1 min-w-0 bg-lt-800 border border-lt-600 px-2 py-1 text-[14px] text-lt-100 placeholder:text-lt-500 outline-none focus:border-lt-accent uppercase"
               .value=${this.joinCode}
               @input=${(e: Event) => {
                 this.joinCode = (e.target as HTMLInputElement).value;
@@ -664,11 +687,11 @@ export class FriendsPanel extends LitElement {
     return html`
       <!-- Invite code + leave -->
       <div class="flex items-center gap-2 px-2.5 py-2 border-b border-lt-700">
-        <span class="lt-label !text-[10px]"
+        <span class="lt-label !text-[11px]"
           >${translateText("party.invite_code")}</span
         >
         <button
-          class="lt-num text-[13px] text-lt-accent tracking-[0.2em] cursor-pointer"
+          class="lt-num text-[14px] text-lt-accent tracking-[0.2em] cursor-pointer"
           title=${translateText("party.copy_code")}
           @click=${() => this.copyInviteCode()}
         >
@@ -680,7 +703,7 @@ export class FriendsPanel extends LitElement {
             >`
           : nothing}
         <button
-          class="ml-auto lt-label !text-[10px] border border-lt-600 px-1.5 py-px hover:!text-lt-bad hover:border-lt-bad/50"
+          class="ml-auto lt-label !text-[11px] border border-lt-600 px-1.5 py-px hover:!text-lt-bad hover:border-lt-bad/50"
           @click=${() => void this.handleLeaveParty()}
         >
           ${translateText("party.leave")}
@@ -703,7 +726,7 @@ export class FriendsPanel extends LitElement {
                 title=${member.isLeader ? translateText("party.leader") : ""}
               ></span>
               <span
-                class="flex-1 min-w-0 truncate text-[13px] ${member.publicId ===
+                class="flex-1 min-w-0 truncate text-[14px] ${member.publicId ===
                 me
                   ? "text-lt-accent"
                   : "text-lt-100"}"
@@ -716,7 +739,7 @@ export class FriendsPanel extends LitElement {
                 : nothing}
               ${iAmLeader && member.publicId !== me
                 ? html`<button
-                    class="lt-label !text-[10px] border border-lt-600 px-1.5 py-px hover:!text-lt-bad hover:border-lt-bad/50"
+                    class="lt-label !text-[11px] border border-lt-600 px-1.5 py-px hover:!text-lt-bad hover:border-lt-bad/50"
                     @click=${() => void this.handleKick(member.userId)}
                   >
                     ${translateText("party.kick")}
@@ -730,12 +753,12 @@ export class FriendsPanel extends LitElement {
       <!-- Party chat -->
       <div class="party-chat-scroll flex-1 overflow-y-auto px-2.5 py-2">
         ${this.partyMessages.length === 0
-          ? html`<div class="lt-label !text-[10px] !text-lt-500 py-2">
+          ? html`<div class="lt-label !text-[11px] !text-lt-500 py-2">
               ${translateText("friends.no_messages")}
             </div>`
           : this.partyMessages.map(
               (line) => html`
-                <div class="mb-1 text-[13px] leading-snug break-words">
+                <div class="mb-1 text-[14px] leading-snug break-words">
                   <b
                     class="${line.from === me
                       ? "text-lt-accent"
@@ -753,7 +776,7 @@ export class FriendsPanel extends LitElement {
         @submit=${(e: Event) => void this.handleSendPartyChat(e)}
       >
         <input
-          class="party-chat-input flex-1 min-w-0 bg-lt-800 border border-lt-600 px-2 py-1 text-[13px] text-lt-100 placeholder:text-lt-500 outline-none focus:border-lt-accent"
+          class="party-chat-input flex-1 min-w-0 bg-lt-800 border border-lt-600 px-2 py-1 text-[14px] text-lt-100 placeholder:text-lt-500 outline-none focus:border-lt-accent"
           maxlength="500"
           placeholder=${translateText("friends.chat_placeholder")}
           autocomplete="off"
