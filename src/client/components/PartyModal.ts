@@ -268,7 +268,7 @@ export class PartyModal extends BaseModal {
         ${isVerifiedUsername(member.username) ? verifiedBadge() : ""}
         ${member.isLeader
           ? html`<span
-              class="bg-lt-accent/20 px-1.5 py-0.5 text-xs text-blue-200"
+              class="bg-lt-accent/20 px-1.5 py-0.5 text-xs text-lt-accent"
               >${translateText("party.leader")}</span
             >`
           : ""}
