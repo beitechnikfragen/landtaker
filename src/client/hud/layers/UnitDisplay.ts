@@ -229,7 +229,7 @@ export class UnitDisplay extends LitElement implements Controller {
         ${hovered
           ? html`
               <div
-                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-gray-200 text-center w-max text-xs bg-lt-850/90 backdrop-blur-xs p-1 z-[100] shadow-lg pointer-events-none"
+                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-lt-100 text-center w-max text-xs bg-lt-850/90 backdrop-blur-xs p-1 z-[100] shadow-lg pointer-events-none"
               >
                 <div class="font-bold text-sm mb-1">
                   ${translateText(
@@ -241,14 +241,14 @@ export class UnitDisplay extends LitElement implements Controller {
                 </div>
                 ${unitType === UnitType.Warship
                   ? html`<div
-                      class="mt-1 px-2 py-1 text-[10px] text-cyan-300 border-t border-lt-700"
+                      class="mt-1 px-2 py-1 text-[10px] text-lt-troop border-t border-lt-700"
                     >
                       ⇧ ${translateText("build_menu.warship_shift_hint")}
                     </div>`
                   : null}
                 <div class="flex items-center justify-center gap-1">
                   <img src=${goldCoinIcon} width="13" height="13" />
-                  <span class="text-yellow-300"
+                  <span class="text-lt-gold"
                     >${renderNumber(this.cost(unitType))}</span
                   >
                 </div>
@@ -259,8 +259,8 @@ export class UnitDisplay extends LitElement implements Controller {
           class="${this.canBuild(unitType)
             ? ""
             : "opacity-40"} border border-lt-600 px-0.5 pb-0.5 flex items-center gap-0.5 cursor-pointer
-             ${selected ? "hover:bg-gray-400/10" : "hover:bg-lt-850"}
-             text-white ${selected ? "bg-slate-400/20" : ""}"
+             ${selected ? "hover:bg-lt-750" : "hover:bg-lt-850"}
+             text-white ${selected ? "bg-lt-750 !border-lt-accent" : ""}"
           @click=${() => {
             if (selected) {
               this.uiState.ghostStructure = null;

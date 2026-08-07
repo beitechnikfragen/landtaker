@@ -90,7 +90,7 @@ export class RadialMenu implements Controller {
   private backButtonHoverTimeout: number | null = null;
   private navigationInProgress: boolean = false;
   private originalCenterButtonIcon: string = "";
-  private readonly defaultCenterButtonColor = "#0f2744";
+  private readonly defaultCenterButtonColor = "#101418";
   private centerButtonColor: string;
   private centerButtonIconSize: number;
 
@@ -334,7 +334,7 @@ export class RadialMenu implements Controller {
         const disabled = this.params === null || d.data.disabled(this.params);
         const color = disabled
           ? this.config.disabledColor
-          : (resolveColor(d.data, this.params) ?? "#1e3a5f");
+          : (resolveColor(d.data, this.params) ?? "#181d22");
         const opacity = disabled ? 0.4 : 0.82;
 
         if (d.data.id === this.selectedItemId && this.currentLevel > level) {
@@ -365,7 +365,7 @@ export class RadialMenu implements Controller {
         const disabled = this.params === null || d.data.disabled(this.params);
         const baseColor = disabled
           ? this.config.disabledColor
-          : (resolveColor(d.data, this.params) ?? "#1e3a5f");
+          : (resolveColor(d.data, this.params) ?? "#181d22");
         const opacity = disabled ? 0.4 : 0.82;
 
         const normalColor =
@@ -422,7 +422,7 @@ export class RadialMenu implements Controller {
         const color =
           this.params === null || d.data.disabled(this.params)
             ? this.config.disabledColor
-            : (resolveColor(d.data, this.params) ?? "#1e3a5f");
+            : (resolveColor(d.data, this.params) ?? "#181d22");
         path.attr("fill", color);
       }
     });
@@ -486,7 +486,7 @@ export class RadialMenu implements Controller {
       path.style("filter", null);
       const color = disabled
         ? this.config.disabledColor
-        : (resolveColor(d.data, this.params) ?? "#333333");
+        : (resolveColor(d.data, this.params) ?? "#181d22");
       const opacity = disabled ? 0.4 : 0.82;
 
       if (d.data.timerFraction) {
@@ -1122,7 +1122,7 @@ export class RadialMenu implements Controller {
         const disabled = this.isItemDisabled(item);
         const color = disabled
           ? this.config.disabledColor
-          : (resolveColor(item, this.params) ?? "#333333");
+          : (resolveColor(item, this.params) ?? "#181d22");
         const opacity = disabled ? 0.4 : 0.82;
 
         // Update path appearance (skip fill for timer items — gradient handles it)

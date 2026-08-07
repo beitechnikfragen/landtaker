@@ -1,7 +1,5 @@
 import {
-  goldCoinIcon,
   guildIcon,
-  profileIcon,
   soldierIcon,
   upperLimitIcon,
 } from "../src/client/hud/HotbarIcons";
@@ -101,9 +99,9 @@ describe("PlayerStats", () => {
     const goldHeader = playerStats.querySelectorAll(
       '.stats-table-header > [role="columnheader"]',
     )[4];
-    expect(goldHeader.querySelector("img")?.getAttribute("src")).toBe(
-      goldCoinIcon,
-    );
+    // Stat headers are text since the standings redesign — no icon to decode.
+    expect(goldHeader.querySelector("img")).toBeNull();
+    expect(goldHeader.textContent).toContain("leaderboard.gold");
     expect(goldHeader.querySelector("button")?.getAttribute("aria-label")).toBe(
       "leaderboard.gold",
     );
@@ -152,15 +150,14 @@ describe("PlayerStats", () => {
     const countCell = playerStats.querySelector(
       '.stats-table-row > [role="cell"]:nth-child(5)',
     );
-    const troopIcon = headers[2].querySelector("img");
     const maxTroopIcons = headers[3].querySelectorAll("img");
     expect(headers[1].classList).toContain("justify-center");
     expect(headers[2].classList).toContain("justify-center");
     expect(headers[3].classList).toContain("justify-center");
     expect(headers[4].classList).toContain("justify-center");
-    expect(troopIcon?.getAttribute("src")).toBe(soldierIcon);
-    expect(troopIcon?.classList).toContain("brightness-0");
-    expect(troopIcon?.classList).toContain("invert");
+    // Troops headers as text since the standings redesign.
+    expect(headers[2].querySelector("img")).toBeNull();
+    expect(headers[2].textContent).toContain("leaderboard.troops");
     // Max troops header reads as a troop icon raised to the upper-limit icon.
     expect(maxTroopIcons.length).toBe(2);
     expect(maxTroopIcons[0].getAttribute("src")).toBe(soldierIcon);
@@ -227,9 +224,8 @@ describe("PlayerStats clan column", () => {
       guildIcon,
     );
     expect(headers[1].getAttribute("title")).toBe("leaderboard.clan");
-    expect(headers[2].querySelector("img")?.getAttribute("src")).toBe(
-      profileIcon,
-    );
+    // The player column headers with its text label now.
+    expect(headers[2].querySelector("img")).toBeNull();
     expect(
       playerStats.querySelector(".stats-table-content")?.getAttribute("style"),
     ).toContain("34px 80px 100px");

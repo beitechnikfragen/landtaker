@@ -5,13 +5,10 @@ import type { GameView, PlayerView } from "../../../view";
 import {
   allianceIcon,
   cityIcon,
-  claimIcon,
   factoryIcon,
-  goldCoinIcon,
   guildIcon,
   missileSiloIcon,
   portIcon,
-  profileIcon,
   samLauncherIcon,
   soldierIcon,
   teamIcon,
@@ -127,7 +124,6 @@ export const COLUMN_DEFS: readonly ColumnDef[] = [
   defineColumn({
     id: "player",
     labelKey: "leaderboard.player",
-    headerVisual: { kind: "icon", src: profileIcon },
     width: "100px",
     align: "start",
     kinds: ["player"],
@@ -147,7 +143,6 @@ export const COLUMN_DEFS: readonly ColumnDef[] = [
   defineColumn({
     id: "tiles",
     labelKey: "leaderboard.owned",
-    headerVisual: { kind: "icon", src: claimIcon, white: true },
     value: (player) => player.numTilesOwned(),
     cell: (row, game) => {
       const validTiles = game.numLandTiles() - game.numTilesWithFallout();
@@ -157,7 +152,6 @@ export const COLUMN_DEFS: readonly ColumnDef[] = [
   defineColumn({
     id: "gold",
     labelKey: "leaderboard.gold",
-    headerVisual: { kind: "icon", src: goldCoinIcon },
     // Gold is a bigint, but game values remain safely below Number.MAX_SAFE_INTEGER.
     value: (player) => Number(player.gold()),
     cell: (row) => renderNumber(row.value),
@@ -165,7 +159,6 @@ export const COLUMN_DEFS: readonly ColumnDef[] = [
   defineColumn({
     id: "troops",
     labelKey: "leaderboard.troops",
-    headerVisual: troopHeaderVisual,
     value: (player) => player.troops(),
     cell: (row) => renderTroops(row.value),
   }),

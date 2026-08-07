@@ -450,7 +450,7 @@ export class ControlPanel extends LitElement implements Controller {
       <div
         class="flex items-center gap-1.5 px-1.5 py-1 border text-xs font-medium mb-1 ${isWarning
           ? "border-lt-accent/60 bg-lt-accent/10 text-lt-accent"
-          : "border-lt-accent/60 bg-blue-400/10 text-lt-accent"}"
+          : "border-lt-troop/60 bg-lt-troop/10 text-lt-troop"}"
       >
         <span class="shrink-0">${isWarning ? "⚠" : "ℹ"}</span>
         <span>${translateText(this._notification.message)}</span>
@@ -536,7 +536,7 @@ export class ControlPanel extends LitElement implements Controller {
           .value=${String(Math.round(this.attackRatio * 100))}
           @input=${(e: Event) => this.handleRatioSliderInput(e)}
           @pointerup=${(e: Event) => this.handleRatioSliderPointerUp(e)}
-          class="flex-1 h-1.5 accent-aquarius cursor-pointer"
+          class="flex-1 h-1.5 accent-lt-accent cursor-pointer"
         />
       </div>
     `;
@@ -593,7 +593,7 @@ export class ControlPanel extends LitElement implements Controller {
             .value=${String(Math.round(this.attackRatio * 100))}
             @input=${(e: Event) => this.handleRatioSliderInput(e)}
             @pointerup=${(e: Event) => this.handleRatioSliderPointerUp(e)}
-            class="w-full h-1.5 accent-aquarius cursor-pointer"
+            class="w-full h-1.5 accent-lt-accent cursor-pointer"
           />
         </div>
       </div>
