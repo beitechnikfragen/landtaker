@@ -31,12 +31,14 @@ for script in "$HERE"/smoke-*.sh; do
     status=$?
     echo "$output"
 
-    # Each script ends with "passed N, failed M"; fall back to the exit code
-    # for any script that does not follow that convention.
-    line="$(echo "$output" | grep -E '^passed [0-9]+, failed [0-9]+$' | tail -1)"
+    # Scripts report either "passed N, failed M" or "passed: N   failed: M".
+    # Accept both rather than making every author match one house style, and
+    # fall back to the exit code for anything that reports neither.
+    line="$(echo "$output" | grep -E '^passed:? [0-9]+' | tail -1)"
     if [ -n "$line" ]; then
         summary+=("$name — $line")
-        failed="$(echo "$line" | sed -n 's/.*failed \([0-9]*\)$/\1/p')"
+        failed="$(echo "$line" | grep -oE 'failed:? *[0-9]+' | grep -oE '[0-9]+')"
+        failed="${failed:-0}"
         total_failed=$((total_failed + failed))
     else
         summary+=("$name — exit $status (no summary line)")

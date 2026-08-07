@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { config } from "../config.ts";
 import { requireAuth } from "../plugins/auth.ts";
 import { getParty, getPartyForUser } from "../services/parties.ts";
 import {
@@ -25,6 +26,24 @@ import {
 const HEARTBEAT_MS = 25_000;
 
 function sseHeaders(reply: FastifyReply): void {
+  // writeHead goes straight to the raw socket, which bypasses @fastify/cors —
+  // it decorates the Fastify reply, and this route never sends one. Without
+  // re-adding these the browser discards the whole stream, since the client
+  // (:9000) and this backend (:8787) are different origins. The 401 path is
+  // unaffected because that one *does* go through Fastify.
+  const origin = reply.request.headers.origin;
+  const allowed = config.CORS_ORIGIN.split(",").map((o) => o.trim());
+  const corsHeaders =
+    origin && allowed.includes(origin)
+      ? {
+          "Access-Control-Allow-Origin": origin,
+          "Access-Control-Allow-Credentials": "true",
+          // Same-origin requests send no Origin, so caches must not reuse a
+          // response keyed on one origin for another.
+          Vary: "Origin",
+        }
+      : {};
+
   reply.raw.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache, no-transform",
@@ -32,6 +51,7 @@ function sseHeaders(reply: FastifyReply): void {
     // nginx buffers proxied responses by default, which holds events back
     // until the buffer fills — the one header that makes SSE work behind it.
     "X-Accel-Buffering": "no",
+    ...corsHeaders,
   });
   reply.raw.flushHeaders?.();
 }

@@ -15,6 +15,19 @@ export const pool = new pg.Pool({
   connectionTimeoutMillis: 10_000,
 });
 
+/**
+ * Without this listener a lost connection is an unhandled 'error' event, and
+ * Node kills the whole process — so a Postgres restart takes the backend down
+ * with it instead of failing the queries that need it. Idle-client errors are
+ * not tied to any request, so there is nobody to reject: log and let the pool
+ * discard the client and reconnect.
+ *
+ * Redis already had this guard in redis.ts; the pool was missing it.
+ */
+pool.on("error", (err: Error) => {
+  console.error("postgres pool error:", err.message);
+});
+
 export const db = drizzle(pool, { schema });
 
 export type Database = typeof db;
