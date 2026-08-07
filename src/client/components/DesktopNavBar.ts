@@ -1,7 +1,6 @@
 import { LitElement, html } from "lit";
 import { customElement } from "lit/decorators.js";
 import { assetUrl } from "../../core/AssetUrls";
-import { translateText } from "../Utils";
 import { NavNotificationsController } from "./NavNotificationsController";
 import "./NavStatusCells";
 
@@ -53,9 +52,12 @@ export class DesktopNavBar extends LitElement {
    */
   private renderComingSoon(labelKey: string) {
     return html`
+      <!-- Chip text via data-i18n, NOT translateText: this bar renders once,
+           before the language files load, and never re-renders — a render-time
+           translation would freeze as the raw key. -->
       <div
         class="relative flex items-stretch"
-        title=${translateText("main.coming_soon")}
+        data-i18n-title="main.coming_soon"
       >
         <!-- Only the label dims — the SOON chip stays at full opacity so it
              actually reads. -->
@@ -66,8 +68,8 @@ export class DesktopNavBar extends LitElement {
         ></button>
         <span
           class="absolute top-2 right-0 lt-num text-[10px] font-bold uppercase tracking-[0.08em] bg-lt-accent text-lt-accent-ink px-1.5 leading-[16px] pointer-events-none"
-          >${translateText("main.soon")}</span
-        >
+          data-i18n="main.soon"
+        ></span>
       </div>
     `;
   }

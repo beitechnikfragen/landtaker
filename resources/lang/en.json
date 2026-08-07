@@ -1243,6 +1243,9 @@
     "teams_of": "{teamCount} teams of {playersPerTeam}",
     "teams_title": "Teams"
   },
+  "nav": {
+    "credits": "Credits"
+  },
   "new_lobby_prompt": {
     "confirm": "Start a new lobby? All players will be invited to join.",
     "dismiss": "Dismiss",

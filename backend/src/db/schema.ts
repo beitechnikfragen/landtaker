@@ -55,6 +55,9 @@ export const users = pgTable(
 
     adfree: boolean("adfree").notNull().default(false),
     unlimitedRanked: boolean("unlimited_ranked").notNull().default(false),
+    // Soft currency for the store-to-be. Earned/spent nowhere yet; the
+    // column exists so the balance has a home before the first sink does.
+    credits: integer("credits").notNull().default(0),
     canCreatePublicLobbies: boolean("can_create_public_lobbies")
       .notNull()
       .default(false),

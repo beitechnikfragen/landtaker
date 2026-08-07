@@ -191,6 +191,9 @@ export const UserMeResponseSchema = z.object({
   player: z.object({
     publicId: z.string(),
     adfree: z.boolean(),
+    // Store balance. Optional so responses from an API without the field
+    // still parse; absent renders the same as zero.
+    credits: z.number().optional(),
     // True when the player's active subscription tier exempts them from the
     // free-ranked-play limits.
     unlimitedRanked: z.boolean(),

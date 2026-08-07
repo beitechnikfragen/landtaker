@@ -1,7 +1,6 @@
 import { html, LitElement, TemplateResult } from "lit";
 import { customElement } from "lit/decorators.js";
 import { assetUrl } from "../../core/AssetUrls";
-import { translateText } from "../Utils";
 import { NavNotificationsController } from "./NavNotificationsController";
 
 @customElement("mobile-nav-bar")
@@ -119,7 +118,7 @@ export class MobileNavBar extends LitElement {
              desktop nav, dimmed label plus a full-opacity SOON chip. -->
         <div
           class="no-crazygames flex items-center gap-3 w-full"
-          title=${translateText("main.coming_soon")}
+          data-i18n-title="main.coming_soon"
         >
           <button
             class="block text-left font-bold uppercase tracking-[0.05em] text-lt-400 opacity-40 cursor-not-allowed text-[clamp(18px,2.8vh,32px)] py-[clamp(0.2rem,0.8vh,0.75rem)]"
@@ -128,12 +127,12 @@ export class MobileNavBar extends LitElement {
           ></button>
           <span
             class="lt-num text-[11px] font-bold uppercase tracking-[0.08em] bg-lt-accent text-lt-accent-ink px-1.5 leading-[18px]"
-            >${translateText("main.soon")}</span
-          >
+            data-i18n="main.soon"
+          ></span>
         </div>
         <div
           class="no-crazygames flex items-center gap-3 w-full"
-          title=${translateText("main.coming_soon")}
+          data-i18n-title="main.coming_soon"
         >
           <button
             class="block text-left font-bold uppercase tracking-[0.05em] text-lt-400 opacity-40 cursor-not-allowed text-[clamp(18px,2.8vh,32px)] py-[clamp(0.2rem,0.8vh,0.75rem)]"
@@ -142,8 +141,8 @@ export class MobileNavBar extends LitElement {
           ></button>
           <span
             class="lt-num text-[11px] font-bold uppercase tracking-[0.08em] bg-lt-accent text-lt-accent-ink px-1.5 leading-[18px]"
-            >${translateText("main.soon")}</span
-          >
+            data-i18n="main.soon"
+          ></span>
         </div>
         <button
           class="nav-menu-item block w-full text-left font-bold uppercase tracking-[0.05em] text-lt-400 transition-all duration-200 cursor-pointer hover:text-blue-600 hover:translate-x-2.5 hover:drop-shadow-[0_0_20px_rgba(37,99,235,0.5)] [&.active]:text-blue-600 [&.active]:translate-x-2.5 [&.active]:drop-shadow-[0_0_20px_rgba(37,99,235,0.5)] text-[clamp(18px,2.8vh,32px)] py-[clamp(0.2rem,0.8vh,0.75rem)]"
