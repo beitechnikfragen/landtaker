@@ -36,7 +36,14 @@ export type ChatResult<T> =
 /** An event addressed to one user, as carried on the Redis channel. */
 export type FriendEvent =
   | { type: "message"; message: FriendMessage }
-  | { type: "presence"; publicId: string; online: boolean };
+  | { type: "presence"; publicId: string; online: boolean }
+  | {
+      type: "party_message";
+      from: string;
+      username: string | null;
+      body: string;
+      createdAt: string;
+    };
 
 type AddressedEvent = { to: string; event: FriendEvent };
 
@@ -124,8 +131,11 @@ export async function subscribeToUser(
   };
 }
 
-/** Fire-and-forget: chat must not fail because Redis is down. */
-async function publishToUser(
+/**
+ * Fire-and-forget: chat must not fail because Redis is down. Exported for
+ * party chat, which addresses the same per-user streams.
+ */
+export async function publishToUser(
   userId: string,
   event: FriendEvent,
 ): Promise<void> {

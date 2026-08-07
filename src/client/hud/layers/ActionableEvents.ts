@@ -314,7 +314,7 @@ export class ActionableEvents extends LitElement implements Controller {
 
     return html`
       <div
-        class="flex flex-col gap-1 w-full min-[1200px]:w-[340px] pointer-events-auto mt-1"
+        class="flex flex-col gap-1 w-full lg:w-[322px] pointer-events-auto mt-1"
       >
         ${sorted.map(
           (event) => html`

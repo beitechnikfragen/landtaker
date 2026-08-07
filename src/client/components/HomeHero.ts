@@ -4,6 +4,8 @@ import { UserMeResponse } from "../../core/ApiSchemas";
 import { GameMapType } from "../../core/game/Game";
 import { PublicGameInfo, PublicGames } from "../../core/Schemas";
 import { hasLinkedAccount } from "../Api";
+import { showInGameAlert } from "../InGameModal";
+import { fetchMyParty } from "../PartyApi";
 import {
   calculateServerTimeOffset,
   getMapName,
@@ -338,16 +340,27 @@ export class HomeHero extends LitElement {
 
   /**
    * Joins the soonest public FFA lobby — the same join-lobby event the lobby
-   * cards dispatch. FFA carries no playerTeams, so the party-fit guard the
-   * cards run has nothing to check here.
+   * cards dispatch. FFA is solo by definition, so a party larger than one is
+   * refused here exactly like on the lobby cards.
    */
-  private deploy = () => {
+  private deploy = async () => {
     const usernameInput = document.querySelector("username-input") as {
       canPlay?: () => boolean;
     } | null;
     if (usernameInput?.canPlay && !usernameInput.canPlay()) return;
     const lobby = this.deployLobby();
     if (!lobby) return;
+
+    const party = await fetchMyParty();
+    if (party.ok && party.value !== null && party.value.members.length > 1) {
+      await showInGameAlert(
+        translateText("party.ffa_solo", {
+          size: String(party.value.members.length),
+        }),
+      );
+      return;
+    }
+
     this.dispatchEvent(
       new CustomEvent("join-lobby", {
         detail: {
@@ -370,7 +383,11 @@ export class HomeHero extends LitElement {
 
     return html`
       <div class="lt-rise">
-        <div class="lt-group w-fit">
+        <!-- Five actions in the inset shell: tighter padding than the base
+             button, and no wrapping — one line per label like the mock. -->
+        <div
+          class="lt-group w-fit [&>.lt-btn]:!px-5 [&>.lt-btn]:whitespace-nowrap"
+        >
           <button
             class="lt-btn lt-btn-primary"
             ?disabled=${deployTarget === null}

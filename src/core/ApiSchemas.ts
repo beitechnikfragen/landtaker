@@ -621,6 +621,16 @@ export const FriendStreamEventSchema = z.discriminatedUnion("type", [
     publicId: z.string(),
     online: z.boolean(),
   }),
+  // Party chat rides the same per-user stream: members need not be friends,
+  // and the panel holds exactly one connection either way. Ephemeral — party
+  // chat has no history endpoint, what you missed is gone.
+  z.object({
+    type: z.literal("party_message"),
+    from: z.string(),
+    username: z.string().nullable(),
+    body: z.string(),
+    createdAt: z.iso.datetime(),
+  }),
 ]);
 export type FriendStreamEvent = z.infer<typeof FriendStreamEventSchema>;
 

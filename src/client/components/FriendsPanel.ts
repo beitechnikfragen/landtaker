@@ -1,4 +1,4 @@
-import { LitElement, html, nothing } from "lit";
+import { html, LitElement, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import {
   FriendEntry,
@@ -6,6 +6,7 @@ import {
   FriendStreamEvent,
   UserMeResponse,
 } from "../../core/ApiSchemas";
+import { Party } from "../../core/PartyApiSchemas";
 import { hasLinkedAccount } from "../Api";
 import {
   acceptFriendRequest,
@@ -14,26 +15,46 @@ import {
   fetchFriendRequests,
   fetchFriends,
   fetchMessages,
+  type FriendsStreamHandle,
   sendChatMessage,
   sendFriendRequest,
-  type FriendsStreamHandle,
 } from "../FriendsApi";
+import {
+  connectPartyStream,
+  createParty,
+  joinParty,
+  kickFromParty,
+  leaveParty,
+  type PartyStreamHandle,
+  sendPartyChat,
+} from "../PartyApi";
 import { translateText } from "../Utils";
+
+/** One party-chat line as the panel keeps it. Ephemeral, never persisted. */
+interface PartyChatLine {
+  from: string;
+  username: string | null;
+  body: string;
+  createdAt: string;
+}
+
+/** Cap the in-memory party chat; older lines scroll out of existence. */
+const PARTY_CHAT_CAP = 100;
 
 /**
  * The always-there social dock: a collapsible panel pinned to the bottom-right
  * of every main-menu page (hidden in game, where the HUD owns the screen).
  *
- * Presence and incoming messages arrive over one SSE stream
- * (connectFriendsStream); everything the user does goes through the same REST
- * calls the account modal's friends tab uses. The stream also echoes the
- * user's own sends, so messages are deduplicated by id rather than appended
- * blindly.
+ * Two tabs: FRIENDS (list, requests, 1:1 chat) and PARTY (roster, invite
+ * code, party chat). Presence, direct messages and party chat all arrive over
+ * ONE SSE stream (connectFriendsStream); the party roster additionally rides
+ * the existing party stream so leader changes and joins appear live.
  */
 @customElement("friends-panel")
 export class FriendsPanel extends LitElement {
   @state() private userMeResponse: UserMeResponse | false = false;
   @state() private open = localStorage.getItem("friendsPanelOpen") === "1";
+  @state() private tab: "friends" | "party" = "friends";
   @state() private friends: FriendEntry[] = [];
   @state() private incoming: FriendEntry[] = [];
   @state() private unread: Map<string, number> = new Map();
@@ -43,7 +64,15 @@ export class FriendsPanel extends LitElement {
   @state() private addValue = "";
   @state() private addNote: string | null = null;
 
+  @state() private party: Party | null = null;
+  @state() private partyMessages: PartyChatLine[] = [];
+  @state() private partyUnread = 0;
+  @state() private joinCode = "";
+  @state() private partyNote: string | null = null;
+  @state() private codeCopied = false;
+
   private stream: FriendsStreamHandle | null = null;
+  private partyStream: PartyStreamHandle | null = null;
 
   createRenderRoot() {
     return this;
@@ -86,16 +115,41 @@ export class FriendsPanel extends LitElement {
   private async start() {
     await this.refresh();
     this.stream ??= connectFriendsStream((event) => this.onStreamEvent(event));
+    this.connectPartyStream();
+  }
+
+  /**
+   * (Re)opens the roster stream. The backend only subscribes the stream to
+   * the party that exists WHEN IT CONNECTS, so every create/join/leave from
+   * this panel reconnects to pick up the new subscription.
+   */
+  private connectPartyStream() {
+    this.partyStream?.close();
+    this.partyStream = connectPartyStream({
+      onEvent: (event) => {
+        this.party = event.party;
+        if (event.party === null) {
+          this.partyMessages = [];
+          this.partyUnread = 0;
+        }
+      },
+      onFailure: () => {},
+    });
   }
 
   private teardown() {
     this.stream?.close();
     this.stream = null;
+    this.partyStream?.close();
+    this.partyStream = null;
     this.friends = [];
     this.incoming = [];
     this.unread = new Map();
     this.activeChat = null;
     this.messages = [];
+    this.party = null;
+    this.partyMessages = [];
+    this.partyUnread = 0;
   }
 
   private async refresh() {
@@ -117,15 +171,25 @@ export class FriendsPanel extends LitElement {
       return;
     }
 
-    // A chat message. Identify the other party: for our own echoed sends
+    if (event.type === "party_message") {
+      this.partyMessages = [...this.partyMessages, event].slice(
+        -PARTY_CHAT_CAP,
+      );
+      const watching = this.open && this.tab === "party";
+      if (!watching && event.from !== this.myPublicId()) this.partyUnread++;
+      if (watching) this.scrollDown(".party-chat-scroll");
+      return;
+    }
+
+    // A direct message. Identify the other party: for our own echoed sends
     // that's the recipient, otherwise the sender.
     const mine = event.message.from === this.myPublicId();
     const other = mine ? event.message.to : event.message.from;
 
-    if (this.activeChat === other) {
+    if (this.activeChat === other && this.open && this.tab === "friends") {
       if (!this.messages.some((m) => m.id === event.message.id)) {
         this.messages = [...this.messages, event.message];
-        this.scrollChatDown();
+        this.scrollDown(".friends-chat-scroll");
       }
       return;
     }
@@ -133,8 +197,6 @@ export class FriendsPanel extends LitElement {
       const next = new Map(this.unread);
       next.set(other, (next.get(other) ?? 0) + 1);
       this.unread = next;
-      // A message from someone not yet in the list (brand-new friend) —
-      // refresh so the row exists to hang the badge on.
       if (!this.friends.some((f) => f.publicId === other)) void this.refresh();
     }
   }
@@ -142,6 +204,15 @@ export class FriendsPanel extends LitElement {
   private toggleOpen() {
     this.open = !this.open;
     localStorage.setItem("friendsPanelOpen", this.open ? "1" : "0");
+    if (this.open && this.tab === "party") this.partyUnread = 0;
+  }
+
+  private switchTab(tab: "friends" | "party") {
+    this.tab = tab;
+    if (tab === "party") {
+      this.partyUnread = 0;
+      this.scrollDown(".party-chat-scroll");
+    }
   }
 
   private async openChat(publicId: string) {
@@ -153,13 +224,13 @@ export class FriendsPanel extends LitElement {
     const history = await fetchMessages(publicId);
     if (history !== false && this.activeChat === publicId) {
       this.messages = history.results;
-      this.scrollChatDown();
+      this.scrollDown(".friends-chat-scroll");
     }
   }
 
-  private scrollChatDown() {
+  private scrollDown(selector: string) {
     requestAnimationFrame(() => {
-      const el = this.querySelector(".friends-chat-scroll");
+      const el = this.querySelector(selector);
       if (el) el.scrollTop = el.scrollHeight;
     });
   }
@@ -176,8 +247,21 @@ export class FriendsPanel extends LitElement {
     const sent = await sendChatMessage(this.activeChat, body);
     if (sent !== false && !this.messages.some((m) => m.id === sent.id)) {
       this.messages = [...this.messages, sent];
-      this.scrollChatDown();
+      this.scrollDown(".friends-chat-scroll");
     }
+  }
+
+  private async handleSendPartyChat(e: Event) {
+    e.preventDefault();
+    const input = this.querySelector(
+      ".party-chat-input",
+    ) as HTMLInputElement | null;
+    const body = input?.value.trim() ?? "";
+    if (body.length === 0) return;
+    if (input) input.value = "";
+    // The echo arrives on our own stream; nothing is appended here, so the
+    // line shows exactly what every member received.
+    await sendPartyChat(body);
   }
 
   private async handleAdd(e: Event) {
@@ -212,12 +296,67 @@ export class FriendsPanel extends LitElement {
     void this.refresh();
   }
 
-  private nameOf(entry: FriendEntry): string {
+  private async handleCreateParty() {
+    this.partyNote = null;
+    const result = await createParty();
+    if (result.ok) {
+      this.party = result.value;
+      this.connectPartyStream();
+    } else {
+      this.partyNote = translateText("party.error_generic");
+    }
+  }
+
+  private async handleJoinParty(e: Event) {
+    e.preventDefault();
+    const code = this.joinCode.trim();
+    if (code.length === 0) return;
+    this.partyNote = null;
+    const result = await joinParty(code);
+    if (result.ok) {
+      this.party = result.value;
+      this.joinCode = "";
+      this.connectPartyStream();
+    } else {
+      this.partyNote = translateText(
+        result.error === "not_found"
+          ? "party.error_not_found"
+          : result.error === "party_full"
+            ? "party.error_full"
+            : result.error === "closed"
+              ? "party.error_closed"
+              : "party.error_generic",
+      );
+    }
+  }
+
+  private async handleLeaveParty() {
+    await leaveParty();
+    this.party = null;
+    this.partyMessages = [];
+    this.partyUnread = 0;
+    this.connectPartyStream();
+  }
+
+  private async handleKick(userId: string) {
+    const result = await kickFromParty(userId);
+    if (result.ok) this.party = result.value;
+  }
+
+  private copyInviteCode() {
+    if (this.party === null) return;
+    void navigator.clipboard?.writeText(this.party.inviteCode).then(() => {
+      this.codeCopied = true;
+      setTimeout(() => (this.codeCopied = false), 1500);
+    });
+  }
+
+  private nameOf(entry: { username?: string | null; publicId: string }) {
     return entry.username ?? entry.publicId;
   }
 
   private unreadTotal(): number {
-    let sum = 0;
+    let sum = this.partyUnread;
     for (const n of this.unread.values()) sum += n;
     return sum;
   }
@@ -230,7 +369,7 @@ export class FriendsPanel extends LitElement {
 
     return html`
       <div
-        class="hidden lg:block in-[.in-game]:hidden fixed bottom-0 right-4 z-[900] w-[300px] pointer-events-auto"
+        class="hidden lg:block in-[.in-game]:!hidden fixed bottom-0 right-[64px] z-[900] w-[340px] pointer-events-auto"
       >
         <!-- Collapsed bar / panel header -->
         <button
@@ -241,12 +380,18 @@ export class FriendsPanel extends LitElement {
           @click=${() => this.toggleOpen()}
         >
           <span class="lt-label !text-[11px] !text-lt-100"
-            >${translateText("friends.title")}</span
+            >${translateText("friends.social")}</span
           >
           <span class="lt-label !text-[10px]"
             >${onlineCount}/${this.friends.length}
             ${translateText("friends.online")}</span
           >
+          ${this.party !== null
+            ? html`<span class="lt-label !text-[10px] !text-lt-accent"
+                >${translateText("party.title")}
+                ${this.party.members.length}/${this.party.maxMembers}</span
+              >`
+            : nothing}
           ${unreadTotal > 0
             ? html`<span
                 class="lt-num min-w-[18px] h-[16px] px-1 grid place-items-center bg-lt-accent text-lt-accent-ink text-[11px] font-bold"
@@ -266,11 +411,37 @@ export class FriendsPanel extends LitElement {
 
         ${this.open
           ? html`<div
-              class="bg-[rgb(11_14_17/0.96)] border border-lt-700 border-t-lt-700 flex flex-col h-[400px]"
+              class="bg-[rgb(11_14_17/0.96)] border border-lt-700 flex flex-col h-[460px]"
             >
-              ${this.activeChat !== null
-                ? this.renderChat()
-                : this.renderList()}
+              <!-- Tabs -->
+              <div class="flex border-b border-lt-700 shrink-0">
+                ${(["friends", "party"] as const).map(
+                  (tab) => html`
+                    <button
+                      class="flex-1 flex items-center justify-center gap-1.5 py-1.5 lt-label !text-[11px] cursor-pointer ${this
+                        .tab === tab
+                        ? "!text-lt-accent [box-shadow:inset_0_-2px_0_var(--color-lt-accent)]"
+                        : "hover:!text-lt-100"}"
+                      @click=${() => this.switchTab(tab)}
+                    >
+                      ${translateText(
+                        tab === "friends" ? "friends.title" : "party.title",
+                      )}
+                      ${tab === "party" && this.partyUnread > 0
+                        ? html`<span
+                            class="lt-num min-w-[16px] h-[14px] px-0.5 grid place-items-center bg-lt-accent text-lt-accent-ink text-[10px] font-bold"
+                            >${this.partyUnread}</span
+                          >`
+                        : nothing}
+                    </button>
+                  `,
+                )}
+              </div>
+              ${this.tab === "party"
+                ? this.renderParty()
+                : this.activeChat !== null
+                  ? this.renderChat()
+                  : this.renderList()}
             </div>`
           : nothing}
       </div>
@@ -434,6 +605,155 @@ export class FriendsPanel extends LitElement {
       >
         <input
           class="friends-chat-input flex-1 min-w-0 bg-lt-800 border border-lt-600 px-2 py-1 text-[13px] text-lt-100 placeholder:text-lt-500 outline-none focus:border-lt-accent"
+          maxlength="500"
+          placeholder=${translateText("friends.chat_placeholder")}
+          autocomplete="off"
+        />
+        <button class="lt-btn-primary !py-1 !px-3 text-[12px]" type="submit">
+          ${translateText("friends.send")}
+        </button>
+      </form>
+    `;
+  }
+
+  private renderParty() {
+    if (this.party === null) {
+      return html`
+        <div class="p-3 flex flex-col gap-2">
+          <button
+            class="lt-btn-primary w-full py-2 text-[13px]"
+            @click=${() => void this.handleCreateParty()}
+          >
+            ${translateText("party.create")}
+          </button>
+          <div class="lt-rule my-1">
+            <span class="lt-label !text-[10px]"
+              >${translateText("party.or_join")}</span
+            >
+          </div>
+          <form
+            class="flex gap-1"
+            @submit=${(e: Event) => void this.handleJoinParty(e)}
+          >
+            <input
+              class="flex-1 min-w-0 bg-lt-800 border border-lt-600 px-2 py-1 text-[13px] text-lt-100 placeholder:text-lt-500 outline-none focus:border-lt-accent uppercase"
+              .value=${this.joinCode}
+              @input=${(e: Event) => {
+                this.joinCode = (e.target as HTMLInputElement).value;
+                this.partyNote = null;
+              }}
+              placeholder=${translateText("party.code_placeholder")}
+            />
+            <button class="lt-btn !py-1 !px-2.5 text-[12px]" type="submit">
+              ${translateText("party.join")}
+            </button>
+          </form>
+          ${this.partyNote !== null
+            ? html`<div class="lt-label !text-[10px] !text-lt-bad">
+                ${this.partyNote}
+              </div>`
+            : nothing}
+        </div>
+      `;
+    }
+
+    const me = this.myPublicId();
+    const viewer = this.party.members.find((m) => m.publicId === me);
+    const iAmLeader = viewer?.isLeader === true;
+
+    return html`
+      <!-- Invite code + leave -->
+      <div class="flex items-center gap-2 px-2.5 py-2 border-b border-lt-700">
+        <span class="lt-label !text-[10px]"
+          >${translateText("party.invite_code")}</span
+        >
+        <button
+          class="lt-num text-[13px] text-lt-accent tracking-[0.2em] cursor-pointer"
+          title=${translateText("party.copy_code")}
+          @click=${() => this.copyInviteCode()}
+        >
+          ${this.party.inviteCode}
+        </button>
+        ${this.codeCopied
+          ? html`<span class="lt-label !text-[9px] !text-lt-ok"
+              >${translateText("party.copied")}</span
+            >`
+          : nothing}
+        <button
+          class="ml-auto lt-label !text-[10px] border border-lt-600 px-1.5 py-px hover:!text-lt-bad hover:border-lt-bad/50"
+          @click=${() => void this.handleLeaveParty()}
+        >
+          ${translateText("party.leave")}
+        </button>
+      </div>
+
+      <!-- Roster -->
+      <div
+        class="border-b border-lt-700 shrink-0 max-h-[150px] overflow-y-auto"
+      >
+        ${this.party.members.map(
+          (member) => html`
+            <div
+              class="flex items-center gap-2 px-2.5 py-1.5 border-b border-lt-700/45 last:border-b-0"
+            >
+              <span
+                class="w-2 h-2 shrink-0 rounded-full ${member.isLeader
+                  ? "bg-lt-accent"
+                  : "bg-lt-ok"}"
+                title=${member.isLeader ? translateText("party.leader") : ""}
+              ></span>
+              <span
+                class="flex-1 min-w-0 truncate text-[13px] ${member.publicId ===
+                me
+                  ? "text-lt-accent"
+                  : "text-lt-100"}"
+                >${this.nameOf(member)}</span
+              >
+              ${member.isLeader
+                ? html`<span class="lt-label !text-[9px] !text-lt-accent"
+                    >${translateText("party.leader")}</span
+                  >`
+                : nothing}
+              ${iAmLeader && member.publicId !== me
+                ? html`<button
+                    class="lt-label !text-[10px] border border-lt-600 px-1.5 py-px hover:!text-lt-bad hover:border-lt-bad/50"
+                    @click=${() => void this.handleKick(member.userId)}
+                  >
+                    ${translateText("party.kick")}
+                  </button>`
+                : nothing}
+            </div>
+          `,
+        )}
+      </div>
+
+      <!-- Party chat -->
+      <div class="party-chat-scroll flex-1 overflow-y-auto px-2.5 py-2">
+        ${this.partyMessages.length === 0
+          ? html`<div class="lt-label !text-[10px] !text-lt-500 py-2">
+              ${translateText("friends.no_messages")}
+            </div>`
+          : this.partyMessages.map(
+              (line) => html`
+                <div class="mb-1 text-[13px] leading-snug break-words">
+                  <b
+                    class="${line.from === me
+                      ? "text-lt-accent"
+                      : "text-lt-100"} font-semibold"
+                    >${line.username ?? line.from}:</b
+                  >
+                  <span class="text-lt-100">${line.body}</span>
+                </div>
+              `,
+            )}
+      </div>
+
+      <form
+        class="flex gap-1 p-2 border-t border-lt-700"
+        @submit=${(e: Event) => void this.handleSendPartyChat(e)}
+      >
+        <input
+          class="party-chat-input flex-1 min-w-0 bg-lt-800 border border-lt-600 px-2 py-1 text-[13px] text-lt-100 placeholder:text-lt-500 outline-none focus:border-lt-accent"
           maxlength="500"
           placeholder=${translateText("friends.chat_placeholder")}
           autocomplete="off"

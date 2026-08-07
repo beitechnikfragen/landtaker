@@ -68,7 +68,6 @@ const FILTER_CHIPS: { category: MessageCategory | null; key: string }[] = [
   { category: MessageCategory.ATTACK, key: "events_display.filter_war" },
   { category: MessageCategory.NUKE, key: "events_display.filter_nuke" },
   { category: MessageCategory.ALLIANCE, key: "events_display.filter_pact" },
-  { category: MessageCategory.TRADE, key: "events_display.filter_trade" },
   { category: MessageCategory.CHAT, key: "events_display.filter_chat" },
 ];
 
@@ -707,7 +706,7 @@ export class EventsDisplay extends LitElement implements Controller {
 
     return html`
       <div
-        class="w-full min-[1200px]:w-[340px] bg-[rgb(11_14_17/0.92)] border border-lt-700 backdrop-blur-sm pointer-events-auto"
+        class="w-full lg:w-[322px] bg-[rgb(11_14_17/0.94)] border border-lt-700 backdrop-blur-sm pointer-events-auto flex flex-col lg:max-h-[inherit] min-h-0"
       >
         <!-- header: title + category chips -->
         <div
@@ -729,7 +728,7 @@ export class EventsDisplay extends LitElement implements Controller {
           : ""}
         <!-- the feed -->
         <div
-          class="max-h-[18vh] lg:max-h-[28vh] overflow-y-auto events-container"
+          class="max-h-[18vh] lg:max-h-none lg:flex-1 lg:min-h-0 overflow-y-auto events-container"
         >
           ${visibleFeed.map((event) => this.renderEventRow(event))}
         </div>

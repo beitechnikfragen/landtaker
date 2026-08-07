@@ -117,6 +117,24 @@ export async function createParty(options?: {
   return mutate("/parties", options);
 }
 
+/**
+ * One message to the whole party, delivered over the friend-event streams.
+ * Fire-and-forget from the caller's perspective — the echo arrives on the
+ * sender's own stream like everyone else's.
+ */
+export async function sendPartyChat(body: string): Promise<boolean> {
+  try {
+    const res = await partyFetch("/parties/@me/chat", {
+      method: "POST",
+      body: JSON.stringify({ body }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn("sendPartyChat: request failed", err);
+    return false;
+  }
+}
+
 export interface PartyFit {
   fits: boolean;
   partySize: number;

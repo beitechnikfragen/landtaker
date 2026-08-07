@@ -144,11 +144,8 @@ export class DesktopNavBar extends LitElement {
           data-page="page-clan"
           data-i18n="main.clans"
         ></button>
-        <button
-          class="no-crazygames nav-menu-item lt-nav-item"
-          data-page="page-party"
-          data-i18n="main.party"
-        ></button>
+        <!-- Party moved into the social dock (friends-panel), so the nav
+             stays about pages; page-party still exists for deep links. -->
         <div class="relative flex items-stretch">
           <button
             class="nav-menu-item lt-nav-item"
