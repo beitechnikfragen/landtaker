@@ -1,6 +1,7 @@
 import { LitElement, html } from "lit";
 import { customElement } from "lit/decorators.js";
 import { assetUrl } from "../../core/AssetUrls";
+import { translateText } from "../Utils";
 import { NavNotificationsController } from "./NavNotificationsController";
 import "./NavStatusCells";
 
@@ -43,6 +44,32 @@ export class DesktopNavBar extends LitElement {
         el.classList.remove("active");
       }
     });
+  }
+
+  /**
+   * A tab that exists but isn't live yet: dimmed, unclickable, with a SOON
+   * chip. Deliberately NOT a nav-menu-item — Main.ts binds navigation to that
+   * class, and a disabled attribute alone would not stop that listener.
+   */
+  private renderComingSoon(labelKey: string) {
+    return html`
+      <div
+        class="relative flex items-stretch"
+        title=${translateText("main.coming_soon")}
+      >
+        <!-- Only the label dims — the SOON chip stays at full opacity so it
+             actually reads. -->
+        <button
+          class="lt-nav-item cursor-not-allowed opacity-40"
+          disabled
+          data-i18n=${labelKey}
+        ></button>
+        <span
+          class="absolute top-2 right-0 lt-num text-[10px] font-bold uppercase tracking-[0.08em] bg-lt-accent text-lt-accent-ink px-1.5 leading-[16px] pointer-events-none"
+          >${translateText("main.soon")}</span
+        >
+      </div>
+    `;
   }
 
   render() {
@@ -109,26 +136,9 @@ export class DesktopNavBar extends LitElement {
               `
             : ""}
         </div>
-        <div class="relative no-crazygames flex items-stretch">
-          <button
-            class="nav-menu-item lt-nav-item ${currentPage === "page-item-store"
-              ? "active"
-              : ""}"
-            data-page="page-item-store"
-            data-i18n="main.store"
-            @click=${this._notifications.onStoreClick}
-          ></button>
-          ${this._notifications.showStoreDot()
-            ? html`
-                <span
-                  class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"
-                ></span>
-                <span
-                  class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
-                ></span>
-              `
-            : ""}
-        </div>
+        <!-- Store isn't stocked yet: the tab is visible so the plan reads,
+             but disabled until there is something to sell. -->
+        ${this.renderComingSoon("main.store")}
         <button
           class="nav-menu-item lt-nav-item"
           data-page="page-settings"
@@ -139,11 +149,8 @@ export class DesktopNavBar extends LitElement {
           data-page="page-leaderboard"
           data-i18n="main.leaderboard"
         ></button>
-        <button
-          class="no-crazygames nav-menu-item lt-nav-item"
-          data-page="page-clan"
-          data-i18n="main.clans"
-        ></button>
+        <!-- Clans exist upstream but aren't wired to our backend yet. -->
+        ${this.renderComingSoon("main.clans")}
         <!-- Party moved into the social dock (friends-panel), so the nav
              stays about pages; page-party still exists for deep links. -->
         <div class="relative flex items-stretch">

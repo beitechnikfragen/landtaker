@@ -369,7 +369,7 @@ export class FriendsPanel extends LitElement {
 
     return html`
       <div
-        class="hidden lg:block in-[.in-game]:!hidden fixed bottom-0 right-[64px] z-[900] w-[340px] pointer-events-auto"
+        class="hidden lg:block in-[.in-game]:!hidden fixed bottom-0 right-[max(96px,calc((100vw-1300px)/2+28px))] z-[900] w-[340px] pointer-events-auto"
       >
         <!-- Collapsed bar / panel header -->
         <button

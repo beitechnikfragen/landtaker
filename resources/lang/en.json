@@ -1024,6 +1024,7 @@
   "main": {
     "account": "Account",
     "clans": "Clans",
+    "coming_soon": "Coming soon",
     "copyright": "© OpenFront™ and Contributors",
     "create": "Create Lobby",
     "discord_avatar_alt": "Discord profile avatar",
@@ -1041,6 +1042,7 @@
     "settings": "Settings",
     "sign_in": "Sign in",
     "solo": "Solo",
+    "soon": "Soon",
     "store": "Store",
     "terms_of_service": "Terms of Service",
     "title": "Landtaker (ALPHA)",
