@@ -19,7 +19,7 @@ import { showInGameAlert } from "./InGameModal";
 import { JoinLobbyModal } from "./JoinLobbyModal";
 import { PublicLobbySocket } from "./LobbySocket";
 import { JoinLobbyEvent } from "./Main";
-import { fetchMyParty, fetchPartyFit } from "./PartyApi";
+import { fetchPartyFit } from "./PartyApi";
 import { SinglePlayerModal } from "./SinglePlayerModal";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
 import { UsernameInput } from "./UsernameInput";
@@ -63,21 +63,10 @@ export class GameModeSelector extends LitElement {
   private async validatePartyFits(lobby: PublicGameInfo): Promise<boolean> {
     const teamCount = lobby.gameConfig?.playerTeams;
 
-    // Free-for-all carries no teams, so a party cannot be seated together —
-    // everyone would fight everyone, including each other. Block the join for
-    // any party larger than one instead of silently splitting it.
-    if (teamCount === undefined) {
-      const party = await fetchMyParty();
-      if (party.ok && party.value !== null && party.value.members.length > 1) {
-        await showInGameAlert(
-          translateText("party.ffa_solo", {
-            size: String(party.value.members.length),
-          }),
-        );
-        return false;
-      }
-      return true;
-    }
+    // Free-for-all: parties join freely. There are no teams to seat them in,
+    // and friends squadding up in FFA happens anyway — warning about it just
+    // added a click.
+    if (teamCount === undefined) return true;
 
     const fit = await fetchPartyFit(teamCount);
     if (fit.fits) return true;
