@@ -1850,6 +1850,7 @@
     "sign_in_required": "Sign in to use parties.",
     "sign_in_hint": "Parties are tied to your account, so both you and your friends need to be signed in.",
     "dev_sign_in": "Sign in",
-    "dev_sign_in_note": "Development only: sign in with any name to test parties before accounts exist. A name without a dot gets the verified check."
+    "dev_sign_in_note": "Development only: sign in with any name to test parties before accounts exist. A name without a dot gets the verified check.",
+    "lobby_too_small": "Your party has {partySize} members, but this lobby plays teams of {seats}. Pick a lobby with bigger teams, or leave the party first."
   }
 }

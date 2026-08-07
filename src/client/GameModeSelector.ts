@@ -12,9 +12,11 @@ import {
 import { PublicGameInfo, PublicGames } from "../core/Schemas";
 import "./components/IOSAddToHomeScreenBanner";
 import { HostLobbyModal } from "./HostLobbyModal";
+import { showInGameAlert } from "./InGameModal";
 import { JoinLobbyModal } from "./JoinLobbyModal";
 import { PublicLobbySocket } from "./LobbySocket";
 import { JoinLobbyEvent } from "./Main";
+import { fetchPartyFit } from "./PartyApi";
 import { SinglePlayerModal } from "./SinglePlayerModal";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
 import { UsernameInput } from "./UsernameInput";
@@ -43,6 +45,31 @@ export class GameModeSelector extends LitElement {
 
   createRenderRoot() {
     return this;
+  }
+
+  /**
+   * Refuses the join when the player's party is larger than a team in this
+   * lobby, and says why. Catching it here means nobody gets kicked or split
+   * once the match has started.
+   *
+   * Free-for-all lobbies carry no `playerTeams`, so there is nothing to check.
+   * Everything else — no party, signed out, backend unreachable — fails open
+   * inside fetchPartyFit: a failed side request must never block a join.
+   */
+  private async validatePartyFits(lobby: PublicGameInfo): Promise<boolean> {
+    const teamCount = lobby.gameConfig?.playerTeams;
+    if (teamCount === undefined) return true;
+
+    const fit = await fetchPartyFit(teamCount);
+    if (fit.fits) return true;
+
+    await showInGameAlert(
+      translateText("party.lobby_too_small", {
+        partySize: String(fit.partySize),
+        seats: String(fit.seats ?? 0),
+      }),
+    );
+    return false;
   }
 
   // Silent backstop; the buttons are already disabled while input is invalid.
@@ -338,7 +365,7 @@ export class GameModeSelector extends LitElement {
 
     return html`
       <button
-        @click=${() => this.validateAndJoin(lobby)}
+        @click=${() => void this.validateAndJoin(lobby)}
         ?disabled=${!this.inputValid}
         class="group relative w-full h-44 sm:h-full text-white uppercase rounded-2xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] bg-surface hover:shadow-[var(--shadow-lobby-card-hover)] ${!this
           .inputValid
@@ -419,8 +446,9 @@ export class GameModeSelector extends LitElement {
     `;
   }
 
-  private validateAndJoin(lobby: PublicGameInfo) {
+  private async validateAndJoin(lobby: PublicGameInfo) {
     if (!this.validateUsername()) return;
+    if (!(await this.validatePartyFits(lobby))) return;
 
     this.dispatchEvent(
       new CustomEvent("join-lobby", {

@@ -1,0 +1,102 @@
+- generic [active] [ref=f201e1]:
+    - generic [ref=f201e2]:
+        - navigation [ref=f201e4]:
+            - generic [ref=f201e5]:
+                - img "Landtaker" [ref=f201e7]
+                - generic [ref=f201e8]: v0.1.0
+            - button "Play" [ref=f201e9] [cursor=pointer]
+            - button "News" [ref=f201e11] [cursor=pointer]
+            - button "Store" [ref=f201e13] [cursor=pointer]
+            - button "Settings" [ref=f201e14] [cursor=pointer]
+            - button "Leaderboard" [ref=f201e15] [cursor=pointer]
+            - button "Clans" [ref=f201e16] [cursor=pointer]
+            - button "Party" [ref=f201e17] [cursor=pointer]
+            - button "Help" [ref=f201e19] [cursor=pointer]
+            - button "Account" [ref=f201e23] [cursor=pointer]:
+                - generic [ref=f201e27]: Sign in
+        - main [ref=f201e29]:
+            - generic [ref=f201e32]:
+                - generic [ref=f201e35]:
+                    - generic [ref=f201e37]:
+                        - generic [ref=f201e38]: "0"
+                        - text: Spieler
+                    - img "Landtaker" [ref=f201e39]
+                - generic [ref=f201e41]:
+                    - generic [ref=f201e44]:
+                        - generic [ref=f201e45]: news_box.warning
+                        - generic [ref=f201e46]:
+                            - generic [ref=f201e47]: Firefox Performance Issues
+                            - paragraph [ref=f201e49]: news_box.firefox_warning
+                        - generic [ref=f201e50]:
+                            - button "news_box.go_to_item" [ref=f201e51] [cursor=pointer]
+                            - button "news_box.go_to_item" [ref=f201e52] [cursor=pointer]
+                            - button "news_box.go_to_item" [ref=f201e53] [cursor=pointer]
+                            - button "news_box.go_to_item" [ref=f201e54] [cursor=pointer]
+                        - button "news_box.dismiss" [ref=f201e55] [cursor=pointer]
+                    - generic [ref=f201e59]:
+                        - button "Flagge auswählen" [ref=f201e61] [cursor=pointer]
+                        - generic [ref=f201e64]:
+                            - textbox "TAG" [ref=f201e66]
+                            - textbox "Benutzernamen eingeben" [ref=f201e67]: AnonTurquoise3
+                            - button "Verified" [ref=f201e68] [cursor=pointer]
+                        - button "Cosmetics" [ref=f201e74] [cursor=pointer]
+                - generic [ref=f201e77]:
+                    - generic [ref=f201e78]:
+                        - button "Afrika Starting… 0/110 Afrika Free for All" [ref=f201e80] [cursor=pointer]:
+                            - generic:
+                                - img "Afrika"
+                            - generic [ref=f201e81]: Starting…
+                            - generic [ref=f201e84]:
+                                - generic [ref=f201e85]: 0/110
+                                - paragraph [ref=f201e88]: Afrika
+                                - heading "Free for All" [level=3] [ref=f201e89]
+                        - generic [ref=f201e90]:
+                            - button "Strait Of Malacca Compact Map Water Nukes Alliances Disabled Starting… 0/9 Strait Of Malacca 3 teams of 3" [ref=f201e92] [cursor=pointer]:
+                                - generic:
+                                    - img "Strait Of Malacca"
+                                - generic [ref=f201e93]:
+                                    - generic [ref=f201e94]:
+                                        - generic [ref=f201e95]: Compact Map
+                                        - generic [ref=f201e96]: Water Nukes
+                                        - generic [ref=f201e97]: Alliances Disabled
+                                    - generic [ref=f201e98]: Starting…
+                                - generic [ref=f201e100]:
+                                    - generic [ref=f201e101]: 0/9
+                                    - paragraph [ref=f201e104]: Strait Of Malacca
+                                    - heading "3 teams of 3" [level=3] [ref=f201e105]
+                            - button "Hecate Strait Starting… 0/90 Hecate Strait 3 teams of 30" [ref=f201e107] [cursor=pointer]:
+                                - generic:
+                                    - img "Hecate Strait"
+                                - generic [ref=f201e108]: Starting…
+                                - generic [ref=f201e111]:
+                                    - generic [ref=f201e112]: 0/90
+                                    - paragraph [ref=f201e115]: Hecate Strait
+                                    - heading "3 teams of 30" [level=3] [ref=f201e116]
+                    - button "Solo" [ref=f201e118] [cursor=pointer]
+                    - generic [ref=f201e119]:
+                        - button "Create Lobby" [ref=f201e120] [cursor=pointer]
+                        - button "Ranked" [ref=f201e121] [cursor=pointer]
+                        - button "Join Lobby" [ref=f201e122] [cursor=pointer]
+        - contentinfo [ref=f201e125]:
+            - generic [ref=f201e126]:
+                - generic [ref=f201e127]:
+                    - link "GitHub" [ref=f201e128] [cursor=pointer]:
+                        - /url: https://github.com/openfrontio/OpenFrontIO
+                        - img "GitHub"
+                    - link [ref=f201e129] [cursor=pointer]:
+                        - /url: https://www.reddit.com/r/OpenFront/
+                    - link [ref=f201e130] [cursor=pointer]:
+                        - /url: https://discord.gg/openfront
+                    - link "Wiki" [ref=f201e131] [cursor=pointer]:
+                        - /url: https://openfront.wiki/Main_Page
+                        - img "Wiki"
+                - generic [ref=f201e132]:
+                    - link "Nutzungsbedingungen" [ref=f201e133] [cursor=pointer]:
+                        - /url: /terms-of-service.html
+                    - generic [ref=f201e134]: © OpenFront™ and Contributors
+                    - link "Datenschutzerklärung" [ref=f201e135] [cursor=pointer]:
+                        - /url: /privacy-policy.html
+            - button "flag" [ref=f201e137] [cursor=pointer]:
+                - img "flag"
+    - generic:
+        - generic "chat.title"
