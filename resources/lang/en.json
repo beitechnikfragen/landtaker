@@ -574,6 +574,7 @@
     "cannot_friend_self": "You can't add yourself as a friend",
     "chat_placeholder": "Message...",
     "confirm_remove": "Remove {publicId} from your friends?",
+    "copy_id": "Copy your ID",
     "deny": "Deny",
     "error_bad_request": "Invalid request",
     "error_conflict": "Already friends or request already sent",
@@ -602,7 +603,8 @@
     "team_info": "Friends are placed on the same team.",
     "title": "Friends",
     "withdraw": "Withdraw",
-    "your_friends": "Your Friends"
+    "your_friends": "Your Friends",
+    "your_id": "Your ID"
   },
   "fullscreen": {
     "enter": "Enter fullscreen",

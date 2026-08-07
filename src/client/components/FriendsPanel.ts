@@ -82,6 +82,7 @@ export class FriendsPanel extends LitElement {
   @state() private partyInvites: PartyInvite[] = [];
   /** Friends already invited this session, for the "Invited" feedback. */
   @state() private invitedFriends: Set<string> = new Set();
+  @state() private idCopied = false;
 
   private stream: FriendsStreamHandle | null = null;
   private partyStream: PartyStreamHandle | null = null;
@@ -437,6 +438,15 @@ export class FriendsPanel extends LitElement {
     );
   }
 
+  private copyOwnId() {
+    const id = this.myPublicId();
+    if (id.length === 0) return;
+    void navigator.clipboard?.writeText(id).then(() => {
+      this.idCopied = true;
+      setTimeout(() => (this.idCopied = false), 1500);
+    });
+  }
+
   private copyInviteCode() {
     if (this.party === null) return;
     void navigator.clipboard?.writeText(this.party.inviteCode).then(() => {
@@ -586,6 +596,38 @@ export class FriendsPanel extends LitElement {
             ${this.addNote}
           </div>`
         : nothing}
+
+      <!-- Your own id, one click to copy — it's the only way friends can
+           add you, so it must never need hunting. -->
+      <div class="flex items-center gap-2 px-2.5 py-1.5 border-b border-lt-700">
+        <span class="lt-label !text-[11px] shrink-0"
+          >${translateText("friends.your_id")}</span
+        >
+        <button
+          class="lt-num text-[13px] text-lt-accent tracking-[0.06em] truncate cursor-pointer hover:text-lt-accent-hi"
+          title=${translateText("friends.copy_id")}
+          @click=${() => this.copyOwnId()}
+        >
+          ${this.myPublicId()}
+        </button>
+        ${this.idCopied
+          ? html`<span class="lt-label !text-[10px] !text-lt-ok shrink-0"
+              >${translateText("party.copied")}</span
+            >`
+          : html`<svg
+              viewBox="0 0 24 24"
+              class="w-3.5 h-3.5 shrink-0 text-lt-500"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="9" y="9" width="11" height="11" rx="0" />
+              <path d="M5 15V5a1 1 0 0 1 1-1h10" />
+            </svg>`}
+      </div>
 
       <div class="flex-1 overflow-y-auto">
         <!-- Incoming requests first: they need an answer. -->
