@@ -5,6 +5,7 @@ import { GameEnv } from "../../core/configuration/Config";
 import type { Party } from "../../core/PartyApiSchemas";
 import { ClientEnv } from "../ClientEnv";
 import {
+  connectPartyStream,
   createParty,
   devSignIn,
   fetchMyParty,
@@ -12,6 +13,7 @@ import {
   kickFromParty,
   leaveParty,
   type PartyActionError,
+  type PartyStreamHandle,
 } from "../PartyApi";
 import { translateText } from "../Utils";
 import { BaseModal } from "./BaseModal";
@@ -21,10 +23,15 @@ import { verifiedBadge } from "./ui/VerifiedBadge";
 /**
  * Party UI: create a party, share the invite code, see who is in, leave.
  *
- * State is re-fetched rather than patched locally. There is no live channel
- * yet (see backend/README.md), so a member joining elsewhere only shows up on
- * the next fetch — a short poll while the modal is open keeps that tolerable
- * without pretending to be real-time.
+ * State is server-driven, never patched locally. While the modal is open it
+ * subscribes to GET /parties/@me/events and renders straight from the pushed
+ * payload, so a member joining elsewhere appears immediately.
+ *
+ * The 5s poll is kept as a fallback, not as the primary path: it runs only
+ * until the stream reports itself live, and comes back if the stream cannot be
+ * established (older backend without the route, a proxy that blocks SSE, a
+ * signed-out viewer). A backend that cannot stream therefore still works
+ * exactly as it did before.
  */
 @customElement("party-modal")
 export class PartyModal extends BaseModal {
@@ -43,6 +50,7 @@ export class PartyModal extends BaseModal {
 
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private copiedTimer: ReturnType<typeof setTimeout> | null = null;
+  private stream: PartyStreamHandle | null = null;
 
   constructor() {
     super();
@@ -50,7 +58,9 @@ export class PartyModal extends BaseModal {
   }
 
   disconnectedCallback() {
-    this.stopPolling();
+    // Both, not just the poll: a leaked stream reconnects on its own and would
+    // outlive the element forever.
+    this.teardownUpdates();
     if (this.copiedTimer) clearTimeout(this.copiedTimer);
     super.disconnectedCallback();
   }
@@ -59,11 +69,66 @@ export class PartyModal extends BaseModal {
   protected override onOpen(): void {
     this.errorMessage = null;
     void this.refresh();
+    // Poll from the start so the modal is never dead while the stream is still
+    // connecting; startStream() stands it down as soon as the stream is live.
     this.startPolling();
+    this.startStream();
   }
 
   protected override onClose(): void {
+    this.teardownUpdates();
+  }
+
+  /** Drops both update paths. Safe to call repeatedly. */
+  private teardownUpdates() {
     this.stopPolling();
+    this.stopStream();
+  }
+
+  /**
+   * Subscribes to the live stream. Exactly one connection at a time: any
+   * previous handle is closed first, so re-opening the modal cannot stack
+   * subscriptions.
+   */
+  private startStream() {
+    this.stopStream();
+    const handle = connectPartyStream({
+      onOpen: () => {
+        // Ignore a late callback from a connection we already replaced.
+        if (this.stream !== handle) return;
+        // Live updates supersede the poll — this is the whole point.
+        this.stopPolling();
+      },
+      onEvent: ({ party }) => {
+        if (this.stream !== handle) return;
+        // Server-authoritative, including `party: null` for a viewer who was
+        // kicked or whose party was deleted — render create/join, never a
+        // stale roster.
+        this.party = party;
+        this.needsSignIn = false;
+        this.loading = false;
+      },
+      onDisconnect: () => {
+        if (this.stream !== handle) return;
+        // The stream is retrying (server restarted, network blip). It is not
+        // delivering meanwhile, so poll until it reports itself live again —
+        // otherwise the roster silently freezes.
+        if (!this.needsSignIn && this.isOpen()) this.startPolling();
+      },
+      onFailure: () => {
+        if (this.stream !== handle) return;
+        // No live channel available. Fall back rather than showing a screen
+        // that will never update.
+        this.stream = null;
+        if (!this.needsSignIn && this.isOpen()) this.startPolling();
+      },
+    });
+    this.stream = handle;
+  }
+
+  private stopStream() {
+    this.stream?.close();
+    this.stream = null;
   }
 
   /** Poll only while visible — a background tab should not hammer the API. */
@@ -86,10 +151,11 @@ export class PartyModal extends BaseModal {
       this.needsSignIn = false;
     } else if (result.error === "unauthenticated") {
       // Parties are account-bound, so a signed-out visitor gets told that
-      // rather than a create button that can only fail.
+      // rather than a create button that can only fail. Stop the stream too:
+      // it would retry against a route that can only 401.
       this.needsSignIn = true;
       this.party = null;
-      this.stopPolling();
+      this.teardownUpdates();
     }
     // Any other failure leaves the last known state on screen; the poll will
     // pick it up again once the request succeeds.
@@ -127,6 +193,16 @@ export class PartyModal extends BaseModal {
       const result = await action();
       if (result.ok) {
         await this.refresh();
+        // Rebind the stream to the party we are now in.
+        //
+        // The backend subscribes to whichever party the viewer had AT CONNECT
+        // TIME, and to nothing at all when they had none (see the comment in
+        // backend/src/routes/partyEvents.ts). A stream opened on the
+        // create/join screen is therefore watching nothing, and would never
+        // report a later joiner. Reconnecting after a membership change is
+        // what makes the subscription follow us — verified: without this, a
+        // party created after the stream opened receives no live updates.
+        if (this.isOpen()) this.startStream();
       } else {
         this.errorMessage = this.messageFor(result.error);
       }

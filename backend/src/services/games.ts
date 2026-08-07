@@ -2,6 +2,7 @@ import type { GameRecord } from "@game/Schemas.ts";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { gameParticipants, games, users } from "../db/schema.ts";
+import { alreadyRated, rateArchivedGame } from "./elo.ts";
 
 /**
  * The game archive. When a match ends the game server POSTs the full
@@ -130,6 +131,12 @@ export async function archiveGame(
       .where(eq(games.id, gameId));
     const created = existing.length === 0;
 
+    // Whether a previous archive already moved the ladder for this match. It
+    // MUST be read here, before the participant rows below are deleted: those
+    // rows are the evidence, and the delete destroys it. See the idempotency
+    // note in services/elo.ts.
+    const rated = await alreadyRated(tx, gameId);
+
     await tx
       .insert(games)
       .values(row)
@@ -149,6 +156,16 @@ export async function archiveGame(
     if (participants.length > 0) {
       await tx.insert(gameParticipants).values(participants);
     }
+
+    // Ranked rating, on the same transaction so a match is never left
+    // archived-but-half-rated. A no-op for every unranked match, which is
+    // almost all of them.
+    await rateArchivedGame({
+      tx,
+      rankedType: row.rankedType,
+      participants,
+      alreadyRated: rated,
+    });
 
     return { ok: true, created };
   });

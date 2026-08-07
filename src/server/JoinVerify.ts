@@ -24,6 +24,12 @@ export type JoinVerifyPlan =
   | { action: "skip" } // the verdict couldn't change anything
   | { action: "verify"; token: string | null };
 
+const PartyMembersVerdictSchema = z.object({
+  // publicIds of everyone in the caller's party, the caller included. Empty
+  // when the caller is in no party.
+  publicIds: z.array(z.string()),
+});
+
 /**
  * Pure decision for whether a join needs a join_verify call, kept free of
  * I/O so the gating logic is unit-testable.
@@ -140,5 +146,40 @@ export async function verifyJoin(
     return parsed.data;
   } catch (e) {
     return { status: "error", reason: `api-worker unavailable: ${e}` };
+  }
+}
+
+/**
+ * The publicIds of the joining player's party, themselves included, or an
+ * empty list when they are in none.
+ *
+ * Asked once at join time and then frozen for the lobby (see
+ * GameServer.recordPartyMembers): the answer must be stable, because it
+ * feeds the deterministic team assignment. Re-reading it later (say at
+ * start) would let a party edited mid-lobby change the grouping under a
+ * player who already committed to the match.
+ *
+ * Fails open with an empty list. A party that doesn't get grouped is a
+ * disappointment; a join that fails because the party service hiccuped is a
+ * player locked out of a match, which is strictly worse. Grouping is a
+ * preference, never a precondition.
+ */
+export async function fetchPartyMembers(publicId: string): Promise<string[]> {
+  try {
+    const response = await fetch(
+      `${ServerEnv.jwtIssuer()}/parties/members?publicId=${encodeURIComponent(
+        publicId,
+      )}`,
+      {
+        method: "GET",
+        signal: AbortSignal.timeout(3000),
+        headers: { "x-api-key": ServerEnv.apiKey() },
+      },
+    );
+    if (!response.ok) return [];
+    const parsed = PartyMembersVerdictSchema.safeParse(await response.json());
+    return parsed.success ? parsed.data.publicIds : [];
+  } catch {
+    return [];
   }
 }
