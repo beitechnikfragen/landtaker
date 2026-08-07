@@ -379,6 +379,15 @@ export class HomeHero extends LitElement {
             ${translateText("home.deploy")}
             <small class="lt-btn-sub">${deploySub ?? "—"}</small>
           </button>
+          <button
+            class="lt-btn"
+            @click=${() => window.showPage?.("page-ranked")}
+          >
+            ${translateText("mode_selector.ranked_title")}
+            <small class="lt-btn-sub"
+              >${translateText("home.ranked_sub")}</small
+            >
+          </button>
           <button class="lt-btn" @click=${this.open("single-player-modal")}>
             ${translateText("home.single_player")}
             <small class="lt-btn-sub">${translateText("home.no_queue")}</small>
@@ -399,11 +408,17 @@ export class HomeHero extends LitElement {
     `;
   }
 
-  /** "Next deployment in 0:42 · 46 of 64 slots filled" — all live data. */
+  /**
+   * "Next deployment in 0:42 · 46 of 64 slots filled" — all live data.
+   *
+   * The line keeps a FIXED height and always renders: between lobby cycles
+   * the countdown briefly has nothing to say, and letting the row vanish
+   * made everything below it jump up and down once a minute. The countdown
+   * number is tabular and min-width'd for the same reason.
+   */
   private renderDeployLine() {
     const seconds = this.nextStartSeconds();
     const slots = this.nextLobbySlots();
-    if (seconds === null && slots === null) return nothing;
 
     const mmss =
       seconds === null
@@ -412,23 +427,23 @@ export class HomeHero extends LitElement {
 
     return html`
       <div
-        class="lt-label !text-[13px] !text-lt-500 mt-3 flex items-center gap-2"
+        class="lt-label !text-[13px] !text-lt-500 mt-3 h-[20px] flex items-center gap-2 overflow-hidden"
       >
-        ${mmss !== null
-          ? html`<span
-                >${translateText("home.next_deployment", { time: "" })}</span
-              ><b class="lt-num text-lt-accent text-[14px]">${mmss}</b>`
-          : nothing}
-        ${mmss !== null && slots !== null
-          ? html`<span class="text-lt-600">·</span>`
-          : nothing}
+        <span>${translateText("home.next_deployment", { time: "" })}</span>
+        <b
+          class="lt-num text-lt-accent text-[14px] min-w-[38px] ${mmss === null
+            ? "opacity-50"
+            : ""}"
+          >${mmss ?? "…"}</b
+        >
         ${slots !== null
-          ? html`<span
-              >${translateText("home.slots_filled", {
-                filled: String(slots.filled),
-                max: String(slots.max),
-              })}</span
-            >`
+          ? html`<span class="text-lt-600">·</span>
+              <span
+                >${translateText("home.slots_filled", {
+                  filled: String(slots.filled),
+                  max: String(slots.max),
+                })}</span
+              >`
           : nothing}
       </div>
     `;

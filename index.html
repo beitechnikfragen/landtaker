@@ -383,6 +383,10 @@
     <player-info-overlay></player-info-overlay>
     <heads-up-message></heads-up-message>
 
+    <!-- Friends dock: bottom-right on every main-menu page, hidden in game.
+         A direct <body> child so it survives page switches. -->
+    <friends-panel></friends-panel>
+
     <!-- Featured stream: direct <body> child (NOT inside the in-[.in-game]:hidden
          home container) so the Twitch iframe is never display:none'd during a game,
          which would unmount the player and break ToS-compliant playback. The

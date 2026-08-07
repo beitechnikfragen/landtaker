@@ -195,6 +195,42 @@ export const friendRequests = pgTable(
 );
 
 /**
+ * Direct messages between friends. Sender/recipient are stored as-is (not as
+ * an ordered pair like friendships): a message HAS a direction, and the
+ * conversation view needs it. History survives an unfriend — the rows only
+ * disappear when an account does (cascade).
+ */
+export const friendMessages = pgTable(
+  "friend_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    senderId: uuid("sender_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    recipientId: uuid("recipient_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // The conversation query looks both ways; one index per direction keeps
+    // it an index scan whichever side the caller is on.
+    index("friend_messages_pair_idx").on(
+      table.senderId,
+      table.recipientId,
+      table.createdAt,
+    ),
+    index("friend_messages_recipient_idx").on(
+      table.recipientId,
+      table.createdAt,
+    ),
+  ],
+);
+
+/**
  * Parties: the new feature. Only membership and settings live here — who is
  * currently online and which lobby the party is watching is ephemeral and
  * belongs in Redis. Persisting a party lets it survive a backend restart.

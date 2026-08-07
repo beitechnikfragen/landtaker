@@ -282,9 +282,14 @@ export class GameModeSelector extends LitElement {
       .filter((lobby) => !shownIds.has(lobby.gameID));
 
     return html`
-      <div class="border border-lt-700 bg-[rgb(13_16_20/0.85)] min-h-[120px]">
+      <!-- Fixed height on purpose: the set of open lobbies changes every
+           cycle, and letting the panel grow and shrink with it made the whole
+           band below breathe. Overflow scrolls inside instead. -->
+      <div
+        class="border border-lt-700 bg-[rgb(13_16_20/0.85)] h-[300px] flex flex-col"
+      >
         <div
-          class="flex items-center justify-between px-4 py-2 border-b border-lt-700"
+          class="flex items-center justify-between px-4 py-2 border-b border-lt-700 shrink-0"
         >
           <span class="lt-label !text-[12px]"
             >${translateText("home.open_lobbies")}</span
@@ -296,7 +301,7 @@ export class GameModeSelector extends LitElement {
             </div>`
           : html`
               <div
-                class="grid grid-cols-[minmax(0,2fr)_1fr_auto_auto] items-center gap-x-6 px-4 py-1.5 border-b border-lt-700/60"
+                class="grid grid-cols-[minmax(0,2fr)_1fr_auto_auto] items-center gap-x-6 px-4 py-1.5 border-b border-lt-700/60 shrink-0"
               >
                 <span class="lt-label !text-[10px]"
                   >${translateText("home.col_map")}</span
@@ -311,7 +316,9 @@ export class GameModeSelector extends LitElement {
                   >${translateText("home.starts")}</span
                 >
               </div>
-              ${extra.map((lobby) => this.renderLobbyRow(lobby))}
+              <div class="flex-1 overflow-y-auto min-h-0">
+                ${extra.map((lobby) => this.renderLobbyRow(lobby))}
+              </div>
             `}
       </div>
     `;

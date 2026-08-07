@@ -60,24 +60,26 @@ export class DesktopNavBar extends LitElement {
              because the SVG renders its lettering at a fraction of the mark's
              height — this stays razor-sharp at any size. -->
         <div
-          class="flex flex-col items-center justify-center gap-0.5 pl-5 pr-7 mr-2 border-r border-lt-700"
+          class="flex items-center gap-3.5 pl-4 pr-7 mr-2 border-r border-lt-700"
         >
-          <div class="flex items-center gap-3">
-            <img
-              class="block h-14 w-14"
-              src=${assetUrl("images/logo/mark.svg")}
-              alt=""
-              aria-hidden="true"
-            />
+          <!-- The mark carries the brand, so it gets almost the full bar
+               height; wordmark and version stack beside it. -->
+          <img
+            class="block h-[72px] w-[72px] shrink-0"
+            src=${assetUrl("images/logo/mark.svg")}
+            alt=""
+            aria-hidden="true"
+          />
+          <div class="flex flex-col items-center gap-1">
             <span
               class="lt-display text-[26px] leading-none !tracking-[0.24em] text-lt-100"
               >LANDTAKER</span
             >
+            <div
+              id="game-version"
+              class="lt-label !text-[10px] !tracking-[0.3em] text-center w-full"
+            ></div>
           </div>
-          <div
-            id="game-version"
-            class="lt-label !text-[10px] !tracking-[0.3em] text-center w-full"
-          ></div>
         </div>
         <button
           class="nav-menu-item lt-nav-item ${currentPage === "page-play"

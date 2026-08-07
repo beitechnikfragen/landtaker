@@ -588,8 +588,41 @@ export const FriendEntrySchema = z.object({
   // `username ?? publicId`; identify players by publicId only.
   username: z.string().nullable().optional(),
   createdAt: z.iso.datetime(),
+  // Live presence, filled in by GET /friends and kept fresh by the friends
+  // event stream. Absent on request entries, where it has no meaning.
+  online: z.boolean().optional(),
 });
 export type FriendEntry = z.infer<typeof FriendEntrySchema>;
+
+/** One direct message between friends, as the wire carries it. */
+export const FriendMessageSchema = z.object({
+  id: z.string(),
+  // publicIds on the wire, never internal ids.
+  from: z.string(),
+  to: z.string(),
+  body: z.string(),
+  createdAt: z.iso.datetime(),
+});
+export type FriendMessage = z.infer<typeof FriendMessageSchema>;
+
+export const FriendMessagesResponseSchema = z.object({
+  // Oldest first, ready to render top-to-bottom.
+  results: FriendMessageSchema.array(),
+});
+export type FriendMessagesResponse = z.infer<
+  typeof FriendMessagesResponseSchema
+>;
+
+/** Events on GET /friends/events (SSE). */
+export const FriendStreamEventSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("message"), message: FriendMessageSchema }),
+  z.object({
+    type: z.literal("presence"),
+    publicId: z.string(),
+    online: z.boolean(),
+  }),
+]);
+export type FriendStreamEvent = z.infer<typeof FriendStreamEventSchema>;
 
 export const FriendRequestsResponseSchema = z.object({
   incoming: FriendEntrySchema.array(),
