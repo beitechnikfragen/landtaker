@@ -51,14 +51,16 @@ export class DesktopNavBar extends LitElement {
 
     return html`
       <nav
-        class="hidden lg:flex w-full h-[62px] bg-lt-900/90 backdrop-blur-md items-stretch shrink-0 z-50 relative border-b border-lt-700"
+        class="hidden lg:flex w-full h-[76px] bg-lt-900/90 backdrop-blur-md items-stretch shrink-0 z-50 relative border-b border-lt-700"
       >
         <!-- Brand sits at the left edge, separated by a rule rather than
              centred — the row then reads left-to-right like a title bar. -->
+        <!-- Brand column: the lockup at full readable size with the version
+             centred beneath it, not squeezed beside it. -->
         <div
-          class="flex items-center gap-3 pl-5 pr-6 mr-2 border-r border-lt-700"
+          class="flex flex-col items-center justify-center gap-1 pl-5 pr-7 mr-2 border-r border-lt-700"
         >
-          <div class="h-9">
+          <div class="h-12">
             <img
               class="block h-full aspect-[3943/1442]"
               src=${assetUrl("images/logo/lockup-horizontal.svg")}
@@ -67,7 +69,7 @@ export class DesktopNavBar extends LitElement {
           </div>
           <div
             id="game-version"
-            class="lt-label !text-[11px] !tracking-widest"
+            class="lt-label !text-[10px] !tracking-[0.3em] text-center w-full"
           ></div>
         </div>
         <button
