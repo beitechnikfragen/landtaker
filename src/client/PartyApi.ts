@@ -117,6 +117,43 @@ export async function createParty(options?: {
   return mutate("/parties", options);
 }
 
+export interface PartyFit {
+  fits: boolean;
+  partySize: number;
+  /** Seats per team, or null when the lobby's team size is not fixed. */
+  seats: number | null;
+}
+
+/**
+ * Asks whether the caller's party can be seated together in a lobby of the
+ * given shape.
+ *
+ * Fails open: a player not in a party, a signed-out visitor and a backend
+ * that is unreachable all resolve to `fits: true`. Blocking someone from a
+ * lobby because a side request failed would be worse than the mis-seating
+ * this is meant to prevent.
+ */
+export async function fetchPartyFit(
+  teamCount: number | string,
+): Promise<PartyFit> {
+  const open: PartyFit = { fits: true, partySize: 0, seats: null };
+  try {
+    const res = await partyFetch(
+      `/parties/@me/fit?teamCount=${encodeURIComponent(String(teamCount))}`,
+    );
+    if (!res.ok) return open;
+    const body = (await res.json()) as Partial<PartyFit>;
+    if (typeof body.fits !== "boolean") return open;
+    return {
+      fits: body.fits,
+      partySize: typeof body.partySize === "number" ? body.partySize : 0,
+      seats: typeof body.seats === "number" ? body.seats : null,
+    };
+  } catch {
+    return open;
+  }
+}
+
 /**
  * DEVELOPMENT ONLY. Signs in without an OAuth provider by hitting the
  * backend's dev-login route, which sets the httpOnly refresh cookie.
