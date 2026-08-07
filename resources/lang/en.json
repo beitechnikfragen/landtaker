@@ -853,18 +853,25 @@
   },
   "home": {
     "by_invite": "By invite code",
+    "col_map": "Map",
     "commander": "Commander",
     "deploy": "Deploy",
     "deployments": "Deployments",
+    "details": "Details",
     "hero_lede": "Claim territory tile by tile, build an economy, and outlast every other nation on the board.",
     "hero_title_1": "Take the map.",
     "hero_title_2": "Hold it.",
+    "join": "Join",
     "next_deployment": "Next deployment in {time}",
+    "no_open_lobbies": "No other open lobbies right now",
     "no_queue": "No queue",
+    "open_lobbies": "Open lobbies",
+    "placement": "Placement",
     "private_lobby": "Private",
     "servers_online": "Servers online",
     "single_player": "Single player",
-    "slots_filled": "{filled} of {max} slots filled"
+    "slots_filled": "{filled} of {max} slots filled",
+    "starts": "Starts"
   },
   "host_modal": {
     "anonymous_players": "Anonymous players",
@@ -1463,6 +1470,15 @@
   "radial_menu": {
     "delete_unit_description": "Click to delete the nearest unit",
     "delete_unit_title": "Delete Unit"
+  },
+  "rank": {
+    "elo_to_next": "{elo} elo to next",
+    "matches": "Matches",
+    "max_division": "Max division",
+    "next_rank": "Next rank",
+    "rating": "Rating",
+    "tiers": "Rank tiers",
+    "win_rate": "Win rate"
   },
   "relation": {
     "default": "Default",

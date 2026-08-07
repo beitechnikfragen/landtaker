@@ -1,6 +1,7 @@
 import { html, LitElement, nothing, type TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { ClientEnv } from "src/client/ClientEnv";
+import { UserMeResponse } from "../core/ApiSchemas";
 import {
   Duos,
   GameMapType,
@@ -10,7 +11,9 @@ import {
   Trios,
 } from "../core/game/Game";
 import { PublicGameInfo, PublicGames } from "../core/Schemas";
+import { hasLinkedAccount } from "./Api";
 import "./components/IOSAddToHomeScreenBanner";
+import { rankBadgeUrl, rankFromElo } from "./components/RankBadge";
 import { HostLobbyModal } from "./HostLobbyModal";
 import { showInGameAlert } from "./InGameModal";
 import { JoinLobbyModal } from "./JoinLobbyModal";
@@ -36,6 +39,7 @@ export class GameModeSelector extends LitElement {
   @state() private lobbies: PublicGames | null = null;
   @state() private mapAspectRatios: Map<GameMapType, number> = new Map();
   @state() private inputValid: boolean = true;
+  @state() private userMeResponse: UserMeResponse | false = false;
   private serverTimeOffset: number = 0;
   private defaultLobbyTime: number = 0;
 
@@ -80,6 +84,10 @@ export class GameModeSelector extends LitElement {
     return usernameInput ? usernameInput.canPlay() : true;
   }
 
+  private onUserMe = (e: CustomEvent<UserMeResponse | false>) => {
+    this.userMeResponse = e.detail;
+  };
+
   connectedCallback() {
     super.connectedCallback();
     this.lobbySocket.start();
@@ -88,6 +96,7 @@ export class GameModeSelector extends LitElement {
       "username-validity-change",
       this.handleValidityChange,
     );
+    document.addEventListener("userMeResponse", this.onUserMe as EventListener);
     // Pick up the current value in case username-input validated before us.
     const usernameInput = document.querySelector(
       "username-input",
@@ -102,6 +111,10 @@ export class GameModeSelector extends LitElement {
     window.removeEventListener(
       "username-validity-change",
       this.handleValidityChange,
+    );
+    document.removeEventListener(
+      "userMeResponse",
+      this.onUserMe as EventListener,
     );
     super.disconnectedCallback();
   }
@@ -210,7 +223,7 @@ export class GameModeSelector extends LitElement {
               <!-- Left col: main card (desktop only) -->
               ${ffa
                 ? html`<div class="hidden sm:block">
-                    ${this.renderLobbyCard(ffa, this.getLobbyTitle(ffa))}
+                    ${this.renderLobbyCard(ffa, this.getLobbyTitle(ffa), true)}
                   </div>`
                 : nothing}
 
@@ -244,17 +257,179 @@ export class GameModeSelector extends LitElement {
               </div>
             </div>`}
 
-        <!-- Desktop keeps only ranked here: solo, create and join moved into
-             the hero, where the primary actions belong. Ranked is a separate
-             mode rather than a way into the same queue, so it stays with the
-             lobby list. -->
-        <div class="hidden sm:block h-12">
-          ${this.renderSmallActionCard(
-            translateText("mode_selector.ranked_title"),
-            this.openRankedMenu,
-            "",
-          )}
+        <!-- Below the cards, mock layout: every remaining open lobby in a
+             table on the left, the player's ranked standing on the right.
+             Desktop only — mobile keeps the compact action cards above. -->
+        ${this.lobbies !== null
+          ? html`<div class="hidden sm:grid grid-cols-[1.75fr_1fr] gap-3">
+              ${this.renderOpenLobbies([ffa, teams, special])}
+              ${this.renderRankedPanel()}
+            </div>`
+          : nothing}
+      </div>
+    `;
+  }
+
+  /** Lobbies that did not get a card, as the mock's OPEN LOBBIES table. */
+  private renderOpenLobbies(shown: (PublicGameInfo | undefined)[]) {
+    const shownIds = new Set(
+      shown
+        .filter((lobby): lobby is PublicGameInfo => lobby !== undefined)
+        .map((lobby) => lobby.gameID),
+    );
+    const extra = Object.values(this.lobbies?.games ?? {})
+      .flat()
+      .filter((lobby) => !shownIds.has(lobby.gameID));
+
+    return html`
+      <div class="border border-lt-700 bg-[rgb(13_16_20/0.85)] min-h-[120px]">
+        <div
+          class="flex items-center justify-between px-4 py-2 border-b border-lt-700"
+        >
+          <span class="lt-label !text-[12px]"
+            >${translateText("home.open_lobbies")}</span
+          >
         </div>
+        ${extra.length === 0
+          ? html`<div class="px-4 py-5 lt-label !text-[11px] !text-lt-500">
+              ${translateText("home.no_open_lobbies")}
+            </div>`
+          : html`
+              <div
+                class="grid grid-cols-[minmax(0,2fr)_1fr_auto_auto] items-center gap-x-6 px-4 py-1.5 border-b border-lt-700/60"
+              >
+                <span class="lt-label !text-[10px]"
+                  >${translateText("home.col_map")}</span
+                >
+                <span class="lt-label !text-[10px]"
+                  >${translateText("host_modal.mode")}</span
+                >
+                <span class="lt-label !text-[10px] text-right"
+                  >${translateText("host_modal.players")}</span
+                >
+                <span class="lt-label !text-[10px] text-right"
+                  >${translateText("home.starts")}</span
+                >
+              </div>
+              ${extra.map((lobby) => this.renderLobbyRow(lobby))}
+            `}
+      </div>
+    `;
+  }
+
+  private renderLobbyRow(lobby: PublicGameInfo) {
+    const mapType = lobby.gameConfig!.gameMap as GameMapType;
+    const thumb = terrainMapFileLoader.getMapData(mapType).webpPath;
+    const seconds = lobby.startsAt
+      ? getSecondsUntilServerTimestamp(lobby.startsAt, this.serverTimeOffset)
+      : null;
+
+    return html`
+      <button
+        @click=${() => void this.validateAndJoin(lobby)}
+        ?disabled=${!this.inputValid}
+        class="grid grid-cols-[minmax(0,2fr)_1fr_auto_auto] items-center gap-x-6 w-full px-4 py-2 text-left lt-row cursor-pointer"
+      >
+        <span class="flex items-center gap-3 min-w-0">
+          ${thumb
+            ? html`<img
+                src=${thumb}
+                alt=""
+                class="w-[52px] h-[36px] object-cover border border-lt-700 shrink-0"
+              />`
+            : nothing}
+          <span class="text-[14px] font-bold text-lt-100 truncate"
+            >${getMapName(lobby.gameConfig?.gameMap) ?? "—"}</span
+          >
+        </span>
+        <span class="lt-label !text-[11px] truncate"
+          >${this.getLobbyTitle(lobby)}</span
+        >
+        <span class="lt-num text-[13px] text-right text-lt-100"
+          >${lobby.numClients} / ${lobby.gameConfig?.maxPlayers ?? "—"}</span
+        >
+        <span class="lt-num text-[13px] text-right text-lt-400"
+          >${seconds !== null && seconds > 0
+            ? renderDuration(seconds)
+            : translateText("public_lobby.starting_game")}</span
+        >
+      </button>
+    `;
+  }
+
+  /** The mock's SEASON panel, driven by the player's real ranked record. */
+  private renderRankedPanel() {
+    const board =
+      this.userMeResponse !== false && hasLinkedAccount(this.userMeResponse)
+        ? this.userMeResponse.player?.leaderboard
+        : undefined;
+    const elo = board?.oneVone?.elo;
+    const hasElo = typeof elo === "number" && Number.isFinite(elo);
+    const rank = hasElo ? rankFromElo(elo) : null;
+
+    return html`
+      <div
+        class="border border-lt-700 bg-[rgb(13_16_20/0.85)] flex flex-col self-start"
+      >
+        <div
+          class="flex items-center justify-between px-4 py-2 border-b border-lt-700"
+        >
+          <span class="lt-label !text-[12px]"
+            >${translateText("mode_selector.ranked_title")}</span
+          >
+          <button
+            @click=${this.openRankedMenu}
+            class="lt-label !text-[11px] hover:!text-lt-accent transition-colors cursor-pointer"
+          >
+            ${translateText("home.details")}
+          </button>
+        </div>
+        ${rank !== null
+          ? html`
+              <div class="lt-kv !px-4">
+                <span>${translateText("home.placement")}</span>
+                <b class="flex items-center gap-2">
+                  <img
+                    src=${rankBadgeUrl(rank, true)}
+                    alt=""
+                    aria-hidden="true"
+                    class="w-[22px] h-[22px]"
+                  />
+                  ${rank.label}
+                </b>
+              </div>
+              ${rank.toNext !== null
+                ? html`<div class="lt-kv !px-4">
+                    <span>${translateText("rank.next_rank")}</span>
+                    <b class="text-lt-accent">+${rank.toNext}</b>
+                  </div>`
+                : nothing}
+              <div class="lt-kv !px-4">
+                <span>${translateText("player_stats_tree.stats_wins")}</span>
+                <b class="text-lt-ok">${board?.oneVone?.wins ?? 0}</b>
+              </div>
+              <div class="lt-kv !px-4">
+                <span>${translateText("rank.matches")}</span>
+                <b
+                  >${(board?.oneVone?.wins ?? 0) +
+                  (board?.oneVone?.losses ?? 0)}</b
+                >
+              </div>
+            `
+          : html`
+              <div class="px-4 py-3 lt-label !text-[11px] !text-lt-500">
+                ${translateText("matchmaking_modal.no_elo")}
+              </div>
+              <div class="px-4 pb-3">
+                <button
+                  @click=${this.openRankedMenu}
+                  ?disabled=${!this.inputValid}
+                  class="lt-btn w-full py-2"
+                >
+                  ${translateText("mode_selector.ranked_title")}
+                </button>
+              </div>
+            `}
       </div>
     `;
   }
@@ -320,6 +495,7 @@ export class GameModeSelector extends LitElement {
   private renderLobbyCard(
     lobby: PublicGameInfo,
     titleContent: string | TemplateResult,
+    featured = false,
   ) {
     const mapType = lobby.gameConfig!.gameMap as GameMapType;
     const mapImageSrc = terrainMapFileLoader.getMapData(mapType).webpPath;
@@ -354,11 +530,22 @@ export class GameModeSelector extends LitElement {
       modifierLabels.sort((a, b) => a.length - b.length);
     }
 
+    const maxPlayers = lobby.gameConfig?.maxPlayers ?? 0;
+    const fillPercent =
+      maxPlayers > 0
+        ? Math.min(
+            100,
+            Math.round(((lobby.numClients ?? 0) / maxPlayers) * 100),
+          )
+        : 0;
+
     return html`
       <button
         @click=${() => void this.validateAndJoin(lobby)}
         ?disabled=${!this.inputValid}
-        class="group relative w-full h-44 sm:h-full text-lt-100 uppercase border border-lt-700 hover:border-lt-accent transition-colors duration-150 bg-lt-800 overflow-hidden ${!this
+        class="group relative w-full h-44 sm:h-full text-lt-100 uppercase border ${featured
+          ? "border-lt-accent"
+          : "border-lt-700 hover:border-lt-accent"} transition-colors duration-150 bg-lt-800 overflow-hidden ${!this
           .inputValid
           ? "opacity-50 cursor-not-allowed pointer-events-none"
           : ""}"
@@ -376,21 +563,23 @@ export class GameModeSelector extends LitElement {
               />`
             : null}
         </div>
-        <!-- Top row: modifiers + timer -->
+        <!-- Top row: mode chip + modifiers left, countdown right -->
         <div
           class="absolute inset-x-2 top-2 flex items-start justify-between gap-2"
         >
-          ${modifierLabels.length > 0
-            ? html`<div class="flex flex-col items-start gap-1 mt-[2px]">
-                ${modifierLabels.map(
-                  (label) =>
-                    html`<span
-                      class="lt-label !text-[12px] !text-lt-accent px-2 py-1 bg-lt-900/85 border border-lt-accent/45"
-                      >${label}</span
-                    >`,
-                )}
-              </div>`
-            : html`<div></div>`}
+          <div class="flex flex-col items-start gap-1 mt-[2px]">
+            <span
+              class="lt-label !text-[12px] !text-lt-900 px-2 py-1 bg-lt-100 border border-lt-100"
+              >${titleContent}</span
+            >
+            ${modifierLabels.map(
+              (label) =>
+                html`<span
+                  class="lt-label !text-[12px] !text-lt-accent px-2 py-1 bg-lt-900/85 border border-lt-accent/45"
+                  >${label}</span
+                >`,
+            )}
+          </div>
           <div class="shrink-0">
             <span
               class="lt-num text-[14px] ${timeDisplayUppercase
@@ -400,36 +589,54 @@ export class GameModeSelector extends LitElement {
             >
           </div>
         </div>
-        <!-- Bottom bar: map name + mode, with player count floating above -->
+        <!-- Bottom block, mock order: map name, mode sub, fill underline,
+             then players left / JOIN right. -->
         <div
-          class="absolute bottom-0 left-0 right-0 flex flex-col px-3 py-2 bg-gradient-to-t from-lt-900/95 to-lt-900/25"
-          style="overflow: visible;"
+          class="absolute bottom-0 left-0 right-0 flex flex-col px-3 pt-6 pb-2 text-left bg-gradient-to-t from-lt-900/95 via-lt-900/70 to-transparent"
         >
-          <span
-            class="lt-num absolute bottom-full right-2 mb-1 flex items-center gap-1.5 text-[13px] bg-lt-900/85 border border-lt-700 px-2 py-0.5"
-          >
-            ${lobby.numClients}/${lobby.gameConfig?.maxPlayers}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4 inline-block"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"
-              ></path>
-            </svg>
-          </span>
           ${mapName
-            ? html`<p
-                class="text-sm sm:text-base font-bold uppercase tracking-wider text-left leading-tight"
-              >
-                ${mapName}
-              </p>`
+            ? html`<span
+                class="lt-display ${featured
+                  ? "text-[24px]"
+                  : "text-[17px]"} leading-none"
+                >${mapName}</span
+              >`
             : ""}
-          <h3 class="text-xs text-lt-400 uppercase tracking-wider text-left">
-            ${titleContent}
-          </h3>
+          <!-- Sub-line carries what the chip doesn't: modifiers when there
+               are any, otherwise nothing (the chip already names the mode). -->
+          ${modifierLabels.length > 0
+            ? html`<span class="lt-label !text-[11px] mt-1"
+                >${modifierLabels.join(" · ")}</span
+              >`
+            : nothing}
+          <div class="h-[2px] bg-lt-700/80 mt-2">
+            <div
+              class="h-full bg-lt-accent"
+              style="width: ${fillPercent}%"
+            ></div>
+          </div>
+          <div class="flex items-center justify-between mt-1.5">
+            <span class="lt-num flex items-center gap-1.5 text-[13px]">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-3.5 w-3.5 inline-block"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+              >
+                <path d="M16 21v-2a4 4 0 0 0-8 0v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              ${lobby.numClients} / ${maxPlayers}
+            </span>
+            <span
+              class="lt-label !text-[12px] group-hover:!text-lt-accent transition-colors"
+              >${translateText("home.join")}
+              <span aria-hidden="true">→</span></span
+            >
+          </div>
         </div>
       </button>
     `;
