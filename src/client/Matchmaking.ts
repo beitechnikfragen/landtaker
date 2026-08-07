@@ -60,7 +60,7 @@ export class MatchmakingModal extends BaseModal {
 
   protected renderBody() {
     const eloDisplay = html`
-      <p class="text-center mt-2 mb-4 text-white/60">
+      <p class="text-center mt-2 mb-4 text-lt-400">
         ${translateText("matchmaking_modal.elo", { elo: this.elo })}
       </p>
     `;
@@ -78,12 +78,12 @@ export class MatchmakingModal extends BaseModal {
           <p class="text-white font-bold">
             ${translateText("matchmaking_modal.limit_reached")}
           </p>
-          <p class="text-sm text-white/60">
+          <p class="text-sm text-lt-400">
             ${translateText("matchmaking_modal.limit_reached_info")}
           </p>
           <button
             @click=${this.openSubscriptions}
-            class="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-wider rounded-xl transition-colors"
+            class="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-wider transition-colors"
           >
             ${translateText("matchmaking_modal.limit_upsell")}
           </button>
@@ -100,7 +100,7 @@ export class MatchmakingModal extends BaseModal {
       return html`
         ${this.queueSize !== null
           ? html`
-              <p class="text-center text-white/60">
+              <p class="text-center text-lt-400">
                 ${translateText("matchmaking_modal.queue_size", {
                   count: this.queueSize,
                 })}

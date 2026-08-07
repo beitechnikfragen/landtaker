@@ -238,8 +238,8 @@ export class HostLobbyModal extends BaseModal {
       <button
         class="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full transition-all ${this
           .publiclyListed === isPublic
-          ? "bg-malibu-blue text-white"
-          : "text-white/50 hover:text-white"}"
+          ? "bg-lt-accent text-white"
+          : "text-lt-500 hover:text-white"}"
         @click=${() => this.handleVisibilitySelect(isPublic)}
       >
         ${translateText(labelKey)}
@@ -247,7 +247,7 @@ export class HostLobbyModal extends BaseModal {
     `;
     return html`
       <div
-        class="flex items-center rounded-full border border-white/10 bg-white/5 p-0.5 shrink-0"
+        class="flex items-center rounded-full border border-lt-700 bg-white/5 p-0.5 shrink-0"
       >
         ${segment("host_modal.visibility_private", false)}
         ${segment("host_modal.visibility_public", true)}
@@ -613,7 +613,7 @@ export class HostLobbyModal extends BaseModal {
         </div>
 
         <!-- Player List / footer -->
-        <div class="p-6 pt-4 border-t border-white/10 bg-black/20 shrink-0">
+        <div class="p-6 pt-4 border-t border-lt-700 bg-black/20 shrink-0">
           <o-button
             variant=${secondsRemaining !== null ? "warning" : "primary"}
             width="block"

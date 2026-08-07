@@ -15,6 +15,7 @@ import {
   buildPublicAssetManifest,
   copyRootPublicFiles,
   createHashedPublicAssetFiles,
+  getBrandDir,
   getProprietaryDir,
   getResourcesDir,
   writePublicAssetManifest,
@@ -24,12 +25,15 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-function serveProprietaryDir(
-  proprietaryDir: string,
+// Serves the non-publicDir asset roots (brand/, proprietary/) in dev. In
+// production these are hashed into the manifest and uploaded to the CDN
+// instead; see createHashedPublicAssetFiles.
+function serveExtraAssetDirs(
+  extraDirs: string[],
   resourcesDir: string,
 ): Plugin {
   return {
-    name: "serve-proprietary-dir",
+    name: "serve-extra-asset-dirs",
     configureServer(server) {
       // Must run before Vite's htmlFallback; skip when resources/ has the file
       // so publicDir keeps precedence.
@@ -40,9 +44,11 @@ function serveProprietaryDir(
         ).replace(/^\//, "");
         if (rel.includes("..")) return next();
         if (fs.existsSync(path.join(resourcesDir, rel))) return next();
-        const filePath = path.join(proprietaryDir, rel);
-        if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile())
-          return next();
+        // First dir that has the file wins, matching resolveSourceDir's order.
+        const filePath = extraDirs
+          .map((dir) => path.join(dir, rel))
+          .find((p) => fs.existsSync(p) && fs.statSync(p).isFile());
+        if (!filePath) return next();
         const mime = lookupMime(filePath);
         if (mime) res.setHeader("Content-Type", mime);
         res.setHeader("Cache-Control", "no-store");
@@ -95,7 +101,8 @@ export default defineConfig(({ mode }) => {
   const devNumWorkers = parseInt(env.NUM_WORKERS ?? "2", 10);
   const resourcesDir = getResourcesDir(__dirname);
   const proprietaryDir = getProprietaryDir(__dirname);
-  const sourceDirs = [resourcesDir, proprietaryDir];
+  const brandDir = getBrandDir(__dirname);
+  const sourceDirs = [resourcesDir, brandDir, proprietaryDir];
   const assetManifest: AssetManifest = isProduction
     ? buildPublicAssetManifest(sourceDirs)
     : {};
@@ -117,8 +124,10 @@ export default defineConfig(({ mode }) => {
       assetManifest,
       cdnBase,
     ),
+    // The plain terrain map, not background.webp — that one carries the old
+    // hexagon overlay baked in, which the redesign drops.
     backgroundImageUrl: buildAssetUrl(
-      "images/background.webp",
+      "images/EuropeBackground.webp",
       assetManifest,
       cdnBase,
     ),
@@ -218,7 +227,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       ...(!isProduction
         ? [
-            serveProprietaryDir(proprietaryDir, resourcesDir),
+            serveExtraAssetDirs([brandDir, proprietaryDir], resourcesDir),
             randomWorkerCreateProxy(devNumWorkers),
           ]
         : []),

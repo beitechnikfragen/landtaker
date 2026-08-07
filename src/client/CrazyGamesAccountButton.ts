@@ -52,7 +52,7 @@ export async function updateCrazyGamesNavButton() {
       signInTextEl.textContent = profile.username;
       signInTextEl.classList.remove("hidden");
     }
-    desktopButton?.classList.remove("border", "border-white/20");
+    desktopButton?.classList.remove("border", "border-lt-600");
     if (desktopButton) desktopButton.onclick = null;
   } else {
     avatarEl?.classList.add("hidden");
@@ -63,7 +63,7 @@ export async function updateCrazyGamesNavButton() {
       signInTextEl.textContent = signInText;
       signInTextEl.classList.remove("hidden");
     }
-    desktopButton?.classList.add("border", "border-white/20");
+    desktopButton?.classList.add("border", "border-lt-600");
     if (desktopButton) desktopButton.onclick = promptSignIn;
   }
 

@@ -1,0 +1,44 @@
+Copyright (c) 2026 Landtaker
+All Rights Reserved.
+
+LANDTAKER BRAND ASSET LICENSE
+
+The assets in this directory are the exclusive property of the Landtaker
+project and its contributors. They are NOT covered by the AGPL v3.0 that
+applies to the source code, nor by the Creative Commons BY-SA 4.0 licence
+that applies to the assets in resources/.
+
+They are also entirely separate from proprietary/, which contains assets
+belonging to OpenFront Inc. Nothing in this directory is derived from, or
+grants any rights to, those assets.
+
+WHAT IS IN HERE:
+Original brand and identity assets created for Landtaker — logos, wordmarks,
+rank insignia, and other artwork that identifies the project.
+
+PERMITTED USE:
+- You may use these assets for development, testing, and contribution
+  purposes to Landtaker
+- You may use these assets solely as part of the complete Landtaker software
+  package
+- You may view and study these assets for personal educational purposes
+- You may run, compile, and test the software containing these assets
+
+RESTRICTIONS:
+You may NOT:
+- Extract, copy, or use these assets in any other project or work
+- Modify, alter, or create derivative works of these assets for redistribution
+- Redistribute, sublicense, sell, or transfer these assets separately from
+  Landtaker
+- Use these assets for any commercial purpose outside of running Landtaker
+- Use these assets in a way that implies endorsement by, or affiliation with,
+  the Landtaker project
+
+WHY THIS EXISTS:
+The source code is released under the AGPL and must stay that way. Brand
+identity is different: a fork is free to take the code, but it must not ship
+under our name and marks. Keeping these assets under a separate licence is
+what makes that distinction enforceable.
+
+If you fork Landtaker, replace the contents of this directory with your own
+brand assets.

@@ -1,10 +1,12 @@
-import type { UserMeResponse } from "@game/ApiSchemas.ts";
-import { and, eq, gt, isNull, or } from "drizzle-orm";
+import type { RecentMatch, UserMeResponse } from "@game/ApiSchemas.ts";
+import { and, desc, eq, gt, isNotNull, isNull, or } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { db } from "../db/index.ts";
 import {
   bans,
   friendships,
+  gameParticipants,
+  games,
   identities,
   leaderboardEntries,
   users,
@@ -26,15 +28,18 @@ export async function buildUserMeResponse(
   });
   if (!user) return null;
 
-  const [links, activeBan, ranks, friendIds] = await Promise.all([
-    db.select().from(identities).where(eq(identities.userId, userId)),
-    findActiveBan(userId),
-    db
-      .select()
-      .from(leaderboardEntries)
-      .where(eq(leaderboardEntries.userId, userId)),
-    listFriendPublicIds(userId),
-  ]);
+  const [links, activeBan, ranks, friendIds, recentMatches] = await Promise.all(
+    [
+      db.select().from(identities).where(eq(identities.userId, userId)),
+      findActiveBan(userId),
+      db
+        .select()
+        .from(leaderboardEntries)
+        .where(eq(leaderboardEntries.userId, userId)),
+      listFriendPublicIds(userId),
+      listRecentMatches(userId),
+    ],
+  );
 
   const userBlock: UserMeResponse["user"] = {};
   for (const link of links) {
@@ -77,10 +82,29 @@ export async function buildUserMeResponse(
         : {}),
       nextUsernameChangeAt: user.nextUsernameChangeAt?.toISOString() ?? null,
       achievements: { singleplayerMap: [] },
+      // wins/losses live on the same row as elo, so sending them costs
+      // nothing extra and saves the client a second request to show a record.
       leaderboard: {
-        ...(oneVone ? { oneVone: { elo: oneVone.elo } } : {}),
-        ...(twoVtwo ? { twoVtwo: { elo: twoVtwo.elo } } : {}),
+        ...(oneVone
+          ? {
+              oneVone: {
+                elo: oneVone.elo,
+                wins: oneVone.wins,
+                losses: oneVone.losses,
+              },
+            }
+          : {}),
+        ...(twoVtwo
+          ? {
+              twoVtwo: {
+                elo: twoVtwo.elo,
+                wins: twoVtwo.wins,
+                losses: twoVtwo.losses,
+              },
+            }
+          : {}),
       },
+      recentMatches,
       friends: friendIds,
       subscription: null,
     },
@@ -149,6 +173,51 @@ async function listFriendPublicIds(userId: string): Promise<string[]> {
       .where(eq(friendships.userIdB, userId)),
   ]);
   return [...asA, ...asB].map((row) => row.publicId);
+}
+
+/**
+ * How many finished matches /users/@me carries. Small on purpose: this is the
+ * "what did I just play" strip on the home page, not a match archive — a full
+ * history belongs behind its own paginated endpoint.
+ */
+export const RECENT_MATCHES_LIMIT = 5;
+
+/**
+ * The caller's most recent finished matches, newest first.
+ *
+ * Reads `game_participants` (indexed on user_id) and joins the parent game for
+ * the map and mode, so it never touches the archived `record` JSON — that blob
+ * exists for replays and is large.
+ *
+ * Unfinished games are excluded: a row with no `endedAt` is a match still in
+ * progress or one whose result never arrived, and neither is history.
+ */
+async function listRecentMatches(userId: string): Promise<RecentMatch[]> {
+  const rows = await db
+    .select({
+      gameId: games.id,
+      map: games.map,
+      mode: games.mode,
+      rankedType: games.rankedType,
+      endedAt: games.endedAt,
+      placement: gameParticipants.placement,
+      won: gameParticipants.won,
+    })
+    .from(gameParticipants)
+    .innerJoin(games, eq(games.id, gameParticipants.gameId))
+    .where(and(eq(gameParticipants.userId, userId), isNotNull(games.endedAt)))
+    .orderBy(desc(games.endedAt))
+    .limit(RECENT_MATCHES_LIMIT);
+
+  return rows.map((row) => ({
+    gameId: row.gameId,
+    map: row.map,
+    mode: row.mode,
+    rankedType: row.rankedType,
+    placement: row.placement,
+    won: row.won,
+    endedAt: row.endedAt?.toISOString() ?? null,
+  }));
 }
 
 /**

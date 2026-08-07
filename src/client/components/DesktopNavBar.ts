@@ -2,6 +2,7 @@ import { LitElement, html } from "lit";
 import { customElement } from "lit/decorators.js";
 import { assetUrl } from "../../core/AssetUrls";
 import { NavNotificationsController } from "./NavNotificationsController";
+import "./NavStatusCells";
 
 @customElement("desktop-nav-bar")
 export class DesktopNavBar extends LitElement {
@@ -50,34 +51,40 @@ export class DesktopNavBar extends LitElement {
 
     return html`
       <nav
-        class="hidden lg:flex w-full bg-zinc-900/90 backdrop-blur-md items-center justify-center gap-8 py-4 shrink-0 z-50 relative"
+        class="hidden lg:flex w-full h-[76px] bg-lt-900/90 backdrop-blur-md items-stretch shrink-0 z-50 relative border-b border-lt-700"
       >
-        <div class="flex flex-col items-center justify-center">
-          <div class="h-8">
+        <!-- Brand sits at the left edge, separated by a rule rather than
+             centred — the row then reads left-to-right like a title bar. -->
+        <!-- Brand column: the lockup at full readable size with the version
+             centred beneath it, not squeezed beside it. -->
+        <div
+          class="flex flex-col items-center justify-center gap-1 pl-5 pr-7 mr-2 border-r border-lt-700"
+        >
+          <div class="h-12">
             <img
-              class="block h-full aspect-[1364/259]"
-              src=${assetUrl("images/LandtakerLogo.svg")}
-              alt="OpenFront"
+              class="block h-full aspect-[3943/1442]"
+              src=${assetUrl("images/logo/lockup-horizontal.svg")}
+              alt="Landtaker"
             />
           </div>
           <div
             id="game-version"
-            class="l-header__highlightText text-center"
+            class="lt-label !text-[10px] !tracking-[0.3em] text-center w-full"
           ></div>
         </div>
         <button
-          class="nav-menu-item ${currentPage === "page-play"
+          class="nav-menu-item lt-nav-item ${currentPage === "page-play"
             ? "active"
-            : ""} text-white/70 hover:text-malibu-blue  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue "
+            : ""}"
           data-page="page-play"
           data-i18n="main.play"
         ></button>
         <!-- Desktop Navigation Menu Items -->
-        <div class="relative">
+        <div class="relative flex items-stretch">
           <button
-            class="nav-menu-item ${currentPage === "page-news"
+            class="nav-menu-item lt-nav-item ${currentPage === "page-news"
               ? "active"
-              : ""} text-white/70 hover:text-malibu-blue  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue "
+              : ""}"
             data-page="page-news"
             data-i18n="main.news"
             @click=${this._notifications.onNewsClick}
@@ -93,11 +100,11 @@ export class DesktopNavBar extends LitElement {
               `
             : ""}
         </div>
-        <div class="relative no-crazygames">
+        <div class="relative no-crazygames flex items-stretch">
           <button
-            class="nav-menu-item ${currentPage === "page-item-store"
+            class="nav-menu-item lt-nav-item ${currentPage === "page-item-store"
               ? "active"
-              : ""} text-white/70 hover:text-malibu-blue  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue "
+              : ""}"
             data-page="page-item-store"
             data-i18n="main.store"
             @click=${this._notifications.onStoreClick}
@@ -114,28 +121,28 @@ export class DesktopNavBar extends LitElement {
             : ""}
         </div>
         <button
-          class="nav-menu-item text-white/70 hover:text-malibu-blue  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue "
+          class="nav-menu-item lt-nav-item"
           data-page="page-settings"
           data-i18n="main.settings"
         ></button>
         <button
-          class="nav-menu-item text-white/70 hover:text-malibu-blue  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue "
+          class="nav-menu-item lt-nav-item"
           data-page="page-leaderboard"
           data-i18n="main.leaderboard"
         ></button>
         <button
-          class="no-crazygames nav-menu-item text-white/70 hover:text-blue-500 font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-blue-500"
+          class="no-crazygames nav-menu-item lt-nav-item"
           data-page="page-clan"
           data-i18n="main.clans"
         ></button>
         <button
-          class="no-crazygames nav-menu-item text-white/70 hover:text-malibu-blue font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue"
+          class="no-crazygames nav-menu-item lt-nav-item"
           data-page="page-party"
           data-i18n="main.party"
         ></button>
-        <div class="relative">
+        <div class="relative flex items-stretch">
           <button
-            class="nav-menu-item text-white/70 hover:text-malibu-blue  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue "
+            class="nav-menu-item lt-nav-item"
             data-page="page-help"
             data-i18n="main.help"
             @click=${this._notifications.onHelpClick}
@@ -151,23 +158,26 @@ export class DesktopNavBar extends LitElement {
               `
             : ""}
         </div>
+        <!-- Push the status and account cells to the right edge; tabs stay left. -->
+        <div class="flex-1"></div>
+        <nav-status-cells class="flex items-stretch"></nav-status-cells>
         <button
           id="nav-account-button"
-          class="nav-menu-item relative h-10 rounded-full overflow-hidden flex items-center justify-center gap-2 px-3 bg-transparent border border-white/20 text-white/80 hover:text-white cursor-pointer transition-colors [&.active]:text-white"
+          class="nav-menu-item lt-nav-cell relative"
           data-page="page-account"
           data-i18n-aria-label="main.account"
           data-i18n-title="main.account"
         >
           <img
             id="nav-account-avatar"
-            class="hidden w-8 h-8 rounded-full object-cover"
+            class="hidden w-7 h-7 object-cover border border-lt-600"
             alt=""
             data-i18n-alt="main.discord_avatar_alt"
             referrerpolicy="no-referrer"
           />
           <span
             id="nav-account-loading-spinner"
-            class="w-4 h-4 border-2 border-white/30 border-t-white/80 rounded-full animate-spin"
+            class="w-4 h-4 border-2 border-lt-600 border-t-lt-100 rounded-full animate-spin"
             aria-hidden="true"
           ></span>
           <svg
@@ -187,11 +197,11 @@ export class DesktopNavBar extends LitElement {
           </svg>
           <span
             id="nav-account-email-badge"
-            class="hidden absolute bottom-1 right-1 w-4 h-4 rounded-full bg-slate-900/80 border border-white/20 flex items-center justify-center"
+            class="hidden absolute bottom-1 right-1 w-4 h-4 bg-lt-900/90 border border-lt-600 flex items-center justify-center"
             aria-hidden="true"
           >
             <svg
-              class="w-2.5 h-2.5 text-white/80"
+              class="w-2.5 h-2.5 text-lt-400"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="none"
@@ -207,7 +217,7 @@ export class DesktopNavBar extends LitElement {
           </span>
           <span
             id="nav-account-signin-text"
-            class="hidden text-xs font-bold tracking-widest"
+            class="hidden lt-label !text-[13px] !text-lt-100"
             data-i18n="main.sign_in"
           >
           </span>

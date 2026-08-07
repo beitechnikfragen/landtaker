@@ -4,9 +4,9 @@ import { translateCosmetic } from "../Cosmetics";
 import { translateText } from "../Utils";
 
 const rarityColors: Record<string, string> = {
-  common: "text-white/60",
-  uncommon: "text-green-400",
-  rare: "text-blue-400",
+  common: "text-lt-400",
+  uncommon: "text-lt-ok",
+  rare: "text-lt-accent",
   epic: "text-purple-300",
   legendary: "text-orange-400",
 };
@@ -47,7 +47,7 @@ export class CosmeticInfo extends LitElement {
       return nothing;
     }
 
-    const rarityColor = rarityColors[this.rarity ?? ""] ?? "text-white/70";
+    const rarityColor = rarityColors[this.rarity ?? ""] ?? "text-lt-400";
 
     return html`
       <div
@@ -57,10 +57,10 @@ export class CosmeticInfo extends LitElement {
         <div
           class="w-6 h-6 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center cursor-help transition-colors duration-150"
         >
-          <span class="text-xs font-bold text-white/70">?</span>
+          <span class="text-xs font-bold text-lt-400">?</span>
         </div>
         <div
-          class="hidden group-hover/artist:block absolute top-7 right-0 bg-zinc-800 text-white text-xs px-2.5 py-1.5 rounded shadow-lg whitespace-nowrap z-20 border border-white/10 flex flex-col gap-0.5"
+          class="hidden group-hover/artist:block absolute top-7 right-0 bg-lt-850 text-white text-xs px-2.5 py-1.5 shadow-lg whitespace-nowrap z-20 border border-lt-700 flex flex-col gap-0.5"
         >
           ${this.rarity
             ? html`<div
@@ -70,7 +70,7 @@ export class CosmeticInfo extends LitElement {
               </div>`
             : nothing}
           ${this.showAdFree
-            ? html`<div class="text-green-400 font-bold">
+            ? html`<div class="text-lt-ok font-bold">
                 ${translateText("cosmetics.adfree")}
               </div>`
             : nothing}
@@ -85,7 +85,7 @@ export class CosmeticInfo extends LitElement {
             (perk) =>
               html`<div class="whitespace-normal w-56">
                 <span class="font-bold text-purple-300">${perk.label}:</span>
-                <span class="text-white/80">${perk.info}</span>
+                <span class="text-lt-100">${perk.info}</span>
               </div>`,
           )}
           ${this.colorPalette

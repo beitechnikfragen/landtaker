@@ -74,7 +74,7 @@ export class TrailSwatch extends LitElement {
       // Strand count mirrors the in-game clamp (max 8).
       const strands = Math.min(Math.max(Math.round(this.trail.strands), 1), 8);
       return html`<div
-        class="w-full h-full rounded-md overflow-hidden"
+        class="w-full h-full overflow-hidden"
         style="background:${SPIRAL_BG};"
       >
         <svg
@@ -136,7 +136,7 @@ export class TrailSwatch extends LitElement {
       backgroundSize = "background-size:200% 100%;";
     }
     return html`<div
-      class="w-full h-full rounded-md"
+      class="w-full h-full "
       style="background:${background};${backgroundSize}"
     ></div>`;
   }

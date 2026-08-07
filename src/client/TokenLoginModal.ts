@@ -47,10 +47,10 @@ export class TokenLoginModal extends BaseModal {
     return html`
       <div class="flex items-center gap-4">
         <div
-          class="w-12 h-12 rounded-full border border-blue-400/40 bg-blue-500/10 flex items-center justify-center"
+          class="w-12 h-12 rounded-full border border-lt-accent/40 bg-lt-accent/10 flex items-center justify-center"
         >
           <div
-            class="w-6 h-6 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin"
+            class="w-6 h-6 border-2 border-lt-accent/30 border-t-blue-400 rounded-full animate-spin"
           ></div>
         </div>
         <div class="flex flex-col gap-2">
@@ -72,7 +72,7 @@ export class TokenLoginModal extends BaseModal {
         >
           <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
         </div>
-        <p class="text-base text-white/90">${successText}</p>
+        <p class="text-base text-lt-100">${successText}</p>
       </div>
     `;
   }

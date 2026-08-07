@@ -7,7 +7,7 @@ import { translateText } from "../../Utils";
 export function verifiedBadge(sizeClass = "w-4 h-4"): TemplateResult {
   return html`<svg
     viewBox="0 0 24 24"
-    class="${sizeClass} text-blue-400 shrink-0"
+    class="${sizeClass} text-lt-accent shrink-0"
     role="img"
     aria-label=${translateText("username.verified_player")}
   >

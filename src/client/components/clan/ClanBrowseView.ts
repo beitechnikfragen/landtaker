@@ -107,7 +107,7 @@ export class ClanBrowseView extends LitElement {
             type="text"
             .value=${this.searchQuery}
             @input=${(e: Event) => this.onSearchInput(e)}
-            class="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 text-sm"
+            class="w-full pl-10 pr-4 py-3 bg-white/5 border border-lt-700 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 text-sm"
             placeholder="${translateText("clan_modal.search_placeholder")}"
           />
           <svg
@@ -124,14 +124,14 @@ export class ClanBrowseView extends LitElement {
         </div>
 
         ${this.errorMsg
-          ? html`<p class="text-red-400 text-sm text-center py-4">
+          ? html`<p class="text-lt-bad text-sm text-center py-4">
               ${this.errorMsg}
             </p>`
           : ""}
 
         <div class="space-y-3">
           ${filtered.length === 0 && this.browseData
-            ? html`<p class="text-white/40 text-sm text-center py-8">
+            ? html`<p class="text-lt-500 text-sm text-center py-8">
                 ${translateText("clan_modal.no_results")}
               </p>`
             : filtered.map(
@@ -152,14 +152,14 @@ export class ClanBrowseView extends LitElement {
                     this.loadBrowse();
                   }}
                   ?disabled=${this.browsePage <= 1}
-                  class="px-2 py-1 text-xs font-bold rounded-lg transition-all ${this
+                  class="px-2 py-1 text-xs font-bold transition-all ${this
                     .browsePage <= 1
                     ? "text-white/20 cursor-not-allowed"
-                    : "text-white/60 hover:text-white hover:bg-white/10"}"
+                    : "text-lt-400 hover:text-white hover:bg-white/10"}"
                 >
                   &lt;
                 </button>
-                <span class="text-xs text-white/50 font-medium">
+                <span class="text-xs text-lt-500 font-medium">
                   ${this.browsePage} / ${totalPages}
                 </span>
                 <button
@@ -168,10 +168,10 @@ export class ClanBrowseView extends LitElement {
                     this.loadBrowse();
                   }}
                   ?disabled=${this.browsePage >= totalPages}
-                  class="px-2 py-1 text-xs font-bold rounded-lg transition-all ${this
+                  class="px-2 py-1 text-xs font-bold transition-all ${this
                     .browsePage >= totalPages
                     ? "text-white/20 cursor-not-allowed"
-                    : "text-white/60 hover:text-white hover:bg-white/10"}"
+                    : "text-lt-400 hover:text-white hover:bg-white/10"}"
                 >
                   &gt;
                 </button>

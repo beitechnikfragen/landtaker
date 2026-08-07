@@ -73,6 +73,32 @@ const SingleplayerMapAchievementSchema = z.object({
   difficulty: z.enum(Difficulty),
 });
 
+// The caller's own standing in one ranked ladder. Distinct from
+// RankedLeaderboardEntrySchema, which describes a row on the PUBLIC board and
+// carries a rank and identity — here the player is already known, so the
+// record is just their numbers. `wins`/`losses` are optional so a response
+// from an API that only serves elo still parses.
+const OwnRankedRecordSchema = z.object({
+  elo: z.number().optional(),
+  wins: z.number().optional(),
+  losses: z.number().optional(),
+});
+
+// One finished match in the caller's history. `placement` is 1-based; `won`
+// is stored separately because a team win is not the same as placing first.
+// `map` and `mode` are open strings: the archive keeps whatever the game
+// server recorded, and unknown values must not break the response.
+const RecentMatchSchema = z.object({
+  gameId: z.string(),
+  map: z.string().nullable(),
+  mode: z.string().nullable(),
+  rankedType: z.string().nullable(),
+  placement: z.number().nullable(),
+  won: z.boolean().nullable(),
+  endedAt: z.iso.datetime().nullable(),
+});
+export type RecentMatch = z.infer<typeof RecentMatchSchema>;
+
 // An unclaimed subscription reward from GET /users/@me. `id` and `amount` are
 // stringified bigints — keep them as strings (amount can in principle exceed
 // Number.MAX_SAFE_INTEGER). `reason` is open-ended server-side; fall back to
@@ -194,18 +220,13 @@ export const UserMeResponseSchema = z.object({
     }),
     leaderboard: z
       .object({
-        oneVone: z
-          .object({
-            elo: z.number().optional(),
-          })
-          .optional(),
-        twoVtwo: z
-          .object({
-            elo: z.number().optional(),
-          })
-          .optional(),
+        oneVone: OwnRankedRecordSchema.optional(),
+        twoVtwo: OwnRankedRecordSchema.optional(),
       })
       .optional(),
+    // The player's own recent finished matches, newest first. Absent when the
+    // API does not serve history; [] means "has played none".
+    recentMatches: RecentMatchSchema.array().optional(),
     currency: CurrencyBalancesSchema.optional(),
     // Unclaimed rewards — NOT included in `currency` balances until claimed.
     rewards: RewardSchema.array().optional(),

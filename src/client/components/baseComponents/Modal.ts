@@ -91,7 +91,7 @@ export class OModal extends LitElement {
     return html`
       <div
         role="tablist"
-        class="flex flex-wrap justify-center border-b border-white/10 px-4 lg:px-6 gap-1 shrink-0"
+        class="flex flex-wrap justify-center border-b border-lt-700 px-4 lg:px-6 gap-1 shrink-0"
       >
         ${this.tabs.map((tab) => {
           const active = this.activeTab === tab.key;
@@ -101,15 +101,15 @@ export class OModal extends LitElement {
               role="tab"
               data-key=${tab.key}
               aria-selected=${active}
-              class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all relative cursor-pointer ${active
-                ? "text-aquarius"
-                : "text-white/40 hover:text-white/70"}"
+              class="px-4 py-3 text-sm font-[family-name:var(--font-lt-util)] font-semibold uppercase tracking-[0.14em] transition-colors relative cursor-pointer ${active
+                ? "text-lt-100"
+                : "text-lt-500 hover:text-lt-400"}"
               @click=${() => this.handleTabClick(tab.key)}
             >
               ${tab.label}
               ${active
                 ? html`<div
-                    class="absolute bottom-0 left-0 right-0 h-0.5 bg-malibu-blue"
+                    class="absolute bottom-0 left-0 right-0 h-0.5 bg-lt-accent"
                   ></div>`
                 : ""}
             </button>
@@ -131,7 +131,7 @@ export class OModal extends LitElement {
 
     const wrapperClass = this.inline
       ? "relative flex flex-col w-full h-full m-0 max-w-full max-h-none shadow-none"
-      : `relative flex flex-col w-full h-full lg:w-[90%] lg:h-auto lg:min-w-[400px] lg:max-w-[900px] lg:m-8 lg:rounded-lg shadow-[0_20px_60px_rgba(0,0,0,0.8)] lg:max-h-[calc(100vh-4rem)] ${
+      : `relative flex flex-col w-full h-full lg:w-[90%] lg:h-auto lg:min-w-[400px] lg:max-w-[900px] lg:m-8 shadow-[0_20px_60px_rgba(0,0,0,0.8)] lg:max-h-[calc(100vh-4rem)] ${
           this.alwaysMaximized ? "h-auto" : ""
         }`;
     const wrapperStyle =
@@ -139,7 +139,7 @@ export class OModal extends LitElement {
 
     const hasTabs = this.tabs.length > 0;
     const sectionClass =
-      "relative flex-1 min-h-0 flex flex-col text-white bg-black/70 backdrop-blur-xl lg:rounded-2xl lg:border border-white/10 overflow-hidden";
+      "relative flex-1 min-h-0 flex flex-col text-lt-100 bg-lt-900/95 backdrop-blur-xl lg:border border-lt-700 overflow-hidden";
 
     return html`
       <aside
@@ -161,7 +161,7 @@ export class OModal extends LitElement {
               </div>`}
           ${!this.hideHeader && this.title
             ? html`<div
-                class="px-[1.4rem] py-[1rem] text-2xl font-bold text-white"
+                class="px-[1.4rem] py-[1rem] text-2xl lt-display text-lt-100"
               >
                 ${this.title}
               </div>`

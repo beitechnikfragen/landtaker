@@ -388,9 +388,9 @@ export class PlayerPanel extends LitElement implements Controller {
 
     switch (relation) {
       case Relation.Hostile:
-        return `${base} border-red-400/30 bg-red-500/10 text-red-200`;
+        return `${base} border-lt-bad/30 bg-red-500/10 text-red-200`;
       case Relation.Distrustful:
-        return `${base} border-red-300/40 bg-red-300/10 text-red-300`;
+        return `${base} border-red-300/40 bg-red-300/10 text-lt-bad`;
       case Relation.Friendly:
         return `${base} border-emerald-400/30 bg-emerald-500/10 text-emerald-200`;
       case Relation.Neutral:
@@ -416,9 +416,9 @@ export class PlayerPanel extends LitElement implements Controller {
   private getExpiryColorClass(seconds: number | null): string {
     if (seconds === null) return "text-white"; // Default color
 
-    if (seconds <= 30) return "text-red-400"; // Last 30 seconds: Red
-    if (seconds <= 60) return "text-yellow-400"; // Last 60 seconds: Yellow
-    return "text-emerald-400"; // More than 60 seconds: Green
+    if (seconds <= 30) return "text-lt-bad"; // Last 30 seconds: Red
+    if (seconds <= 60) return "text-lt-gold"; // Last 60 seconds: Yellow
+    return "text-lt-ok"; // More than 60 seconds: Green
   }
 
   private getTraitorRemainingSeconds(player: PlayerView): number | null {
@@ -440,7 +440,7 @@ export class PlayerPanel extends LitElement implements Controller {
     return html`
       <div class="mt-1" role="status" aria-live="polite" aria-atomic="true">
         <span
-          class="inline-flex items-center gap-2 rounded-full border border-red-400/30
+          class="inline-flex items-center gap-2 rounded-full border border-lt-bad/30
             bg-red-500/10 px-2.5 py-0.5 text-sm font-semibold text-red-200
             shadow-[inset_0_0_8px_rgba(239,68,68,0.12)]"
           title=${translateText("player_panel.traitor")}
@@ -562,7 +562,7 @@ export class PlayerPanel extends LitElement implements Controller {
     return html`
       <div class="mb-1 flex justify-between gap-2">
         <div
-          class="inline-flex items-center gap-1.5 rounded-lg bg-white/4 px-3 py-1.5 shrink-0
+          class="inline-flex items-center gap-1.5 bg-white/4 px-3 py-1.5 shrink-0
                     text-white w-35"
         >
           <span class="mr-0.5">💰</span>
@@ -575,7 +575,7 @@ export class PlayerPanel extends LitElement implements Controller {
         </div>
 
         <div
-          class="inline-flex items-center gap-1.5 rounded-lg bg-white/4 px-3 py-1.5
+          class="inline-flex items-center gap-1.5 bg-white/4 px-3 py-1.5
                     text-white w-35 shrink-0"
         >
           <span class="mr-0.5">🛡️</span>
@@ -594,7 +594,7 @@ export class PlayerPanel extends LitElement implements Controller {
     return html`
       <ui-divider></ui-divider>
       <button
-        class="flex w-full items-center justify-between rounded-xl bg-white/5 px-3 py-2 text-left text-white hover:bg-white/8 active:scale-[0.995] transition"
+        class="flex w-full items-center justify-between bg-white/5 px-3 py-2 text-left text-white hover:bg-white/8 active:scale-[0.995] transition"
         @click=${(e: Event) => this.handleToggleRocketDirection(e)}
       >
         <div class="flex flex-col">
@@ -639,10 +639,10 @@ export class PlayerPanel extends LitElement implements Controller {
           class="flex items-center justify-end gap-2 text-[14px] font-semibold"
         >
           ${other.hasEmbargoAgainst(my)
-            ? html`<span class="text-amber-400"
+            ? html`<span class="text-lt-gold"
                 >${translateText("player_panel.stopped")}</span
               >`
-            : html`<span class="text-blue-400"
+            : html`<span class="text-lt-accent"
                 >${translateText("player_panel.active")}</span
               >`}
         </div>
@@ -669,16 +669,14 @@ export class PlayerPanel extends LitElement implements Controller {
           </div>
           <span
             aria-labelledby="alliances-title"
-            class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-[10px]
-                 text-[12px] text-zinc-100 bg-white/10 border border-white/20"
+            class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 -[10px]
+                 text-[12px] text-zinc-100 bg-white/10 border border-lt-600"
           >
             ${allies.length}
           </span>
         </div>
 
-        <div
-          class="rounded-lg bg-zinc-800/70 ring-1 ring-zinc-700/60 w-full min-w-0"
-        >
+        <div class="bg-lt-850/70 ring-1 ring-zinc-700/60 w-full min-w-0">
           <ul
             class="max-h-30 overflow-y-auto p-2
                  flex flex-wrap gap-1.5
@@ -695,7 +693,7 @@ export class PlayerPanel extends LitElement implements Controller {
                   (p) =>
                     html`<li
                       class="max-w-full inline-flex items-center gap-1.5
-                             rounded-md border border-white/10 bg-white/5
+                             border border-lt-700 bg-white/5
                              px-2.5 py-1 text-[14px] text-zinc-100
                              hover:bg-white/8 active:scale-[0.99] transition"
                       title=${p.displayName()}
@@ -936,10 +934,10 @@ export class PlayerPanel extends LitElement implements Controller {
         >
           <div class="relative">
             <div
-              class="absolute inset-2 -z-10 rounded-2xl bg-black/25 backdrop-blur-[2px]"
+              class="absolute inset-2 -z-10 bg-black/25 backdrop-blur-[2px]"
             ></div>
             <div
-              class=${`relative w-full bg-zinc-900/95 rounded-2xl text-zinc-100 shadow-2xl shadow-black/50
+              class=${`relative w-full bg-lt-900/95 text-zinc-100 shadow-2xl shadow-black/50
                  ${other.isTraitor() ? "traitor-ring" : "ring-1 ring-white/5"}`}
             >
               <div class="overflow-visible">
@@ -949,7 +947,7 @@ export class PlayerPanel extends LitElement implements Controller {
                   <div class="sticky top-0 z-20 flex justify-end p-2">
                     <button
                       @click=${this.handleClose}
-                      class="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-700 text-white shadow-sm hover:bg-red-500 transition-colors"
+                      class="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-700 text-white shadow-sm hover:bg-lt-bad transition-colors"
                       aria-label=${translateText("common.close") || "Close"}
                       title=${translateText("common.close") || "Close"}
                     >

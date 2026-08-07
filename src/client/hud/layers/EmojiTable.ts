@@ -59,7 +59,7 @@ export class EmojiTable extends LitElement {
 
   private handleBackdropClick = (e: MouseEvent) => {
     const panelContent = this.querySelector(
-      'div[class*="bg-zinc-900"]',
+      'div[class*="bg-lt-900"]',
     ) as HTMLElement;
     if (panelContent && !panelContent.contains(e.target as Node)) {
       this.hideTable();
@@ -80,14 +80,14 @@ export class EmojiTable extends LitElement {
           <!-- Close button -->
           <button
             class="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center
-                    bg-zinc-700 hover:bg-red-500 text-white rounded-full shadow-sm transition-colors z-10004"
+                    bg-zinc-700 hover:bg-lt-bad text-white rounded-full shadow-sm transition-colors z-10004"
             @click=${this.hideTable}
           >
             ✕
           </button>
 
           <div
-            class="bg-zinc-900/95 p-2 sm:p-3 rounded-[10px] z-10003 shadow-2xl shadow-black/50 ring-1 ring-white/5
+            class="bg-lt-900/95 p-2 sm:p-3 -[10px] z-10003 shadow-2xl shadow-black/50 ring-1 ring-white/5
                    w-[calc(100vw-32px)] sm:w-100 max-h-[calc(100vh-60px)] overflow-y-auto"
             @contextmenu=${(e: MouseEvent) => e.preventDefault()}
             @wheel=${(e: WheelEvent) => e.stopPropagation()}
@@ -98,7 +98,7 @@ export class EmojiTable extends LitElement {
                 (emoji) => html`
                   <button
                     class="flex items-center justify-center cursor-pointer aspect-square
-                           border border-solid border-zinc-600 rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600
+                           border border-solid border-zinc-600 bg-lt-850 hover:bg-zinc-700 active:bg-zinc-600
                            text-3xl sm:text-4xl transition-transform duration-300 hover:scale-110 active:scale-95"
                     @click=${() => this.onEmojiClicked(emoji)}
                   >

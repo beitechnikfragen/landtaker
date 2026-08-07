@@ -25,13 +25,13 @@ export class SettingToggle extends LitElement {
 
     return html`
       <label
-        class="flex flex-row items-center justify-between w-full p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all gap-4 cursor-pointer ${rainbowClass}"
+        class="flex flex-row items-center justify-between w-full p-4 bg-white/5 border border-lt-700 hover:bg-white/10 transition-all gap-4 cursor-pointer ${rainbowClass}"
       >
         <div class="flex flex-col flex-1 min-w-0 mr-4">
           <div class="text-white font-bold text-base block mb-1">
             ${this.label}
           </div>
-          <div class="text-white/50 text-sm leading-snug">
+          <div class="text-lt-500 text-sm leading-snug">
             ${this.description}
           </div>
         </div>
@@ -45,10 +45,10 @@ export class SettingToggle extends LitElement {
             @change=${this.handleChange}
           />
           <span
-            class="absolute inset-0 bg-black/60 border border-white/10 transition-all duration-300 rounded-full
+            class="absolute inset-0 bg-black/60 border border-lt-700 transition-all duration-300 rounded-full
             before:absolute before:content-[''] before:h-5 before:w-5 before:left-[3px] before:top-[3px]
             before:bg-white/40 before:transition-all before:duration-300 before:rounded-full before:shadow-sm hover:before:bg-white/60
-            peer-checked:bg-blue-600 peer-checked:border-blue-500 peer-checked:before:translate-x-[24px] peer-checked:before:bg-white"
+            peer-checked:bg-lt-accent peer-checked:border-lt-accent peer-checked:before:translate-x-[24px] peer-checked:before:bg-white"
           ></span>
         </div>
       </label>

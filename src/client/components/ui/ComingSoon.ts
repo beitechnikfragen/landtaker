@@ -15,12 +15,12 @@ export function renderComingSoon(): TemplateResult {
       class="flex flex-col items-center justify-center gap-2 text-center p-12 min-h-[240px]"
     >
       <div
-        class="text-white/70 text-lg font-bold uppercase tracking-wider"
+        class="text-lt-400 text-lg font-bold uppercase tracking-wider"
         data-testid="coming-soon-title"
       >
         ${translateText("common.coming_soon")}
       </div>
-      <div class="text-white/40 text-sm max-w-sm">
+      <div class="text-lt-500 text-sm max-w-sm">
         ${translateText("common.coming_soon_description")}
       </div>
     </div>

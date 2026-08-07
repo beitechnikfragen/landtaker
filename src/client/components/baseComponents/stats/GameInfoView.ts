@@ -84,15 +84,15 @@ export class GameInfoView extends LitElement {
       return html`
         ${this.renderGameInfo()}
         <div
-          class="mt-5 flex min-h-56 flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-white"
+          class="mt-5 flex min-h-56 flex-col items-center justify-center border border-lt-700 bg-white/[0.03] p-8 text-center text-white"
         >
           <div
-            class="mb-4 flex size-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/35"
+            class="mb-4 flex size-12 items-center justify-center border border-lt-700 bg-white/5 text-white/35"
             aria-hidden="true"
           >
             ${this.renderTrophyIcon("size-6")}
           </div>
-          <p class="max-w-md text-sm leading-relaxed text-white/60">
+          <p class="max-w-md text-sm leading-relaxed text-lt-400">
             ${translateText("game_info_modal.no_winner")}
           </p>
         </div>
@@ -114,10 +114,10 @@ export class GameInfoView extends LitElement {
     return html`
       <div
         role="alert"
-        class="flex min-h-80 flex-col items-center justify-center rounded-2xl border border-red-400/15 bg-red-400/[0.04] p-8 text-center text-white"
+        class="flex min-h-80 flex-col items-center justify-center border border-lt-bad/15 bg-red-400/[0.04] p-8 text-center text-white"
       >
         <div
-          class="mb-4 flex size-12 items-center justify-center rounded-xl border border-red-300/15 bg-red-400/10 text-red-200/70"
+          class="mb-4 flex size-12 items-center justify-center border border-red-300/15 bg-red-400/10 text-red-200/70"
           aria-hidden="true"
         >
           <svg
@@ -140,7 +140,7 @@ export class GameInfoView extends LitElement {
         <button
           type="button"
           @click=${() => this.retry()}
-          class="rounded-lg border border-malibu-blue/40 bg-malibu-blue/20 px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-aquarius transition-colors hover:border-malibu-blue/60 hover:bg-malibu-blue/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aquarius/70"
+          class="border border-malibu-blue/40 bg-lt-accent/20 px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-lt-accent transition-colors hover:border-malibu-blue/60 hover:bg-lt-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aquarius/70"
         >
           ${translateText("game_info_modal.retry")}
         </button>
@@ -177,11 +177,11 @@ export class GameInfoView extends LitElement {
     return html`
       <div
         data-game-summary
-        class="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.025] shadow-[0_18px_50px_rgba(0,0,0,0.2)]"
+        class="relative overflow-hidden border border-lt-700 bg-gradient-to-br from-white/[0.08] to-white/[0.025] shadow-[0_18px_50px_rgba(0,0,0,0.2)]"
       >
         <div class="grid sm:grid-cols-[240px_minmax(0,1fr)]">
           <div
-            class="relative min-h-36 overflow-hidden border-b border-white/10 bg-deep-navy sm:min-h-44 sm:border-b-0 sm:border-r"
+            class="relative min-h-36 overflow-hidden border-b border-lt-700 bg-deep-navy sm:min-h-44 sm:border-b-0 sm:border-r"
           >
             ${this.mapImage
               ? html`<img
@@ -202,7 +202,7 @@ export class GameInfoView extends LitElement {
             <div>
               <div class="mb-2 flex flex-wrap items-center gap-2">
                 <span
-                  class="rounded-md border border-malibu-blue/25 bg-malibu-blue/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-aquarius"
+                  class="border border-malibu-blue/25 bg-lt-accent/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-lt-accent"
                 >
                   ${translateText(
                     info.config.gameMode === GameMode.Team
@@ -211,7 +211,7 @@ export class GameInfoView extends LitElement {
                   )}
                 </span>
                 <span
-                  class="rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white/45"
+                  class="border border-lt-700 bg-white/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white/45"
                 >
                   ${this.gameTypeLabel(info.config.gameType)}
                 </span>
@@ -224,9 +224,9 @@ export class GameInfoView extends LitElement {
               </h2>
               <div
                 data-game-date
-                class="mt-2 flex items-center gap-1.5 text-xs font-medium tabular-nums text-white/50"
+                class="mt-2 flex items-center gap-1.5 text-xs font-medium tabular-nums text-lt-500"
               >
-                <span class="text-aquarius/70" aria-hidden="true">
+                <span class="text-lt-accent/70" aria-hidden="true">
                   ${this.renderCalendarIcon("size-3.5")}
                 </span>
                 <time datetime=${startDate}
@@ -258,11 +258,11 @@ export class GameInfoView extends LitElement {
     value: string,
   ): TemplateResult {
     return html`
-      <div class="rounded-xl border border-white/[0.08] bg-black/15 p-2.5">
+      <div class="border border-white/[0.08] bg-black/15 p-2.5">
         <div
           class="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-white/35"
         >
-          <span class="text-aquarius/70" aria-hidden="true">${icon}</span>
+          <span class="text-lt-accent/70" aria-hidden="true">${icon}</span>
           ${label}
         </div>
         <div class="text-sm font-semibold tabular-nums text-white/85">
@@ -276,7 +276,7 @@ export class GameInfoView extends LitElement {
     return html`
       <div
         data-map-fallback
-        class="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_50%_40%,rgba(0,132,209,0.18),transparent_65%)] text-aquarius/35"
+        class="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_50%_40%,rgba(0,132,209,0.18),transparent_65%)] text-lt-accent/35"
         aria-hidden="true"
       >
         <svg
@@ -321,7 +321,7 @@ export class GameInfoView extends LitElement {
     return html`
       <section
         aria-label=${translateText(RANK_TYPE_LABEL_KEYS[this.rankType])}
-        class="overflow-hidden rounded-2xl border border-white/10 bg-black/15 shadow-[0_12px_35px_rgba(0,0,0,0.16)]"
+        class="overflow-hidden border border-lt-700 bg-black/15 shadow-[0_12px_35px_rgba(0,0,0,0.16)]"
       >
         <ol class="divide-y divide-white/[0.06]">
           ${this.rankedPlayers.map(

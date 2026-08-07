@@ -14,15 +14,14 @@ export interface ModalHeaderProps {
 }
 
 const DEFAULT_WRAPPER_CLASS = "flex flex-wrap items-center gap-2 shrink-0";
-const DEFAULT_DIVIDER_CLASS = "border-b border-white/10";
+const DEFAULT_DIVIDER_CLASS = "border-b border-lt-700";
 const DEFAULT_PADDING_CLASS = "p-4 lg:p-6";
 const DEFAULT_LEFT_CLASS = "flex items-center gap-4 flex-1";
 const DEFAULT_BUTTON_CLASS =
-  "group flex items-center justify-center w-10 h-10 rounded-full shrink-0 " +
-  "bg-white/5 hover:bg-white/10 transition-all border border-white/10";
+  "group flex items-center justify-center w-10 h-10 shrink-0 " +
+  "bg-lt-800 hover:bg-lt-750 transition-colors border border-lt-600 hover:border-lt-accent";
 const DEFAULT_TITLE_CLASS =
-  "text-white text-xl lg:text-2xl font-bold uppercase " +
-  "tracking-widest break-words hyphens-auto";
+  "lt-display text-lt-100 text-xl lg:text-2xl " + "break-words hyphens-auto";
 
 const withClasses = (...classes: Array<string | undefined>) =>
   classes.filter(Boolean).join(" ");
@@ -58,7 +57,7 @@ export const modalHeader = ({
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="w-5 h-5 text-gray-400 group-hover:text-white transition-colors"
+            class="w-5 h-5 text-lt-400 group-hover:text-white transition-colors"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

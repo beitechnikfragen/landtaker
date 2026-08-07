@@ -244,7 +244,7 @@ export class CosmeticContainer extends LitElement {
   private _ensureLegendaryElements() {
     if (this._shimmer || this._borderSweep) return;
 
-    // Shimmer sweep — epic and legendary. Clipped by its own rounded wrapper
+    // Shimmer sweep — epic and legendary. Clipped by its own wrapper
     // (not host overflow) so tooltips can extend outside the card.
     if (this._hasGlint) {
       const shimmerClip = document.createElement("div");

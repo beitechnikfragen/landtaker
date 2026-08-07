@@ -159,7 +159,7 @@ export class UsernamePanel extends LitElement {
     if (this.isTemporary()) {
       return html`
         <div
-          class="mt-3 px-3 py-2 rounded-lg border border-amber-500/50 bg-amber-900/30 text-amber-200 text-sm"
+          class="mt-3 px-3 py-2 border border-amber-500/50 bg-amber-900/30 text-amber-200 text-sm"
         >
           ${translateText("account_modal.username_temporary_notice")}
         </div>
@@ -169,7 +169,7 @@ export class UsernamePanel extends LitElement {
     if (this.player.usernameStatus === "claimed" && claimExpiresAt) {
       return html`
         <div
-          class="mt-3 px-3 py-2 rounded-lg border border-amber-500/50 bg-amber-900/30 text-amber-200 text-sm"
+          class="mt-3 px-3 py-2 border border-amber-500/50 bg-amber-900/30 text-amber-200 text-sm"
         >
           ${translateText("account_modal.username_grace_warning", {
             name: this.player.usernameBase ?? "",
@@ -193,16 +193,16 @@ export class UsernamePanel extends LitElement {
       trimmed.length >= MIN_ACCOUNT_USERNAME_LENGTH &&
       this.error === "";
     return html`
-      <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+      <div class="bg-white/5 border border-lt-700 p-6">
         <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <span class="text-blue-400">🏷️</span>
+          <span class="text-lt-accent">🏷️</span>
           ${translateText("account_modal.username_title")}
         </h3>
         ${this.player.username
           ? html`<div class="text-white text-lg font-medium">
               ${usernameText(this.player.username)}
             </div>`
-          : html`<div class="text-white/50 text-sm">
+          : html`<div class="text-lt-500 text-sm">
               ${translateText("account_modal.username_not_set")}
             </div>`}
         ${this.renderNotices()}
@@ -217,7 +217,7 @@ export class UsernamePanel extends LitElement {
             placeholder=${translateText("account_modal.username_placeholder")}
             maxlength=${MAX_ACCOUNT_USERNAME_LENGTH}
             ?disabled=${locked || this.busy}
-            class="flex-1 min-w-0 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 disabled:opacity-50 disabled:hover:bg-white/5"
+            class="flex-1 min-w-0 px-4 py-3 bg-white/5 border border-lt-700 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium hover:bg-white/10 disabled:opacity-50 disabled:hover:bg-white/5"
           />
           <o-button
             variant="primary"
@@ -228,14 +228,14 @@ export class UsernamePanel extends LitElement {
           ></o-button>
         </div>
         ${locked
-          ? html`<div class="mt-2 text-white/50 text-sm">
+          ? html`<div class="mt-2 text-lt-500 text-sm">
               ${translateText("account_modal.username_cooldown_until", {
                 date: this.formatDate(cooldownEnd),
               })}
             </div>`
           : nothing}
         ${this.error
-          ? html`<div class="mt-2 text-red-400 text-sm">${this.error}</div>`
+          ? html`<div class="mt-2 text-lt-bad text-sm">${this.error}</div>`
           : nothing}
       </div>
     `;

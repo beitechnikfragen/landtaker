@@ -263,21 +263,19 @@ export class PartyModal extends BaseModal {
     const canKick = this.viewerIsLeader() && !member.isLeader;
     const name = member.username ?? translateText("party.unnamed_player");
     return html`
-      <li
-        class="flex items-center gap-2 rounded bg-white/5 px-3 py-2 text-white/90"
-      >
+      <li class="flex items-center gap-2 bg-white/5 px-3 py-2 text-lt-100">
         <span class="truncate">${name}</span>
         ${isVerifiedUsername(member.username) ? verifiedBadge() : ""}
         ${member.isLeader
           ? html`<span
-              class="rounded bg-blue-500/20 px-1.5 py-0.5 text-xs text-blue-200"
+              class="bg-lt-accent/20 px-1.5 py-0.5 text-xs text-lt-accent"
               >${translateText("party.leader")}</span
             >`
           : ""}
         <span class="flex-1"></span>
         ${canKick
           ? html`<button
-              class="rounded px-2 py-1 text-xs text-red-300 hover:bg-red-500/20 disabled:opacity-50"
+              class="px-2 py-1 text-xs text-lt-bad hover:bg-lt-bad/20 disabled:opacity-50"
               ?disabled=${this.busy}
               @click=${() => this.handleKick(member.userId)}
             >
@@ -290,12 +288,8 @@ export class PartyModal extends BaseModal {
 
   private renderSignIn(): TemplateResult {
     return html`
-      <p class="mb-2 text-white/90">
-        ${translateText("party.sign_in_required")}
-      </p>
-      <p class="text-sm text-white/60">
-        ${translateText("party.sign_in_hint")}
-      </p>
+      <p class="mb-2 text-lt-100">${translateText("party.sign_in_required")}</p>
+      <p class="text-sm text-lt-400">${translateText("party.sign_in_hint")}</p>
       ${this.renderDevSignIn()}
     `;
   }
@@ -308,15 +302,13 @@ export class PartyModal extends BaseModal {
   private renderDevSignIn(): TemplateResult {
     if (ClientEnv.env() !== GameEnv.Dev) return html``;
     return html`
-      <div
-        class="mt-6 rounded border border-yellow-500/30 bg-yellow-500/10 p-3"
-      >
+      <div class="mt-6 border border-yellow-500/30 bg-yellow-500/10 p-3">
         <p class="mb-2 text-xs text-yellow-200/80">
           ${translateText("party.dev_sign_in_note")}
         </p>
         <div class="flex gap-2">
           <input
-            class="flex-1 rounded bg-black/30 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-yellow-500"
+            class="flex-1 bg-black/30 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-yellow-500"
             maxlength="24"
             placeholder="Boss"
             .value=${this.devName}
@@ -328,7 +320,7 @@ export class PartyModal extends BaseModal {
             }}
           />
           <button
-            class="rounded bg-yellow-600/80 px-4 py-2 font-semibold text-white hover:bg-yellow-600 disabled:opacity-50"
+            class="bg-yellow-600/80 px-4 py-2 font-semibold text-white hover:bg-yellow-600 disabled:opacity-50"
             ?disabled=${this.busy || this.devName.trim().length < 3}
             @click=${this.handleDevSignIn}
           >
@@ -356,22 +348,22 @@ export class PartyModal extends BaseModal {
 
   private renderNoParty(): TemplateResult {
     return html`
-      <p class="mb-4 text-sm text-white/70">${translateText("party.intro")}</p>
+      <p class="mb-4 text-sm text-lt-400">${translateText("party.intro")}</p>
 
       <button
-        class="mb-6 w-full rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+        class="mb-6 w-full bg-lt-accent px-4 py-2 font-semibold text-white hover:bg-lt-accent-hi disabled:opacity-50"
         ?disabled=${this.busy}
         @click=${this.handleCreate}
       >
         ${translateText("party.create")}
       </button>
 
-      <label class="mb-2 block text-sm text-white/70">
+      <label class="mb-2 block text-sm text-lt-400">
         ${translateText("party.join_label")}
       </label>
       <div class="flex gap-2">
         <input
-          class="flex-1 rounded bg-black/30 px-3 py-2 uppercase tracking-widest text-white outline-none focus:ring-2 focus:ring-blue-500"
+          class="flex-1 bg-black/30 px-3 py-2 uppercase tracking-widest text-white outline-none focus:ring-2 focus:ring-blue-500"
           maxlength="12"
           placeholder="ABC123"
           .value=${this.joinCode}
@@ -384,7 +376,7 @@ export class PartyModal extends BaseModal {
           }}
         />
         <button
-          class="rounded bg-white/10 px-4 py-2 font-semibold text-white hover:bg-white/20 disabled:opacity-50"
+          class="bg-white/10 px-4 py-2 font-semibold text-white hover:bg-white/20 disabled:opacity-50"
           ?disabled=${this.busy || this.joinCode.trim().length < 4}
           @click=${this.handleJoin}
         >
@@ -397,17 +389,17 @@ export class PartyModal extends BaseModal {
   private renderParty(party: Party): TemplateResult {
     return html`
       <div class="mb-4">
-        <div class="mb-1 text-sm text-white/70">
+        <div class="mb-1 text-sm text-lt-400">
           ${translateText("party.invite_code")}
         </div>
         <button
-          class="flex w-full items-center justify-between rounded bg-black/30 px-4 py-3 text-left hover:bg-black/40"
+          class="flex w-full items-center justify-between bg-black/30 px-4 py-3 text-left hover:bg-black/40"
           @click=${this.handleCopyCode}
         >
           <span class="text-2xl font-bold tracking-[0.3em] text-white"
             >${party.inviteCode}</span
           >
-          <span class="text-xs text-white/60">
+          <span class="text-xs text-lt-400">
             ${this.copied
               ? translateText("party.copied")
               : translateText("party.copy")}
@@ -415,7 +407,7 @@ export class PartyModal extends BaseModal {
         </button>
       </div>
 
-      <div class="mb-2 flex items-center justify-between text-sm text-white/70">
+      <div class="mb-2 flex items-center justify-between text-sm text-lt-400">
         <span>${translateText("party.members")}</span>
         <span>${party.members.length} / ${party.maxMembers}</span>
       </div>
@@ -424,7 +416,7 @@ export class PartyModal extends BaseModal {
       </ul>
 
       <button
-        class="w-full rounded bg-red-600/80 px-4 py-2 font-semibold text-white hover:bg-red-600 disabled:opacity-50"
+        class="w-full bg-lt-bad/80 px-4 py-2 font-semibold text-white hover:bg-lt-bad disabled:opacity-50"
         ?disabled=${this.busy}
         @click=${this.handleLeave}
       >
@@ -455,14 +447,12 @@ export class PartyModal extends BaseModal {
     return html`
       <div class="custom-scrollbar p-6">
         ${this.errorMessage && !this.needsSignIn
-          ? html`<div
-              class="mb-4 rounded bg-red-500/20 px-3 py-2 text-sm text-red-200"
-            >
+          ? html`<div class="mb-4 bg-red-500/20 px-3 py-2 text-sm text-red-200">
               ${this.errorMessage}
             </div>`
           : ""}
         ${this.loading
-          ? html`<p class="text-white/60">${translateText("party.loading")}</p>`
+          ? html`<p class="text-lt-400">${translateText("party.loading")}</p>`
           : this.needsSignIn
             ? this.renderSignIn()
             : this.party

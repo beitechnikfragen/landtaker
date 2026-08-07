@@ -254,7 +254,7 @@ export class FriendsList extends LitElement {
       return html`
         <div class="flex items-center justify-center p-12">
           <div
-            class="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"
+            class="w-10 h-10 border-4 border-lt-accent/30 border-t-blue-500 rounded-full animate-spin"
           ></div>
         </div>
       `;
@@ -271,21 +271,19 @@ export class FriendsList extends LitElement {
   private renderTeamInfo(): TemplateResult {
     return html`
       <div
-        class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 flex items-center gap-3"
+        class="bg-lt-accent/10 border border-lt-accent/30 p-3 flex items-center gap-3"
       >
-        <span class="text-blue-400 text-lg shrink-0">🛡️</span>
-        <p class="text-sm text-white/80">
-          ${translateText("friends.team_info")}
-        </p>
+        <span class="text-lt-accent text-lg shrink-0">🛡️</span>
+        <p class="text-sm text-lt-100">${translateText("friends.team_info")}</p>
       </div>
     `;
   }
 
   private renderAddSection(): TemplateResult {
     return html`
-      <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+      <div class="bg-white/5 border border-lt-700 p-6">
         <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <span class="text-blue-400">➕</span>
+          <span class="text-lt-accent">➕</span>
           ${translateText("friends.add_friend")}
         </h3>
         <div class="flex flex-col sm:flex-row gap-3">
@@ -299,7 +297,7 @@ export class FriendsList extends LitElement {
             @keydown=${(e: KeyboardEvent) => {
               if (e.key === "Enter") void this.handleSend();
             }}
-            class="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-mono text-sm"
+            class="flex-1 px-4 py-2 bg-white/5 border border-lt-700 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-mono text-sm"
             placeholder=${translateText("friends.public_id_placeholder")}
             maxlength="200"
             ?disabled=${this.actionPending}
@@ -307,7 +305,7 @@ export class FriendsList extends LitElement {
           <button
             @click=${() => void this.handleSend()}
             ?disabled=${this.actionPending || this.addInput.trim().length === 0}
-            class="px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            class="px-4 py-2 text-sm font-bold text-white bg-lt-accent hover:bg-lt-accent-hi transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
             ${translateText("friends.send_request")}
           </button>
@@ -319,15 +317,15 @@ export class FriendsList extends LitElement {
   private renderRequestsSection(): TemplateResult | "" {
     if (this.incoming.length === 0 && this.outgoing.length === 0) return "";
     return html`
-      <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+      <div class="bg-white/5 border border-lt-700 p-6">
         <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <span class="text-blue-400">✉️</span>
+          <span class="text-lt-accent">✉️</span>
           ${translateText("friends.pending_requests")}
         </h3>
         ${this.incoming.length > 0
           ? html`
               <div
-                class="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2"
+                class="text-[10px] font-bold uppercase tracking-wider text-lt-500 mb-2"
               >
                 ${translateText("friends.incoming")}
               </div>
@@ -341,7 +339,7 @@ export class FriendsList extends LitElement {
         ${this.outgoing.length > 0
           ? html`
               <div
-                class="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2"
+                class="text-[10px] font-bold uppercase tracking-wider text-lt-500 mb-2"
               >
                 ${translateText("friends.outgoing")}
               </div>
@@ -361,9 +359,7 @@ export class FriendsList extends LitElement {
     direction: "incoming" | "outgoing",
   ): TemplateResult {
     return html`
-      <div
-        class="flex items-center gap-3 bg-white/5 rounded-lg border border-white/10 p-3"
-      >
+      <div class="flex items-center gap-3 bg-white/5 border border-lt-700 p-3">
         <div class="flex-1 min-w-0">
           ${playerNameLink(this, entry.username, entry.publicId)}
           <div class="text-white/30 text-[10px] mt-0.5">
@@ -376,7 +372,7 @@ export class FriendsList extends LitElement {
                 <button
                   @click=${() => void this.handleAccept(entry.publicId)}
                   ?disabled=${this.actionPending}
-                  class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 transition-all disabled:opacity-50 disabled:pointer-events-none"
+                  class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-green-500/20 text-lt-ok border border-green-500/30 hover:bg-green-500/30 transition-all disabled:opacity-50 disabled:pointer-events-none"
                 >
                   ${translateText("friends.accept")}
                 </button>
@@ -384,7 +380,7 @@ export class FriendsList extends LitElement {
                   @click=${() =>
                     void this.handleDenyOrWithdraw(entry.publicId, "incoming")}
                   ?disabled=${this.actionPending}
-                  class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all disabled:opacity-50 disabled:pointer-events-none"
+                  class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-lt-bad border border-lt-bad/30 hover:bg-lt-bad/30 transition-all disabled:opacity-50 disabled:pointer-events-none"
                 >
                   ${translateText("friends.deny")}
                 </button>
@@ -394,7 +390,7 @@ export class FriendsList extends LitElement {
                   @click=${() =>
                     void this.handleDenyOrWithdraw(entry.publicId, "outgoing")}
                   ?disabled=${this.actionPending}
-                  class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg bg-white/10 text-white/70 border border-white/10 hover:bg-white/20 transition-all disabled:opacity-50 disabled:pointer-events-none"
+                  class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-white/10 text-lt-400 border border-lt-700 hover:bg-white/20 transition-all disabled:opacity-50 disabled:pointer-events-none"
                 >
                   ${translateText("friends.withdraw")}
                 </button>
@@ -408,10 +404,10 @@ export class FriendsList extends LitElement {
     if (this.friendsTotal === 0) {
       return html`
         <div
-          class="bg-white/5 rounded-xl border border-white/10 p-12 flex flex-col items-center justify-center text-center"
+          class="bg-white/5 border border-lt-700 p-12 flex flex-col items-center justify-center text-center"
         >
           <div class="text-4xl mb-3">👥</div>
-          <p class="text-white/60 text-sm">
+          <p class="text-lt-400 text-sm">
             ${translateText("friends.no_friends")}
           </p>
         </div>
@@ -419,11 +415,11 @@ export class FriendsList extends LitElement {
     }
     const hasMore = this.friends.length < this.friendsTotal;
     return html`
-      <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+      <div class="bg-white/5 border border-lt-700 p-6">
         <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <span class="text-blue-400">👥</span>
+          <span class="text-lt-accent">👥</span>
           ${translateText("friends.your_friends")}
-          <span class="text-xs text-white/40 font-medium">
+          <span class="text-xs text-lt-500 font-medium">
             (${this.friendsTotal})
           </span>
         </h3>
@@ -431,7 +427,7 @@ export class FriendsList extends LitElement {
           ${this.friends.map(
             (f) => html`
               <div
-                class="flex items-center gap-3 bg-white/5 rounded-lg border border-white/10 p-3"
+                class="flex items-center gap-3 bg-white/5 border border-lt-700 p-3"
               >
                 <div class="flex-1 min-w-0">
                   ${playerNameLink(this, f.username, f.publicId)}
@@ -444,7 +440,7 @@ export class FriendsList extends LitElement {
                 <button
                   @click=${() => void this.handleRemove(f.publicId)}
                   ?disabled=${this.actionPending}
-                  class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all disabled:opacity-50 disabled:pointer-events-none shrink-0"
+                  class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-lt-bad border border-lt-bad/30 hover:bg-lt-bad/30 transition-all disabled:opacity-50 disabled:pointer-events-none shrink-0"
                 >
                   ${translateText("friends.remove")}
                 </button>
@@ -458,7 +454,7 @@ export class FriendsList extends LitElement {
                 <button
                   @click=${() => void this.loadMore()}
                   ?disabled=${this.actionPending}
-                  class="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg bg-white/10 text-white/80 border border-white/10 hover:bg-white/20 transition-all disabled:opacity-50 disabled:pointer-events-none"
+                  class="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-white/10 text-lt-100 border border-lt-700 hover:bg-white/20 transition-all disabled:opacity-50 disabled:pointer-events-none"
                 >
                   ${translateText("friends.load_more")}
                 </button>

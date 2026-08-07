@@ -118,7 +118,7 @@ export class PlayerProfileModal extends BaseModal {
       return html`
         <div class="flex flex-col items-center justify-center p-12 text-center">
           <span class="text-4xl mb-4">🛡️</span>
-          <p class="text-white/40 text-sm">
+          <p class="text-lt-500 text-sm">
             ${translateText("player_profile.no_clans")}
           </p>
         </div>
@@ -182,7 +182,7 @@ export class PlayerProfileModal extends BaseModal {
       return html`
         <div class="flex flex-col items-center justify-center p-12 text-center">
           <span class="text-4xl mb-4">🎮</span>
-          <p class="text-white/40 text-sm">
+          <p class="text-lt-500 text-sm">
             ${translateText("account_modal.no_games")}
           </p>
         </div>
@@ -228,7 +228,7 @@ export class PlayerProfileModal extends BaseModal {
     return html`
       <div class="flex flex-col items-center justify-center p-12 text-center">
         <span class="text-4xl mb-4">📊</span>
-        <p class="text-white/40 text-sm">
+        <p class="text-lt-500 text-sm">
           ${translateText("player_profile.not_found")}
         </p>
       </div>

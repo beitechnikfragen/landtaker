@@ -24,7 +24,7 @@ export class CurrencyDisplay extends LitElement {
           title=${translateText("cosmetics.hard")}
         >
           <plutonium-icon .size=${16}></plutonium-icon>
-          <span class="text-sm font-bold text-green-400"
+          <span class="text-sm font-bold text-lt-ok"
             >${this.hard.toLocaleString()}</span
           >
         </div>

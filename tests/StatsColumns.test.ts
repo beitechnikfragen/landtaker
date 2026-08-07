@@ -1,4 +1,4 @@
-import { profileIcon, teamIcon } from "../src/client/hud/HotbarIcons";
+import { teamIcon } from "../src/client/hud/HotbarIcons";
 import {
   COLUMN_DEFS,
   columnById,
@@ -39,15 +39,17 @@ describe("Stats column registry", () => {
     expect(columnById("tiles").isOrderable).toBe(true);
   });
 
-  it("gives the team column its own icon, not the player one", () => {
+  it("keeps the team icon but headers the player column with text", () => {
     expect(columnById("team").headerVisual).toEqual({
       kind: "icon",
       src: teamIcon,
     });
-    expect(columnById("player").headerVisual).toEqual({
-      kind: "icon",
-      src: profileIcon,
-    });
+    // The stat and identity headers moved to text labels (the standings
+    // redesign): no visual means the translated label renders instead.
+    expect(columnById("player").headerVisual).toBeUndefined();
+    expect(columnById("gold").headerVisual).toBeUndefined();
+    expect(columnById("troops").headerVisual).toBeUndefined();
+    expect(columnById("tiles").headerVisual).toBeUndefined();
   });
 
   it("keeps rank and the identity column out of the cog menu", () => {

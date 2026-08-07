@@ -273,12 +273,12 @@ export class GameRightSidebar extends LitElement implements Controller {
       this.game.config().gameConfig().maxTimerValue !== undefined &&
       this.game.config().gameConfig().maxTimerValue !== null &&
       this.timer < 60
-        ? "text-red-400"
+        ? "text-lt-bad"
         : "";
 
     return html`
       <aside
-        class=${`w-fit flex flex-row items-center gap-3 py-2 px-3 bg-gray-800/92 backdrop-blur-sm shadow-xs min-[1200px]:rounded-lg rounded-bl-lg transition-transform duration-300 ease-out transform text-white ${
+        class=${`w-fit flex flex-row items-center gap-3 py-2 px-3 bg-lt-850/92 backdrop-blur-sm shadow-xs min-[1200px]:transition-transform duration-300 ease-out transform text-white ${
           this._isVisible ? "translate-x-0" : "translate-x-full"
         }`}
         @contextmenu=${(e: Event) => e.preventDefault()}

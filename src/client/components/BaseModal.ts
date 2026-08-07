@@ -320,10 +320,10 @@ export abstract class BaseModal extends LitElement {
 }
 
 const spinnerColorClasses: Record<string, string> = {
-  blue: "border-blue-500/30 border-t-blue-500",
+  blue: "border-lt-accent/30 border-t-blue-500",
   green: "border-green-500/30 border-t-green-500",
   yellow: "border-yellow-500/30 border-t-yellow-500",
-  white: "border-white/20 border-t-white",
+  white: "border-lt-600 border-t-white",
 };
 
 /**
@@ -344,7 +344,7 @@ export function renderLoadingSpinner(
         ]} rounded-full animate-spin mb-4"
       ></div>
       ${message
-        ? html`<p class="text-white/60 font-medium tracking-wide animate-pulse">
+        ? html`<p class="text-lt-400 font-medium tracking-wide animate-pulse">
             ${message}
           </p>`
         : ""}

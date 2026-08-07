@@ -476,7 +476,7 @@ export class FeaturedStream extends LitElement {
     return html`
       <div
         id="featured-stream-card"
-        class="fixed z-[45000] overflow-hidden rounded-lg bg-black/95 shadow-2xl ring-1 ring-white/10 ${this
+        class="fixed z-[45000] overflow-hidden bg-black/95 shadow-2xl ring-1 ring-white/10 ${this
           .dragPos
           ? ""
           : "transition-all duration-300 " +
@@ -515,7 +515,7 @@ export class FeaturedStream extends LitElement {
           </button>
           <div class="flex shrink-0 items-center">
             <button
-              class="px-1 text-lg leading-none text-white/70 hover:text-white"
+              class="px-1 text-lg leading-none text-lt-400 hover:text-white"
               aria-label=${translateText(
                 min ? "featured_stream.expand" : "featured_stream.minimize",
               )}
@@ -524,7 +524,7 @@ export class FeaturedStream extends LitElement {
               ${min ? "⤢" : "–"}
             </button>
             <button
-              class="px-1 text-lg leading-none text-white/70 hover:text-white"
+              class="px-1 text-lg leading-none text-lt-400 hover:text-white"
               aria-label=${translateText("common.close")}
               @click=${this.onClose}
             >
@@ -532,7 +532,7 @@ export class FeaturedStream extends LitElement {
             </button>
             ${this.adFree
               ? html`<button
-                  class="px-1 text-lg leading-none text-white/70 hover:text-white"
+                  class="px-1 text-lg leading-none text-lt-400 hover:text-white"
                   aria-label=${translateText("featured_stream.hide_today")}
                   title=${translateText("featured_stream.hide_today")}
                   @click=${this.onHideToday}

@@ -114,8 +114,8 @@ export class MapDisplay extends LitElement {
       )}
       class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm transition-all duration-200 active:scale-90 ${this
         .favorite
-        ? "opacity-100 text-cyber-yellow"
-        : "opacity-0 group-hover:opacity-100 text-white hover:text-cyber-yellow"}"
+        ? "opacity-100 text-lt-gold"
+        : "opacity-0 group-hover:opacity-100 text-white hover:text-lt-gold"}"
     >
       ${starIcon(this.favorite, "w-4 h-4")}
     </button>`;
@@ -129,20 +129,20 @@ export class MapDisplay extends LitElement {
         aria-selected="${this.selected}"
         aria-label="${this.translation ?? this.mapName ?? this.mapKey}"
         @keydown="${this.handleKeydown}"
-        class="w-full h-full p-3 flex flex-col items-center justify-between rounded-xl border cursor-pointer transition-all duration-200 active:scale-95 gap-3 group ${this
+        class="w-full h-full p-3 flex flex-col items-center justify-between border cursor-pointer transition-all duration-200 active:scale-95 gap-3 group ${this
           .selected
-          ? "bg-malibu-blue/20 border-malibu-blue/50 shadow-[var(--shadow-malibu-blue-strong)]"
-          : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:-translate-y-1"}"
+          ? "bg-lt-accent/20 border-malibu-blue/50 shadow-[var(--shadow-malibu-blue-strong)]"
+          : "bg-white/5 border-lt-700 hover:bg-white/10 hover:border-lt-600 hover:-translate-y-1"}"
       >
         ${this.isLoading
           ? html`<div
-              class="w-full aspect-[2/1] text-white/40 transition-transform duration-200 rounded-lg bg-black/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center animate-pulse"
+              class="w-full aspect-[2/1] text-lt-500 transition-transform duration-200 bg-black/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center animate-pulse"
             >
               ${translateText("map_component.loading")}
             </div>`
           : this.mapWebpPath
             ? html`<div
-                class="w-full aspect-[2/1] relative overflow-hidden rounded-lg bg-black/20"
+                class="w-full aspect-[2/1] relative overflow-hidden bg-black/20"
               >
                 <img
                   src="${this.mapWebpPath}"
@@ -156,7 +156,7 @@ export class MapDisplay extends LitElement {
                 ${this.renderFavoriteButton()}
               </div>`
             : html`<div
-                class="w-full aspect-[2/1] text-red-400 transition-transform duration-200 rounded-lg bg-red-500/10 text-xs font-bold uppercase tracking-wider flex items-center justify-center"
+                class="w-full aspect-[2/1] text-lt-bad transition-transform duration-200 bg-red-500/10 text-xs font-bold uppercase tracking-wider flex items-center justify-center"
               >
                 ${translateText("map_component.error")}
               </div>`}

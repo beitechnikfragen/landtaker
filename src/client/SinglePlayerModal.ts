@@ -216,7 +216,7 @@ export class SinglePlayerModal extends BaseModal {
       return html``;
     }
     return html`<button
-      class="px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors duration-200 rounded-lg bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 whitespace-nowrap shrink-0 cursor-pointer hover:bg-yellow-500/30"
+      class="px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors duration-200 bg-yellow-500/20 text-lt-gold border border-yellow-500/30 whitespace-nowrap shrink-0 cursor-pointer hover:bg-yellow-500/30"
       @click=${() => {
         this.close();
         window.showPage?.("page-account");
@@ -262,10 +262,10 @@ export class SinglePlayerModal extends BaseModal {
       rightContent: hasLinkedAccount(this.userMeResponse)
         ? html`<button
               @click=${this.toggleAchievements}
-              class="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all shrink-0 ${this
+              class="flex items-center gap-2 px-3 py-2 border border-lt-700 bg-white/5 hover:bg-white/10 transition-all shrink-0 ${this
                 .showAchievements
-                ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
-                : "text-white/60"}"
+                ? "bg-yellow-500/10 border-yellow-500/30 text-lt-gold"
+                : "text-lt-400"}"
             >
               <img
                 src=${assetUrl("images/MedalIconWhite.svg")}
@@ -290,10 +290,10 @@ export class SinglePlayerModal extends BaseModal {
     const total = this.eligibleMaps?.size ?? null;
     return html`<div class="basis-full w-full">
       <div
-        class="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 rounded-xl border border-yellow-500/20 bg-yellow-500/5"
+        class="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 border border-yellow-500/20 bg-yellow-500/5"
       >
         <span
-          class="text-[11px] font-bold uppercase tracking-wider text-yellow-400/80 shrink-0"
+          class="text-[11px] font-bold uppercase tracking-wider text-lt-gold/80 shrink-0"
         >
           ${translateText("single_modal.medals_earned")}
         </span>
@@ -303,7 +303,7 @@ export class SinglePlayerModal extends BaseModal {
           )}
         </div>
         <span
-          class="ml-auto text-[11px] font-semibold uppercase tracking-wider text-white/40 shrink-0"
+          class="ml-auto text-[11px] font-semibold uppercase tracking-wider text-lt-500 shrink-0"
         >
           ${translateText("single_modal.medals_of_maps", {
             total: total ?? "…",
@@ -322,7 +322,7 @@ export class SinglePlayerModal extends BaseModal {
       title=${translateText(`difficulty.${difficulty.toLowerCase()}`)}
     >
       ${medalIcon(difficulty, "w-4 h-4")}
-      <span class="text-xs font-medium text-white/50 hidden sm:inline"
+      <span class="text-xs font-medium text-lt-500 hidden sm:inline"
         >${translateText(`difficulty.${difficulty.toLowerCase()}`)}</span
       >
       <span class="text-sm font-bold text-white tabular-nums">${count}</span>
@@ -491,10 +491,10 @@ export class SinglePlayerModal extends BaseModal {
         </div>
 
         <!-- Footer Action -->
-        <div class="p-6 border-t border-white/10 bg-black/20 shrink-0">
+        <div class="p-6 border-t border-lt-700 bg-black/20 shrink-0">
           ${hasLinkedAccount(this.userMeResponse) && this.hasOptionsChanged()
             ? html`<div
-                class="mb-4 px-4 py-3 rounded-xl bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-xs font-bold uppercase tracking-wider text-center"
+                class="mb-4 px-4 py-3 bg-yellow-500/20 border border-yellow-500/30 text-lt-gold text-xs font-bold uppercase tracking-wider text-center"
               >
                 ${translateText("single_modal.options_changed_no_achievements")}
               </div>`

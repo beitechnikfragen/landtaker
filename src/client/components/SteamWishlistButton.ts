@@ -34,7 +34,7 @@ export class SteamWishlistButton extends LitElement {
         href=${steamStoreUrl(this.campaign)}
         target="_blank"
         rel="noopener noreferrer"
-        class="group flex w-full items-center justify-center gap-3 rounded border-t border-l border-[#424c5c] bg-[linear-gradient(130deg,#3b4351,#282e39)] px-3 py-2 shadow-md transition-shadow hover:shadow-lg xl:justify-start"
+        class="group flex w-full items-center justify-center gap-3 border-t border-l border-[#424c5c] bg-[linear-gradient(130deg,#3b4351,#282e39)] px-3 py-2 shadow-md transition-shadow hover:shadow-lg xl:justify-start"
       >
         <img
           src=${assetUrl("images/LandtakerLogo.svg")}
@@ -51,7 +51,7 @@ export class SteamWishlistButton extends LitElement {
           </span>
         </span>
         <span
-          class="inline-flex shrink-0 items-center gap-1.5 rounded-sm xl:ml-auto bg-[linear-gradient(to_bottom,#8ec72e,#4c7a17)] px-3 py-1.5 text-xs font-bold whitespace-nowrap text-white transition-[filter] group-hover:brightness-110"
+          class="inline-flex shrink-0 items-center gap-1.5 xl:ml-auto bg-[linear-gradient(to_bottom,#8ec72e,#4c7a17)] px-3 py-1.5 text-xs font-bold whitespace-nowrap text-white transition-[filter] group-hover:brightness-110"
         >
           <svg
             class="h-3.5 w-3.5 shrink-0 pointer-events-none"

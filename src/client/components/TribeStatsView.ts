@@ -47,11 +47,9 @@ export class TribeStatsView extends LitElement {
     playerReach: number;
   }): TemplateResult {
     return html`<div class="grid grid-cols-2 gap-2">
-      <div
-        class="bg-surface rounded-lg border border-white/10 px-3 py-2 flex flex-col"
-      >
+      <div class="bg-surface border border-lt-700 px-3 py-2 flex flex-col">
         <span
-          class="text-[11px] font-bold uppercase tracking-wider text-white/40"
+          class="text-[11px] font-bold uppercase tracking-wider text-lt-500"
         >
           ${translateText("store.tribe_stats_games")}
         </span>
@@ -60,13 +58,13 @@ export class TribeStatsView extends LitElement {
         </span>
       </div>
       <div
-        class="bg-surface rounded-lg border border-white/10 px-3 py-2 flex flex-col"
+        class="bg-surface border border-lt-700 px-3 py-2 flex flex-col"
         title=${translateText("store.tribe_stats_reach_tooltip", {
           count: figures.playerReach.toLocaleString(),
         })}
       >
         <span
-          class="text-[11px] font-bold uppercase tracking-wider text-white/40"
+          class="text-[11px] font-bold uppercase tracking-wider text-lt-500"
         >
           ${translateText("store.tribe_stats_reach")}
         </span>
@@ -95,7 +93,7 @@ export class TribeStatsView extends LitElement {
           });
     return html`<div class="flex flex-col gap-4">
       <div class="flex items-center gap-2 text-sm">
-        <span class="text-white/40 font-medium">
+        <span class="text-lt-500 font-medium">
           ${translateText("store.tribe_stats_owner")}
         </span>
         <player-name
@@ -105,13 +103,13 @@ export class TribeStatsView extends LitElement {
         ></player-name>
       </div>
       <section class="flex flex-col gap-2">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-white/60">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-lt-400">
           ${windowHeading}
         </h3>
         ${this.renderFigures(stats.window)}
       </section>
       <section class="flex flex-col gap-2">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-white/60">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-lt-400">
           ${translateText("store.tribe_stats_lifetime")}
         </h3>
         ${this.renderFigures(stats.lifetime)}
@@ -124,7 +122,7 @@ export class TribeStatsView extends LitElement {
       return renderLoadingSpinner();
     }
     if (this.stats === false) {
-      return html`<p class="text-sm font-medium text-red-400">
+      return html`<p class="text-sm font-medium text-lt-bad">
         ${translateText("store.tribe_stats_failed")}
       </p>`;
     }
@@ -138,7 +136,7 @@ export class TribeStatsView extends LitElement {
     // Display multiplier = 1 + activeBoosts, the same convention as the
     // leaderboard's Boosts column and the owner's row in the store.
     return html`<span
-      class="shrink-0 text-xs font-bold text-amber-300 bg-amber-400/10 border border-amber-400/20 rounded px-2 py-0.5"
+      class="shrink-0 text-xs font-bold text-amber-300 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5"
     >
       ${translateText("store.tribe_stats_boosted", { multiplier: boosts + 1 })}
     </span>`;

@@ -35,7 +35,7 @@ export class PlayerRow extends LitElement {
         class="group relative grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-3 py-3 transition-colors duration-150 hover:bg-white/[0.055] sm:grid-cols-[2.5rem_minmax(0,1fr)_minmax(13rem,0.9fr)] sm:px-5 sm:py-2.5 ${player.winner
           ? "bg-gradient-to-r from-yellow-400/[0.08] via-yellow-400/[0.025] to-transparent"
           : this.currentPlayer
-            ? "bg-malibu-blue/10"
+            ? "bg-lt-accent/10"
             : "bg-transparent"}"
       >
         ${player.winner
@@ -62,12 +62,12 @@ export class PlayerRow extends LitElement {
     const rankClass =
       {
         1: "border-yellow-400/20 bg-yellow-400/10 text-yellow-300",
-        2: "border-slate-300/15 bg-slate-300/10 text-slate-300",
+        2: "border-slate-300/15 bg-slate-300/10 text-lt-400",
         3: "border-amber-600/20 bg-amber-600/10 text-amber-500",
       }[this.rank] ?? "border-white/[0.06] bg-white/[0.035] text-white/35";
     return html`
       <div
-        class="flex size-8 items-center justify-center rounded-lg border font-mono text-xs font-bold tabular-nums sm:size-9 sm:text-sm ${rankClass}"
+        class="flex size-8 items-center justify-center border font-mono text-xs font-bold tabular-nums sm:size-9 sm:text-sm ${rankClass}"
         aria-label=${String(this.rank)}
       >
         ${this.rank}
@@ -134,7 +134,7 @@ export class PlayerRow extends LitElement {
           ${this.player.clanTag
             ? html`<div
                 data-player-clan-tag
-                class="inline-flex min-w-0 max-w-[40%] shrink-0 rounded-md border border-malibu-blue/20 bg-malibu-blue/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-aquarius/85"
+                class="inline-flex min-w-0 max-w-[40%] shrink-0 border border-malibu-blue/20 bg-lt-accent/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-lt-accent/85"
               >
                 <span class="truncate">${this.player.clanTag}</span>
               </div>`
@@ -260,14 +260,14 @@ export class PlayerRow extends LitElement {
         draggable="false"
         decoding="async"
         @error=${() => this.handleFlagError()}
-        class="size-10 rounded-xl border border-white/10 bg-white/[0.055] object-contain p-1"
+        class="size-10 border border-lt-700 bg-white/[0.055] object-contain p-1"
       />`;
     }
 
     return html`
       <div
         data-player-avatar="fallback"
-        class="flex size-10 items-center justify-center rounded-xl border border-malibu-blue/15 bg-gradient-to-br from-malibu-blue/20 to-white/[0.04] text-xs font-bold uppercase tracking-wide text-aquarius/80"
+        class="flex size-10 items-center justify-center border border-malibu-blue/15 bg-gradient-to-br from-malibu-blue/20 to-white/[0.04] text-xs font-bold uppercase tracking-wide text-lt-accent/80"
         aria-hidden="true"
       >
         ${this.initials()}

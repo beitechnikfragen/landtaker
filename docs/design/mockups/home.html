@@ -1,0 +1,1416 @@
+<meta charset="utf-8" />
+<title>Landtaker — BF3 / PUBG direction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
+<style>
+  :root {
+    --bg: #0d1013;
+    --panel: #14181c;
+    --panel-2: #181d22;
+    --line: #252c33;
+    --line-2: #333c45;
+    --txt: #e8ecef;
+    --dim: #8c979f;
+    --dimmer: #5c666e;
+    --accent: #ff8a1f; /* single accent — active state only */
+    --accent-dim: #6b3d12;
+    --ok: #7fb069;
+    /* Oswald = stencil-adjacent condensed display, the BF3 register.
+     Barlow Condensed = narrow utility face for labels/table headers.
+     Inter = body copy only. */
+    --display: "Oswald", "Arial Narrow", sans-serif;
+    --util: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+  }
+  .app {
+    font-family: var(--body);
+    background: var(--bg);
+    color: var(--txt);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    padding-bottom: 0;
+  }
+  /* clean stroke icons, Heroicons-style — matches the 42 inline SVGs already in the app */
+  .ico {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    display: block;
+  }
+  .ico-sm {
+    width: 13px;
+    height: 13px;
+  }
+  .ico-lg {
+    width: 22px;
+    height: 22px;
+  }
+  /* real game map, desaturated + darkened — atmosphere, not decoration */
+  .bg {
+    /* slightly oversized so the parallax drift never exposes an edge */
+    position: fixed;
+    inset: -3%;
+    z-index: 0;
+    will-change: transform;
+    transition: transform 0.5s cubic-bezier(0.2, 0.6, 0.3, 1);
+    /* solid base colour under the image so the letterboxed edges of the webp
+     never show up as a light band across the page */
+    background: var(--bg) url("EuropeBackground.webp") 62% 30% / cover no-repeat;
+    /* keep a trace of the terrain hue instead of full grayscale — reads as a map, not a texture */
+    filter: grayscale(0.82) contrast(1.3) brightness(0.62) sepia(0.15);
+    opacity: 0.9;
+  }
+  /* faint graticule over the map — cartographic, not "tech grid" */
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image:
+      linear-gradient(rgba(232, 236, 239, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232, 236, 239, 0.05) 1px, transparent 1px);
+    background-size: 96px 96px;
+  }
+  .bg-veil {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(13, 16, 19, 0.78) 0%,
+        rgba(13, 16, 19, 0.55) 30%,
+        rgba(13, 16, 19, 0.9) 78%,
+        var(--bg) 100%
+      ),
+      linear-gradient(
+        90deg,
+        var(--bg) 2%,
+        rgba(13, 16, 19, 0.88) 26%,
+        rgba(13, 16, 19, 0.42) 62%,
+        rgba(13, 16, 19, 0.78) 100%
+      );
+  }
+  .shell {
+    position: relative;
+    z-index: 1;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ================= header ================= */
+  header {
+    display: flex;
+    align-items: stretch;
+    height: 62px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(13, 16, 19, 0.86);
+    backdrop-filter: blur(4px);
+  }
+  .logo {
+    font-family: var(--display);
+    display: flex;
+    align-items: center;
+    padding-right: 26px;
+    margin-right: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.32em;
+    border-right: 1px solid var(--line);
+  }
+  .logo b {
+    font-weight: 800;
+  }
+  .logo span {
+    color: var(--dimmer);
+    font-weight: 400;
+  }
+  nav {
+    display: flex;
+    align-items: stretch;
+  }
+  nav a {
+    font-family: var(--util);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dim);
+    border-bottom: 2px solid transparent;
+  }
+  nav a:hover {
+    color: var(--txt);
+    background: rgba(255, 255, 255, 0.03);
+  }
+  nav a.on {
+    color: var(--txt);
+    border-bottom-color: var(--accent);
+  }
+  .hspace {
+    flex: 1;
+  }
+  .hmeta {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .hcell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 18px;
+    height: 100%;
+    border-left: 1px solid var(--line);
+    font-size: 15px;
+    letter-spacing: 0.06em;
+  }
+  .hcell .ico {
+    width: 18px;
+    height: 18px;
+    color: var(--dim);
+  }
+  .hcell .k {
+    font-family: var(--util);
+    color: var(--dim);
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    font-weight: 600;
+  }
+  .hcell .v {
+    font-weight: 700;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
+  .pfp {
+    width: 30px;
+    height: 30px;
+    background: var(--line);
+    border: 1px solid var(--line-2);
+  }
+  .pfp .ico {
+    width: 17px;
+    height: 17px;
+  }
+
+  /* ================= hero / main split ================= */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .left {
+    padding: 40px 40px 34px 0;
+  }
+  .tag {
+    font-family: var(--util);
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 13px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 20px;
+  }
+  .tag i {
+    width: 5px;
+    height: 5px;
+    background: var(--ok);
+    font-style: normal;
+  }
+  h1 {
+    margin: 0 0 16px;
+    font-family: var(--display);
+    font-size: clamp(46px, 6.4vw, 82px);
+    line-height: 0.88;
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    text-transform: uppercase;
+  }
+  h1 em {
+    font-style: normal;
+    color: var(--dimmer);
+    font-weight: 300;
+  }
+  .lede {
+    margin: 0 0 34px;
+    max-width: 46ch;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--dim);
+  }
+  .actions {
+    display: flex;
+    align-items: stretch;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    width: fit-content;
+  }
+  .act {
+    font-family: var(--display);
+    background: var(--panel);
+    border: 0;
+    cursor: pointer;
+    color: var(--txt);
+    padding: 17px 40px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    transition:
+      background 0.12s linear,
+      color 0.12s linear;
+  }
+  .act:hover {
+    background: var(--panel-2);
+  }
+  .act.pri {
+    background: var(--accent);
+    color: #100a03;
+  }
+  .act.pri:hover {
+    background: #ff9c40;
+  }
+  .act small {
+    display: block;
+    font-family: var(--util);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    font-weight: 500;
+    opacity: 0.6;
+    margin-top: 3px;
+  }
+  .deploy {
+    font-family: var(--util);
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--dimmer);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .deploy b {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* right rail: soldier / identity */
+  .rail {
+    border-left: 1px solid var(--line);
+    background: rgba(16, 20, 24, 0.9);
+    backdrop-filter: blur(6px);
+  }
+  .rail-h {
+    font-family: var(--util);
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    font-weight: 700;
+  }
+  .rail-b {
+    padding: 18px;
+  }
+  .idline {
+    display: flex;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-bottom: 16px;
+  }
+  .idcell {
+    background: var(--panel);
+    display: grid;
+    place-items: center;
+    height: 52px;
+    cursor: pointer;
+  }
+  .idcell:hover {
+    background: var(--panel-2);
+  }
+  .idflag {
+    width: 52px;
+    color: var(--dim);
+  }
+  .idcell:hover .ico {
+    color: var(--accent);
+  }
+  .idskin .ico {
+    color: rgba(232, 236, 239, 0.45);
+  }
+  .pfp {
+    display: grid;
+    place-items: center;
+    color: var(--dim);
+  }
+  .col-h a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mode-f .go {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mode-f .go .ico {
+    opacity: 0;
+    transform: translateX(-3px);
+    transition:
+      opacity 0.12s linear,
+      transform 0.12s linear;
+  }
+  .mode:hover .go .ico {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .idname {
+    flex: 1;
+    padding: 0 14px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    justify-content: flex-start !important;
+    display: flex;
+    align-items: center;
+  }
+  .idskin {
+    width: 52px;
+    background: repeating-linear-gradient(
+      45deg,
+      #3a444d 0 6px,
+      #2a323a 6px 12px
+    );
+  }
+  .kv {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+  }
+  .kv:last-child {
+    border: 0;
+  }
+  .kv span {
+    font-family: var(--util);
+    color: var(--dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .kv b {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+  .kv b.acc {
+    color: var(--accent);
+  }
+
+  /* ---- rank insignia ----
+   Tier = colour + plate, division = number of chevrons. The badge encodes both,
+   so the rank is readable without reading the words. */
+  .rank-badge {
+    --tier: #c9a227; /* gold */
+    --tier-dim: #6b5314;
+    display: grid;
+    place-items: center;
+    position: relative;
+    flex: none;
+    width: 52px;
+    height: 60px;
+    background: linear-gradient(
+      180deg,
+      rgba(201, 162, 39, 0.16),
+      rgba(201, 162, 39, 0.04)
+    );
+    border: 1px solid var(--tier-dim);
+    clip-path: polygon(50% 0, 100% 14%, 100% 74%, 50% 100%, 0 74%, 0 14%);
+  }
+  .rank-badge .chev {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .rank-badge .chev i {
+    display: block;
+    width: 19px;
+    height: 6px;
+    font-style: normal;
+    background: var(--tier);
+    clip-path: polygon(50% 0, 100% 100%, 72% 100%, 50% 34%, 28% 100%, 0 100%);
+  }
+  .rank-badge.t-silver {
+    --tier: #b9c3cc;
+    --tier-dim: #5d6771;
+  }
+  .rank-badge.t-bronze {
+    --tier: #c2794a;
+    --tier-dim: #6b4227;
+  }
+  .rank-badge.t-plat {
+    --tier: #6fd3d3;
+    --tier-dim: #2c6a6a;
+  }
+
+  /* rank row in the rail: badge + tier name + progress to next */
+  .rankrow {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0 16px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 4px;
+  }
+  .rankmeta {
+    flex: 1;
+    min-width: 0;
+    display: block;
+  }
+  .ranktier {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1;
+    margin-bottom: 9px;
+  }
+  .rankbar {
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    margin-bottom: 8px;
+  }
+  .rankbar i {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+  }
+  .ranknext {
+    font-family: var(--util);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  .ranknext b {
+    color: var(--txt);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* tier ladder */
+  .tiers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  .tier {
+    background: rgba(20, 24, 28, 0.94);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 12px;
+  }
+  .tier span {
+    font-family: var(--util);
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-weight: 600;
+  }
+  .tier.on {
+    background: var(--panel-2);
+  }
+  .tier.on span {
+    color: var(--txt);
+  }
+  .tier:not(.on) .tier-img {
+    opacity: 0.55;
+    filter: saturate(0.7);
+  }
+  .tier-img {
+    display: block;
+    height: auto;
+  }
+  .rank-img {
+    display: block;
+    flex: none;
+    height: auto;
+  }
+  .tierpill img {
+    display: block;
+  }
+
+  /* inline tier pill for the header */
+  .tierpill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--util);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* recent matches — placement is the only thing that needs emphasis */
+  .hist {
+    padding: 4px 0 8px;
+  }
+  .hrow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 18px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .hrow:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .pl {
+    font-style: normal;
+    font-family: var(--util);
+    font-weight: 700;
+    font-size: 12px;
+    min-width: 26px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    color: var(--dim);
+    border: 1px solid var(--line-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .pl.win {
+    color: #100a03;
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .hmap {
+    flex: 1;
+    color: var(--txt);
+  }
+  .hmode {
+    font-family: var(--util);
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 13px;
+  }
+  .hago {
+    color: var(--dimmer);
+    font-variant-numeric: tabular-nums;
+    min-width: 22px;
+    text-align: right;
+  }
+
+  /* ================= deploy / modes ================= */
+  .sect {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 0 12px;
+  }
+  .sect h2 {
+    font-family: var(--util);
+    margin: 0;
+    font-size: 14px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-weight: 700;
+  }
+  .sect .ln {
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+  .sect .rt {
+    font-family: var(--util);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+  }
+
+  /* Map-led lobby cards: the terrain thumbnail IS the card. One hero card + a
+   stacked column, so the next match reads at a glance. */
+  /* Fixed row height: the cards are overlay-only (absolutely positioned children),
+   so nothing inside them can establish height on its own. */
+  .modes {
+    display: grid;
+    grid-template-columns: 1.75fr 1fr;
+    gap: 12px;
+    align-items: stretch;
+    height: clamp(380px, 42vw, 520px);
+  }
+  .stack {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 12px;
+    min-height: 0;
+  }
+
+  .mode {
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    min-height: 0;
+    border: 1px solid var(--line);
+    background: #0a0d10;
+    transition: border-color 0.14s linear;
+  }
+  .mode:hover {
+    border-color: var(--line-2);
+  }
+  .mode.act-row {
+    border-color: var(--accent);
+  }
+  .mode .shot {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* match the app's map palette but sit back so overlay text stays readable */
+    filter: saturate(0.85) brightness(0.86);
+    transition:
+      transform 0.5s cubic-bezier(0.2, 0.6, 0.3, 1),
+      filter 0.2s linear;
+  }
+  .mode:hover .shot {
+    transform: scale(1.04);
+    filter: saturate(1) brightness(0.96);
+  }
+  .mode .scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(10, 13, 16, 0.55) 0%,
+      rgba(10, 13, 16, 0) 26%,
+      rgba(10, 13, 16, 0.5) 62%,
+      rgba(10, 13, 16, 0.93) 100%
+    );
+  }
+  .mode-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 10px;
+    gap: 8px;
+    z-index: 2;
+  }
+  .mtype {
+    font-family: var(--util);
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--txt);
+    font-weight: 600;
+    background: rgba(10, 13, 16, 0.85);
+    padding: 6px 11px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .mtype.mod {
+    color: var(--accent);
+    border-color: rgba(255, 138, 31, 0.45);
+  }
+  .mtimer {
+    font-family: var(--util);
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #100a03;
+    background: var(--accent);
+    padding: 6px 11px;
+    letter-spacing: 0.06em;
+  }
+  .mtimer.idle {
+    background: rgba(10, 13, 16, 0.82);
+    color: var(--dim);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .mode-b {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 14px;
+    z-index: 2;
+  }
+  .mode h3 {
+    font-family: var(--display);
+    margin: 0 0 2px;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .mode.sm h3 {
+    font-size: 16px;
+  }
+  .mode .map {
+    font-family: var(--util);
+    font-size: 14px;
+    color: #b9c2c9;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 11px;
+  }
+  .mode.sm .map {
+    margin-bottom: 8px;
+  }
+  .bar {
+    height: 2px;
+    background: rgba(255, 255, 255, 0.18);
+    margin-bottom: 8px;
+  }
+  .bar i {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+  }
+  .mode-f {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+  }
+  .mode-f .cnt {
+    font-family: var(--util);
+    color: #dbe2e8;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mode-f .cnt .ico {
+    width: 16px;
+    height: 16px;
+  }
+  .mode-f .go .ico {
+    width: 16px;
+    height: 16px;
+  }
+  .mode-f .go {
+    font-family: var(--util);
+    color: var(--txt);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 14px;
+  }
+  .mode:hover .go {
+    color: var(--accent);
+  }
+
+  /* ================= tables ================= */
+  .cols {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-bottom: 40px;
+  }
+  .col {
+    background: rgba(20, 24, 28, 0.94);
+  }
+  .col-h {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .col-h h3 {
+    font-family: var(--util);
+    margin: 0;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    font-weight: 700;
+  }
+  .col-h a {
+    font-family: var(--util);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dim);
+    text-decoration: none;
+  }
+  .col-h a:hover {
+    color: var(--accent);
+  }
+  /* `color` is NOT inherited into <table> from an ancestor in all engines —
+   set it explicitly or the cells fall back to the UA default (near-black). */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    color: var(--txt);
+  }
+  thead th {
+    font-family: var(--util);
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    font-weight: 600;
+    border-bottom: 1px solid var(--line);
+  }
+  tbody tr {
+    border-bottom: 1px solid rgba(37, 44, 51, 0.6);
+    cursor: pointer;
+  }
+  tbody tr:hover {
+    background: var(--panel-2);
+  }
+  tbody tr:hover td:first-child {
+    color: var(--accent);
+  }
+  tbody td {
+    padding: 10px 16px;
+    letter-spacing: 0.04em;
+    color: var(--txt);
+  }
+  .mcell {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-weight: 600;
+  }
+  /* Big enough to actually recognise the landmass — the map is the point. */
+  .mthumb {
+    width: 92px;
+    height: 56px;
+    object-fit: cover;
+    border: 1px solid var(--line-2);
+    flex: none;
+    filter: saturate(0.9) brightness(0.92);
+    transition: filter 0.15s linear;
+  }
+  tbody tr:hover .mthumb {
+    filter: saturate(1.05) brightness(1.06);
+    border-color: var(--accent);
+  }
+  td.num {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--dim);
+  }
+  td.mode-c {
+    color: var(--dimmer);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .st {
+    display: flex;
+    justify-content: space-between;
+    padding: 13px 16px;
+    border-bottom: 1px solid rgba(37, 44, 51, 0.6);
+    font-size: 14px;
+  }
+  .st:last-child {
+    border: 0;
+  }
+  .st span {
+    font-family: var(--util);
+    color: var(--dim);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .st b {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* page-load sequence: hero settles in once, no looping ambient motion */
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .tag,
+  h1,
+  .lede,
+  .actions,
+  .deploy {
+    animation: rise 0.5s cubic-bezier(0.2, 0.6, 0.3, 1) both;
+  }
+  h1 {
+    animation-delay: 0.06s;
+  }
+  .lede {
+    animation-delay: 0.12s;
+  }
+  .actions {
+    animation-delay: 0.18s;
+  }
+  .deploy {
+    animation-delay: 0.24s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation: none !important;
+      transition: none !important;
+    }
+    .bg {
+      transition: none !important;
+    }
+  }
+  .note {
+    position: static;
+    margin-top: 32px;
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    background: rgba(13, 16, 19, 0.95);
+    border-top: 1px solid var(--line);
+    padding: 9px;
+  }
+  @media (max-width: 1000px) {
+    .main {
+      grid-template-columns: 1fr;
+    }
+    .rail {
+      border-left: 0;
+      border-top: 1px solid var(--line);
+    }
+    .left {
+      padding: 36px 0 32px;
+    }
+    .modes {
+      grid-template-columns: 1fr;
+    }
+    .cols {
+      grid-template-columns: 1fr;
+    }
+    nav a:not(.on) {
+      display: none;
+    }
+  }
+</style>
+
+<div class="app">
+  <div class="bg"></div>
+  <div class="bg-grid"></div>
+  <div class="bg-veil"></div>
+  <div class="shell">
+    <header>
+      <div class="logo"><b>LANDTAKER</b></div>
+      <nav>
+        <a href="#" class="on">Play</a>
+        <a href="#">Ranked</a>
+        <a href="#">Leaderboard</a>
+        <a href="#">Clans</a>
+        <a href="#">News</a>
+      </nav>
+      <div class="hspace"></div>
+      <div class="hmeta">
+        <div class="hcell">
+          <svg class="ico ico-sm" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path
+              d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"
+            /></svg
+          ><span class="k">Online</span><span class="v">1,284</span>
+        </div>
+        <div class="hcell">
+          <svg class="ico ico-sm" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path
+              d="M12 7v10M9.5 9.5h4a1.8 1.8 0 0 1 0 3.6h-3a1.8 1.8 0 0 0 0 3.6h4"
+            /></svg
+          ><span class="k">Credits</span><span class="v">2,480</span>
+        </div>
+        <div class="hcell">
+          <span class="tierpill"
+            ><img src="ranks/gold@small.webp" alt="" width="24" />Gold III</span
+          >
+        </div>
+        <div class="hcell">
+          <div class="pfp">
+            <svg class="ico ico-sm" viewBox="0 0 24 24">
+              <path d="M20 21a8 8 0 0 0-16 0" />
+              <circle cx="12" cy="8" r="4" />
+            </svg>
+          </div>
+          <span class="v">Ömer</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="main">
+      <div class="left">
+        <div class="tag"><i></i> Servers online · EU West · 32 ms</div>
+        <h1>Take the map.<br /><em>Hold it.</em></h1>
+        <p class="lede">
+          Claim territory tile by tile, build an economy, and outlast every
+          other nation on the board. Public matches deploy every two minutes.
+        </p>
+        <div class="actions">
+          <button class="act pri">
+            Deploy<small>Free for all · Europe</small>
+          </button>
+          <button class="act">Single player<small>No queue</small></button>
+          <button class="act">Create lobby<small>Private</small></button>
+        </div>
+        <div class="deploy">
+          Next deployment in <b>00:42</b> · 46 of 64 slots filled
+        </div>
+      </div>
+
+      <aside class="rail">
+        <div class="rail-h">Commander</div>
+        <div class="rail-b">
+          <div class="idline">
+            <div class="idcell idflag">
+              <svg class="ico ico-lg" viewBox="0 0 24 24">
+                <path
+                  d="M4 21V4M4 5.5c3-1.6 6-1.6 9 0s6 1.6 9 0v9c-3 1.6-6 1.6-9 0s-6-1.6-9 0"
+                />
+              </svg>
+            </div>
+            <div class="idcell idname">Ömer</div>
+            <div class="idcell idskin">
+              <svg class="ico ico-lg" viewBox="0 0 24 24">
+                <path
+                  d="M12 3l7.5 4v6c0 4-3.2 6.9-7.5 8-4.3-1.1-7.5-4-7.5-8V7z"
+                />
+              </svg>
+            </div>
+          </div>
+          <div class="rankrow">
+            <img class="rank-img" src="ranks/gold.webp" alt="" width="58" />
+            <div class="rankmeta">
+              <div class="ranktier">Gold III</div>
+              <div class="rankbar"><i style="width: 64%"></i></div>
+              <div class="ranknext"><b>158</b> rating to Platinum I</div>
+            </div>
+          </div>
+          <div class="kv"><span>Rating</span><b class="acc">1,842</b></div>
+          <div class="kv"><span>Matches</span><b>312</b></div>
+          <div class="kv"><span>Wins</span><b>47</b></div>
+          <div class="kv"><span>Win rate</span><b>15.1%</b></div>
+          <div class="kv"><span>Territory claimed</span><b>4.2M</b></div>
+        </div>
+        <div class="rail-h" style="border-top: 1px solid var(--line)">
+          Recent matches
+        </div>
+        <div class="hist">
+          <div class="hrow">
+            <i class="pl win">1</i><span class="hmap">Europe</span
+            ><span class="hmode">FFA</span><span class="hago">2h</span>
+          </div>
+          <div class="hrow">
+            <i class="pl">7</i><span class="hmap">World</span
+            ><span class="hmode">Quads</span><span class="hago">3h</span>
+          </div>
+          <div class="hrow">
+            <i class="pl">4</i><span class="hmap">Black Sea</span
+            ><span class="hmode">FFA</span><span class="hago">5h</span>
+          </div>
+          <div class="hrow">
+            <i class="pl">12</i><span class="hmap">Iceland</span
+            ><span class="hmode">Duos</span><span class="hago">1d</span>
+          </div>
+          <div class="hrow">
+            <i class="pl win">1</i><span class="hmap">Pangaea</span
+            ><span class="hmode">Trios</span><span class="hago">1d</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="sect">
+      <h2>Deployments</h2>
+      <div class="ln"></div>
+      <span class="rt">Auto-filled · joins at start</span>
+    </div>
+
+    <div class="modes">
+      <div class="mode act-row">
+        <img class="shot" src="maps/europe.webp" alt="Europe map" />
+        <div class="scrim"></div>
+        <div class="mode-top">
+          <span class="mtype">Free for all</span
+          ><span class="mtimer">00:42</span>
+        </div>
+        <div class="mode-b">
+          <h3>Europe</h3>
+          <div class="map">Fog of war</div>
+          <div class="bar"><i style="width: 72%"></i></div>
+          <div class="mode-f">
+            <span class="cnt"
+              ><svg class="ico ico-sm" viewBox="0 0 24 24">
+                <path d="M16 21v-2a4 4 0 0 0-8 0v2" />
+                <circle cx="12" cy="7" r="4" /></svg
+              >46 / 64</span
+            >
+            <span class="go"
+              >Join<svg class="ico ico-sm" viewBox="0 0 24 24">
+                <path d="M5 12h13M13 6l6 6-6 6" /></svg
+            ></span>
+          </div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="mode sm">
+          <img class="shot" src="maps/world.webp" alt="World map" />
+          <div class="scrim"></div>
+          <div class="mode-top">
+            <span class="mtype">Quads</span><span class="mtimer">01:15</span>
+          </div>
+          <div class="mode-b">
+            <h3>World</h3>
+            <div class="map">4 teams of 16</div>
+            <div class="bar"><i style="width: 40%"></i></div>
+            <div class="mode-f">
+              <span class="cnt"
+                ><svg class="ico ico-sm" viewBox="0 0 24 24">
+                  <path d="M16 21v-2a4 4 0 0 0-8 0v2" />
+                  <circle cx="12" cy="7" r="4" /></svg
+                >26 / 64</span
+              >
+              <span class="go"
+                >Join<svg class="ico ico-sm" viewBox="0 0 24 24">
+                  <path d="M5 12h13M13 6l6 6-6 6" /></svg
+              ></span>
+            </div>
+          </div>
+        </div>
+        <div class="mode sm">
+          <img
+            class="shot"
+            src="maps/northwestpassage.webp"
+            alt="Northwest Passage map"
+          />
+          <div class="scrim"></div>
+          <div class="mode-top">
+            <span class="mtype mod">Nukes disabled</span
+            ><span class="mtimer">02:30</span>
+          </div>
+          <div class="mode-b">
+            <h3>Northwest Passage</h3>
+            <div class="map">Free for all</div>
+            <div class="bar"><i style="width: 18%"></i></div>
+            <div class="mode-f">
+              <span class="cnt"
+                ><svg class="ico ico-sm" viewBox="0 0 24 24">
+                  <path d="M16 21v-2a4 4 0 0 0-8 0v2" />
+                  <circle cx="12" cy="7" r="4" /></svg
+                >7 / 40</span
+              >
+              <span class="go"
+                >Join<svg class="ico ico-sm" viewBox="0 0 24 24">
+                  <path d="M5 12h13M13 6l6 6-6 6" /></svg
+              ></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="col">
+        <div class="col-h">
+          <h3>Open lobbies</h3>
+          <a href="#"
+            ><svg class="ico ico-sm" viewBox="0 0 24 24">
+              <path d="M20 11a8 8 0 1 0-.6 4" />
+              <path d="M20 5v6h-6" /></svg
+            >Refresh</a
+          >
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Map</th>
+              <th>Mode</th>
+              <th style="text-align: right">Players</th>
+              <th style="text-align: right">Starts</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <span class="mcell"
+                  ><img class="mthumb" src="maps/blacksea.webp" alt="" />Black
+                  Sea</span
+                >
+              </td>
+              <td class="mode-c">Free for all</td>
+              <td class="num">31 / 50</td>
+              <td class="num">00:18</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="mcell"
+                  ><img
+                    class="mthumb"
+                    src="maps/iceland.webp"
+                    alt=""
+                  />Iceland</span
+                >
+              </td>
+              <td class="mode-c">Duos</td>
+              <td class="num">12 / 24</td>
+              <td class="num">01:04</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="mcell"
+                  ><img
+                    class="mthumb"
+                    src="maps/pangaea.webp"
+                    alt=""
+                  />Pangaea</span
+                >
+              </td>
+              <td class="mode-c">Humans vs nations</td>
+              <td class="num">44 / 64</td>
+              <td class="num">00:36</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="mcell"
+                  ><img class="mthumb" src="maps/mena.webp" alt="" />Mena</span
+                >
+              </td>
+              <td class="mode-c">Trios</td>
+              <td class="num">9 / 30</td>
+              <td class="num">02:11</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col">
+        <div class="col-h">
+          <h3>Season 1</h3>
+          <a href="#">Details</a>
+        </div>
+        <div class="st">
+          <span>Placement</span
+          ><b class="tierpill"
+            ><img src="ranks/gold@small.webp" alt="" width="20" />Gold III</b
+          >
+        </div>
+        <div class="st"><span>Next rank</span><b>158 rating</b></div>
+        <div class="st"><span>Season wins</span><b>12</b></div>
+        <div class="st"><span>Days left</span><b>23</b></div>
+      </div>
+    </div>
+
+    <div class="sect">
+      <h2>Rank tiers</h2>
+      <div class="ln"></div>
+      <span class="rt">Chevrons = division</span>
+    </div>
+    <div class="tiers">
+      <div class="tier">
+        <img class="tier-img" src="ranks/bronze.webp" alt="" width="76" /><span
+          >Bronze I</span
+        >
+      </div>
+      <div class="tier">
+        <img class="tier-img" src="ranks/silver.webp" alt="" width="76" /><span
+          >Silver II</span
+        >
+      </div>
+      <div class="tier on">
+        <img class="tier-img" src="ranks/gold.webp" alt="" width="76" /><span
+          >Gold III</span
+        >
+      </div>
+      <div class="tier">
+        <img
+          class="tier-img"
+          src="ranks/platinum.webp"
+          alt=""
+          width="76"
+        /><span>Platinum</span>
+      </div>
+    </div>
+
+    <div class="note">Preview mockup — static, not wired to the game</div>
+  </div>
+</div>
+<script>
+  // Pointer parallax on the map. Tiny travel (max 14px) — BF3 drift, not a carnival ride.
+  (function () {
+    var bg = document.querySelector(".bg");
+    if (!bg || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      return;
+    var tx = 0,
+      ty = 0,
+      raf = null;
+    function apply() {
+      raf = null;
+      bg.style.transform = "translate3d(" + tx + "px," + ty + "px,0)";
+    }
+    window.addEventListener(
+      "pointermove",
+      function (e) {
+        // -1..1 from centre, scaled to a 14px drift
+        tx = (e.clientX / window.innerWidth - 0.5) * -28;
+        ty = (e.clientY / window.innerHeight - 0.5) * -18;
+        if (!raf) raf = requestAnimationFrame(apply);
+      },
+      { passive: true },
+    );
+  })();
+</script>

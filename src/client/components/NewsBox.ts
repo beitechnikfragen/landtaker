@@ -33,10 +33,10 @@ const typeLabelKeys: Record<string, string> = {
 };
 
 const typeLabelColors: Record<string, string> = {
-  tournament: "bg-amber-500/20 text-amber-300",
-  tutorial: "bg-sky-500/20 text-sky-300",
-  announcement: "bg-emerald-500/20 text-emerald-300",
-  warning: "bg-red-500/20 text-red-300",
+  tournament: "border-lt-gold/45 text-lt-gold",
+  tutorial: "border-lt-troop/45 text-lt-troop",
+  announcement: "border-lt-ok/45 text-lt-ok",
+  warning: "border-lt-bad/45 text-lt-bad",
 };
 
 @customElement("news-box")
@@ -114,12 +114,10 @@ export class NewsBox extends LitElement {
     const item = this.items[this.activeIndex];
 
     return html`
-      <div
-        class="px-2 py-2 bg-surface border-y border-white/10 lg:border-y-0 lg:rounded-xl lg:p-3"
-      >
+      <div class="px-2 py-2 bg-lt-800 border border-lt-700 lg:p-3">
         <div class="flex items-center gap-3">
           <span
-            class="shrink-0 text-[10px] font-bold tracking-wider px-2 py-0.5 rounded ${typeLabelColors[
+            class="lt-label shrink-0 !text-[11px] px-2 py-0.5 border bg-lt-900/60 ${typeLabelColors[
               item.type
             ] ?? typeLabelColors["announcement"]}"
             >${translateText(
@@ -132,14 +130,15 @@ export class NewsBox extends LitElement {
                   href="${item.url}"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="text-sm font-medium text-white hover:text-blue-300 transition-colors truncate block"
+                  class="text-sm font-medium text-lt-100 hover:text-lt-accent transition-colors truncate block"
                   >${item.title}</a
                 >`
-              : html`<span class="text-sm font-medium text-white truncate block"
+              : html`<span
+                  class="text-sm font-medium text-lt-100 truncate block"
                   >${item.title}</span
                 >`}
             <span
-              class="text-xs text-white/50 block [&_a]:text-blue-300 [&_a:hover]:text-blue-200"
+              class="text-xs text-lt-400 block [&_a]:text-lt-accent [&_a:hover]:text-lt-accent-hi"
               >${renderMarkdown(
                 item.descriptionTranslationKey
                   ? translateText(item.descriptionTranslationKey)
@@ -154,10 +153,10 @@ export class NewsBox extends LitElement {
                     (_, i) => html`
                       <button
                         @click=${() => this.goTo(i)}
-                        class="w-1.5 h-1.5 rounded-full transition-colors ${i ===
+                        class="w-2 h-2 transition-colors ${i ===
                         this.activeIndex
-                          ? "bg-white/60"
-                          : "bg-white/20 hover:bg-white/40"}"
+                          ? "bg-lt-accent"
+                          : "bg-lt-600 hover:bg-lt-500"}"
                         aria-label="${translateText("news_box.go_to_item", {
                           num: i + 1,
                         })}"
@@ -169,7 +168,7 @@ export class NewsBox extends LitElement {
             : nothing}
           <button
             @click=${() => this.dismiss(item.id)}
-            class="shrink-0 p-0.5 text-white/30 hover:text-white/70 transition-colors"
+            class="shrink-0 p-0.5 text-white/30 hover:text-lt-400 transition-colors"
             aria-label="${translateText("news_box.dismiss")}"
           >
             <svg

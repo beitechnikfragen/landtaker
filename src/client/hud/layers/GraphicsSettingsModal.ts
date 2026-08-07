@@ -788,7 +788,7 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
   private renderPresets() {
     return html`
       <div
-        class="px-3 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider"
+        class="px-3 py-1 text-xs font-semibold text-lt-400 uppercase tracking-wider"
       >
         ${translateText("graphics_setting.section_presets")}
       </div>
@@ -802,7 +802,7 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
   private renderPresetTools() {
     return html`
       <div
-        class="px-3 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-2"
+        class="px-3 py-1 text-xs font-semibold text-lt-400 uppercase tracking-wider mt-2"
       >
         ${translateText("graphics_setting.section_custom_presets")}
       </div>
@@ -817,10 +817,10 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
           spellcheck="false"
           maxlength="40"
           @input=${this.onPresetNameInput}
-          class="flex-1 min-w-0 px-2 py-1 bg-slate-900 border border-slate-500 rounded-sm text-sm text-white"
+          class="flex-1 min-w-0 px-2 py-1 bg-lt-900 border border-lt-600 text-sm text-white"
         />
         <button
-          class="px-3 py-1 bg-slate-600 hover:bg-slate-500 rounded-sm text-sm disabled:opacity-50"
+          class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-sm disabled:opacity-50"
           ?disabled=${this.presetName.trim() === ""}
           @click=${this.onSavePreset}
         >
@@ -829,18 +829,18 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
       </div>
 
       <button
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
         @click=${this.onCopyJson}
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.copy_json_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.copy_json_desc")}
           </div>
         </div>
-        <div class="text-sm text-slate-400">
+        <div class="text-sm text-lt-400">
           ${this.copiedJson
             ? translateText("graphics_setting.copy_json_copied")
             : ""}
@@ -851,7 +851,7 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
         <div class="font-medium">
           ${translateText("graphics_setting.import_json_label")}
         </div>
-        <div class="text-sm text-slate-400">
+        <div class="text-sm text-lt-400">
           ${translateText("graphics_setting.import_json_desc")}
         </div>
         <textarea
@@ -859,17 +859,17 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
           .value=${this.importText}
           spellcheck="false"
           @input=${this.onImportTextInput}
-          class="w-full mt-2 px-2 py-1 bg-slate-900 border ${this.importError
-            ? "border-red-500"
-            : "border-slate-500"} rounded-sm text-sm text-white font-mono"
+          class="w-full mt-2 px-2 py-1 bg-lt-900 border ${this.importError
+            ? "border-lt-bad"
+            : "border-lt-600"} text-sm text-white font-mono"
         ></textarea>
         ${this.importError
-          ? html`<div class="text-sm text-red-400">
+          ? html`<div class="text-sm text-lt-bad">
               ${translateText("graphics_setting.import_json_invalid")}
             </div>`
           : null}
         <button
-          class="mt-1 px-3 py-1 bg-slate-600 hover:bg-slate-500 rounded-sm text-sm disabled:opacity-50"
+          class="mt-1 px-3 py-1 bg-slate-600 hover:bg-slate-500 text-sm disabled:opacity-50"
           ?disabled=${this.importText.trim() === ""}
           @click=${this.onImportApply}
         >
@@ -888,10 +888,10 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
         @contextmenu=${(e: Event) => e.preventDefault()}
       >
         <div
-          class="bg-slate-800 border border-slate-600 rounded-lg max-w-md h-full overflow-y-auto"
+          class="bg-lt-850 border border-lt-600 max-w-md h-full overflow-y-auto"
         >
           <div
-            class="flex items-center justify-between p-4 border-b border-slate-600"
+            class="flex items-center justify-between p-4 border-b border-lt-600"
           >
             <div class="flex items-center gap-2">
               <img
@@ -906,7 +906,7 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
               </h2>
             </div>
             <button
-              class="text-slate-400 hover:text-white text-2xl font-bold leading-none"
+              class="text-lt-400 hover:text-white text-2xl font-bold leading-none"
               @click=${this.closeModal}
             >
               ×
@@ -917,18 +917,18 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             ${this.renderPresets()}
 
             <button
-              class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors mt-2"
+              class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors mt-2"
               @click=${this.onToggleAdvanced}
             >
               <div class="flex-1">
                 <div class="font-medium">
                   ${translateText("graphics_setting.advanced_label")}
                 </div>
-                <div class="text-sm text-slate-400">
+                <div class="text-sm text-lt-400">
                   ${translateText("graphics_setting.advanced_desc")}
                 </div>
               </div>
-              <div class="text-sm text-slate-400">
+              <div class="text-sm text-lt-400">
                 ${this.advancedOpen ? "▾" : "▸"}
               </div>
             </button>
@@ -974,19 +974,19 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
       ${this.renderPresetTools()}
 
       <div
-        class="px-3 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider"
+        class="px-3 py-1 text-xs font-semibold text-lt-400 uppercase tracking-wider"
       >
         ${translateText("graphics_setting.section_lighting")}
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.lighting_ambient_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.lighting_ambient_desc")}
           </div>
           <input
@@ -996,22 +996,20 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${AMBIENT_LEVEL_STEP}
             .value=${String(ambientLevel)}
             @input=${this.onAmbientLevelChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
-          ${ambientLevel}
-        </div>
+        <div class="text-sm text-lt-400 w-12 text-right">${ambientLevel}</div>
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.lighting_unit_glow_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.lighting_unit_glow_desc")}
           </div>
           <input
@@ -1021,20 +1019,20 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${UNIT_GLOW_STEP}
             .value=${String(unitGlow)}
             @input=${this.onUnitGlowChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">${unitGlow}</div>
+        <div class="text-sm text-lt-400 w-12 text-right">${unitGlow}</div>
       </div>
 
       <div
-        class="px-3 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-2"
+        class="px-3 py-1 text-xs font-semibold text-lt-400 uppercase tracking-wider mt-2"
       >
         ${translateText("graphics_setting.section_name_labels")}
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
@@ -1047,22 +1045,22 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${NAME_SCALE_STEP}
             .value=${String(nameScale)}
             @input=${this.onNameScaleChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${nameScale.toFixed(2)}
         </div>
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.name_cull_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.name_cull_desc")}
           </div>
           <input
@@ -1072,22 +1070,22 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${NAME_CULL_STEP}
             .value=${String(nameCull)}
             @input=${this.onNameCullChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${nameCull.toFixed(3)}
         </div>
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.hover_fade_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.hover_fade_desc")}
           </div>
           <input
@@ -1097,22 +1095,22 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${HOVER_FADE_STEP}
             .value=${String(hoverFade)}
             @input=${this.onHoverFadeChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${hoverFade.toFixed(2)}
         </div>
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.hover_glow_width_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.hover_glow_width_desc")}
           </div>
           <input
@@ -1122,22 +1120,22 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${HOVER_GLOW_WIDTH_STEP}
             .value=${String(hoverGlowWidth)}
             @input=${this.onHoverGlowWidthChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${hoverGlowWidth.toFixed(1)}
         </div>
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.hover_glow_alpha_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.hover_glow_alpha_desc")}
           </div>
           <input
@@ -1147,27 +1145,27 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${HOVER_GLOW_ALPHA_STEP}
             .value=${String(hoverGlowAlpha)}
             @input=${this.onHoverGlowAlphaChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${hoverGlowAlpha.toFixed(2)}
         </div>
       </div>
 
       <button
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
         @click=${this.onToggleNamesColored}
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.colored_names_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.colored_names_desc")}
           </div>
         </div>
-        <div class="text-sm text-slate-400">
+        <div class="text-sm text-lt-400">
           ${namesColored
             ? translateText("graphics_setting.colored")
             : translateText("graphics_setting.black")}
@@ -1175,19 +1173,19 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
       </button>
 
       <div
-        class="px-3 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-2"
+        class="px-3 py-1 text-xs font-semibold text-lt-400 uppercase tracking-wider mt-2"
       >
         ${translateText("graphics_setting.section_structure_icons")}
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.icon_size_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.icon_size_desc")}
           </div>
           <input
@@ -1197,27 +1195,27 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${ICON_SIZE_STEP}
             .value=${String(iconSize)}
             @input=${this.onIconSizeChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${iconSize.toFixed(0)}
         </div>
       </div>
 
       <button
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
         @click=${this.onToggleClassicIcons}
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.classic_icons_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.classic_icons_desc")}
           </div>
         </div>
-        <div class="text-sm text-slate-400">
+        <div class="text-sm text-lt-400">
           ${classicIcons
             ? translateText("user_setting.on")
             : translateText("user_setting.off")}
@@ -1225,18 +1223,18 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
       </button>
 
       <button
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
         @click=${this.onToggleClassicNumbers}
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.classic_numbers_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.classic_numbers_desc")}
           </div>
         </div>
-        <div class="text-sm text-slate-400">
+        <div class="text-sm text-lt-400">
           ${classicNumbers
             ? translateText("user_setting.on")
             : translateText("user_setting.off")}
@@ -1244,18 +1242,18 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
       </button>
 
       <button
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
         @click=${this.onToggleShowDots}
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.structure_dots_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.structure_dots_desc")}
           </div>
         </div>
-        <div class="text-sm text-slate-400">
+        <div class="text-sm text-lt-400">
           ${showDots
             ? translateText("user_setting.on")
             : translateText("user_setting.off")}
@@ -1263,24 +1261,24 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
       </button>
 
       <div
-        class="px-3 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-2"
+        class="px-3 py-1 text-xs font-semibold text-lt-400 uppercase tracking-wider mt-2"
       >
         ${translateText("graphics_setting.section_map")}
       </div>
 
       <button
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
         @click=${this.onToggleNavalHighlight}
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.naval_hover_highlight_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.naval_hover_highlight_desc")}
           </div>
         </div>
-        <div class="text-sm text-slate-400">
+        <div class="text-sm text-lt-400">
           ${navalHighlight
             ? translateText("user_setting.on")
             : translateText("user_setting.off")}
@@ -1288,13 +1286,13 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
       </button>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.highlight_fill_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.highlight_fill_desc")}
           </div>
           <input
@@ -1304,22 +1302,22 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${HIGHLIGHT_FILL_STEP}
             .value=${String(highlightFill)}
             @input=${this.onHighlightFillChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${highlightFill.toFixed(2)}
         </div>
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.highlight_brighten_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.highlight_brighten_desc")}
           </div>
           <input
@@ -1329,22 +1327,22 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${HIGHLIGHT_BRIGHTEN_STEP}
             .value=${String(highlightBrighten)}
             @input=${this.onHighlightBrightenChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${highlightBrighten.toFixed(2)}
         </div>
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.highlight_thicken_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.highlight_thicken_desc")}
           </div>
           <input
@@ -1354,22 +1352,22 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${HIGHLIGHT_THICKEN_STEP}
             .value=${String(highlightThicken)}
             @input=${this.onHighlightThickenChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${highlightThicken.toFixed(0)}
         </div>
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.territory_sat_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.territory_sat_desc")}
           </div>
           <input
@@ -1379,22 +1377,22 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${TERRITORY_SAT_STEP}
             .value=${String(territorySat)}
             @input=${this.onTerritorySatChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${territorySat.toFixed(2)}
         </div>
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.territory_alpha_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.territory_alpha_desc")}
           </div>
           <input
@@ -1404,22 +1402,22 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${TERRITORY_ALPHA_STEP}
             .value=${String(territoryAlpha)}
             @input=${this.onTerritoryAlphaChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${territoryAlpha.toFixed(2)}
         </div>
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.coordinate_grid_opacity_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.coordinate_grid_opacity_desc")}
           </div>
           <input
@@ -1429,22 +1427,22 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${COORDINATE_GRID_OPACITY_STEP}
             .value=${String(coordinateGridOpacity)}
             @input=${this.onCoordinateGridOpacityChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${coordinateGridOpacity.toFixed(2)}
         </div>
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.rail_distance_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.rail_distance_desc")}
           </div>
           <input
@@ -1454,22 +1452,22 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${RAIL_ZOOM_STEP}
             .value=${String(railDrawDistance)}
             @input=${this.onRailDrawDistanceChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${railDrawDistance.toFixed(1)}
         </div>
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.rail_thickness_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.rail_thickness_desc")}
           </div>
           <input
@@ -1479,10 +1477,10 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${RAIL_THICKNESS_STEP}
             .value=${String(railThickness)}
             @input=${this.onRailThicknessChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${railThickness.toFixed(1)}
         </div>
       </div>
@@ -1490,19 +1488,19 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
       ${this.mapLayers.length > 0
         ? html`
             <div
-              class="px-3 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-2"
+              class="px-3 py-1 text-xs font-semibold text-lt-400 uppercase tracking-wider mt-2"
             >
               ${translateText("graphics_setting.section_map_layers")}
             </div>
             ${this.mapLayers.map(
               (layer) => html`
                 <button
-                  class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+                  class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
                   @click=${() => this.onToggleLayer(layer.id)}
                 >
                   <div class="flex-1">
                     <div class="font-medium">${this.layerName(layer.id)}</div>
-                    <div class="text-sm text-slate-400">
+                    <div class="text-sm text-lt-400">
                       ${layer.placement === "land"
                         ? translateText("graphics_setting.layer_placement_land")
                         : translateText(
@@ -1513,7 +1511,7 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
                         : ""}
                     </div>
                   </div>
-                  <div class="text-sm text-slate-400">
+                  <div class="text-sm text-lt-400">
                     ${this.isLayerVisible(layer.id)
                       ? translateText("user_setting.on")
                       : translateText("user_setting.off")}
@@ -1525,19 +1523,19 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
         : ""}
 
       <div
-        class="px-3 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-2"
+        class="px-3 py-1 text-xs font-semibold text-lt-400 uppercase tracking-wider mt-2"
       >
         ${translateText("graphics_setting.section_terrain")}
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.ocean_color_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.ocean_color_desc")}
           </div>
         </div>
@@ -1547,24 +1545,24 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
           placeholder=${renderDefaults.terrain.oceanColor}
           spellcheck="false"
           @change=${this.onOceanColorChange}
-          class="w-24 px-2 py-1 bg-slate-900 border border-slate-500 rounded-sm text-sm text-white font-mono"
+          class="w-24 px-2 py-1 bg-lt-900 border border-lt-600 text-sm text-white font-mono"
         />
         <input
           type="color"
           .value=${oceanColor}
           @input=${this.onOceanColorChange}
-          class="w-10 h-8 bg-transparent border border-slate-500 rounded-sm cursor-pointer"
+          class="w-10 h-8 bg-transparent border border-lt-600 cursor-pointer"
         />
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.sand_color_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.sand_color_desc")}
           </div>
         </div>
@@ -1574,24 +1572,24 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
           placeholder=${renderDefaults.terrain.sandColor}
           spellcheck="false"
           @change=${this.onSandColorChange}
-          class="w-24 px-2 py-1 bg-slate-900 border border-slate-500 rounded-sm text-sm text-white font-mono"
+          class="w-24 px-2 py-1 bg-lt-900 border border-lt-600 text-sm text-white font-mono"
         />
         <input
           type="color"
           .value=${sandColor}
           @input=${this.onSandColorChange}
-          class="w-10 h-8 bg-transparent border border-slate-500 rounded-sm cursor-pointer"
+          class="w-10 h-8 bg-transparent border border-lt-600 cursor-pointer"
         />
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.plains_color_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.plains_color_desc")}
           </div>
         </div>
@@ -1601,24 +1599,24 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
           placeholder=${renderDefaults.terrain.plainsColor}
           spellcheck="false"
           @change=${this.onPlainsColorChange}
-          class="w-24 px-2 py-1 bg-slate-900 border border-slate-500 rounded-sm text-sm text-white font-mono"
+          class="w-24 px-2 py-1 bg-lt-900 border border-lt-600 text-sm text-white font-mono"
         />
         <input
           type="color"
           .value=${plainsColor}
           @input=${this.onPlainsColorChange}
-          class="w-10 h-8 bg-transparent border border-slate-500 rounded-sm cursor-pointer"
+          class="w-10 h-8 bg-transparent border border-lt-600 cursor-pointer"
         />
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.highland_color_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.highland_color_desc")}
           </div>
         </div>
@@ -1628,24 +1626,24 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
           placeholder=${renderDefaults.terrain.highlandColor}
           spellcheck="false"
           @change=${this.onHighlandColorChange}
-          class="w-24 px-2 py-1 bg-slate-900 border border-slate-500 rounded-sm text-sm text-white font-mono"
+          class="w-24 px-2 py-1 bg-lt-900 border border-lt-600 text-sm text-white font-mono"
         />
         <input
           type="color"
           .value=${highlandColor}
           @input=${this.onHighlandColorChange}
-          class="w-10 h-8 bg-transparent border border-slate-500 rounded-sm cursor-pointer"
+          class="w-10 h-8 bg-transparent border border-lt-600 cursor-pointer"
         />
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.mountain_color_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.mountain_color_desc")}
           </div>
         </div>
@@ -1655,24 +1653,24 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
           placeholder=${renderDefaults.terrain.mountainColor}
           spellcheck="false"
           @change=${this.onMountainColorChange}
-          class="w-24 px-2 py-1 bg-slate-900 border border-slate-500 rounded-sm text-sm text-white font-mono"
+          class="w-24 px-2 py-1 bg-lt-900 border border-lt-600 text-sm text-white font-mono"
         />
         <input
           type="color"
           .value=${mountainColor}
           @input=${this.onMountainColorChange}
-          class="w-10 h-8 bg-transparent border border-slate-500 rounded-sm cursor-pointer"
+          class="w-10 h-8 bg-transparent border border-lt-600 cursor-pointer"
         />
       </div>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.nuke_color_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.nuke_color_desc")}
           </div>
         </div>
@@ -1682,35 +1680,35 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
           placeholder=${NUKE_COLOR_DEFAULT}
           spellcheck="false"
           @change=${this.onNukeColorChange}
-          class="w-24 px-2 py-1 bg-slate-900 border border-slate-500 rounded-sm text-sm text-white font-mono"
+          class="w-24 px-2 py-1 bg-lt-900 border border-lt-600 text-sm text-white font-mono"
         />
         <input
           type="color"
           .value=${nukeColor}
           @input=${this.onNukeColorChange}
-          class="w-10 h-8 bg-transparent border border-slate-500 rounded-sm cursor-pointer"
+          class="w-10 h-8 bg-transparent border border-lt-600 cursor-pointer"
         />
       </div>
 
       <div
-        class="px-3 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-2"
+        class="px-3 py-1 text-xs font-semibold text-lt-400 uppercase tracking-wider mt-2"
       >
         ${translateText("graphics_setting.section_effects")}
       </div>
 
       <button
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
         @click=${this.onToggleSpecialEffects}
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("user_setting.special_effects_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("user_setting.special_effects_desc")}
           </div>
         </div>
-        <div class="text-sm text-slate-400">
+        <div class="text-sm text-lt-400">
           ${this.currentSpecialEffects()
             ? translateText("user_setting.on")
             : translateText("user_setting.off")}
@@ -1718,18 +1716,18 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
       </button>
 
       <button
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
         @click=${this.onToggleFallout}
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("graphics_setting.fallout_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("graphics_setting.fallout_desc")}
           </div>
         </div>
-        <div class="text-sm text-slate-400">
+        <div class="text-sm text-lt-400">
           ${this.currentFallout()
             ? translateText("user_setting.on")
             : translateText("user_setting.off")}
@@ -1737,13 +1735,13 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
       </button>
 
       <div
-        class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+        class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
       >
         <div class="flex-1">
           <div class="font-medium">
             ${translateText("user_setting.highlight_glow_strength_label")}
           </div>
-          <div class="text-sm text-slate-400">
+          <div class="text-sm text-lt-400">
             ${translateText("user_setting.highlight_small_players_desc")}
           </div>
           <input
@@ -1753,24 +1751,24 @@ export class GraphicsSettingsModal extends LitElement implements Controller {
             step=${GLOW_STRENGTH_STEP}
             .value=${String(glowStrength * 100)}
             @input=${this.onGlowStrengthChange}
-            class="w-full border border-slate-500 rounded-lg"
+            class="w-full border border-lt-600 "
           />
         </div>
-        <div class="text-sm text-slate-400 w-12 text-right">
+        <div class="text-sm text-lt-400 w-12 text-right">
           ${Math.round(glowStrength * 100)}%
         </div>
       </div>
 
-      <div class="border-t border-slate-600 pt-3 mt-4">
+      <div class="border-t border-lt-600 pt-3 mt-4">
         <button
-          class="flex gap-3 items-center w-full text-left p-3 hover:bg-slate-700 rounded-sm text-white transition-colors"
+          class="flex gap-3 items-center w-full text-left p-3 hover:bg-lt-800 text-white transition-colors"
           @click=${this.onResetClick}
         >
           <div class="flex-1">
             <div class="font-medium">
               ${translateText("graphics_setting.reset_label")}
             </div>
-            <div class="text-sm text-slate-400">
+            <div class="text-sm text-lt-400">
               ${translateText("graphics_setting.reset_desc")}
             </div>
           </div>

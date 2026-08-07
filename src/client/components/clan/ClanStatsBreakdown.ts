@@ -85,7 +85,7 @@ export class ClanStatsBreakdown extends LitElement {
     const toggleVisible = !!expand && !expand.disabled;
     const toggleIcon = html`
       <span
-        class="w-3 h-3 shrink-0 flex items-center justify-center text-white/40 transition-transform duration-150
+        class="w-3 h-3 shrink-0 flex items-center justify-center text-lt-500 transition-transform duration-150
           ${expand?.expanded ? "rotate-90" : ""}"
         aria-hidden="true"
       >
@@ -120,7 +120,7 @@ export class ClanStatsBreakdown extends LitElement {
     return html`
       <button
         type="button"
-        class="w-full flex items-center gap-2 ${padding} text-left rounded-md transition-colors cursor-pointer
+        class="w-full flex items-center gap-2 ${padding} text-left transition-colors cursor-pointer
           hover:bg-white/10 focus-visible:bg-white/10 focus:outline-none
           ${expand.expanded ? "bg-white/5" : ""}"
         @click=${expand.onToggle}

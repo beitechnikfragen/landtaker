@@ -62,7 +62,7 @@ export class WinModal extends LitElement implements Controller {
     return html`
       <div
         class="${this.isVisible
-          ? "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-800/70 p-4 md:p-6 shrink-0 rounded-lg z-[10010] shadow-2xl backdrop-blur-xs text-white w-[min(90vw,700px)] max-w-[90%] max-h-[90dvh] overflow-hidden flex flex-col"
+          ? "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-lt-850/70 p-4 md:p-6 shrink-0 z-[10010] shadow-2xl backdrop-blur-xs text-white w-[min(90vw,700px)] max-w-[90%] max-h-[90dvh] overflow-hidden flex flex-col"
           : "hidden"}"
       >
         <h2 class="m-0 mb-4 text-[26px] text-center text-white shrink-0">
@@ -131,14 +131,14 @@ export class WinModal extends LitElement implements Controller {
 
   renderYoutubeTutorial() {
     return html`
-      <div class="text-center mb-6 bg-black/30 p-2.5 rounded-sm">
+      <div class="text-center mb-6 bg-black/30 p-2.5 ">
         <h3 class="text-xl font-semibold text-white mb-3">
           ${translateText("win_modal.youtube_tutorial")}
         </h3>
         <!-- 56.25% = 9:16 -->
         <div class="relative w-full pb-[56.25%]">
           <iframe
-            class="absolute top-0 left-0 w-full h-full rounded-sm"
+            class="absolute top-0 left-0 w-full h-full "
             src="${this.isVisible ? TUTORIAL_VIDEO_URL : ""}"
             title="YouTube video player"
             frameborder="0"
@@ -152,16 +152,14 @@ export class WinModal extends LitElement implements Controller {
 
   renderPatternButton() {
     return html`
-      <div class="text-center mb-6 bg-black/30 p-2.5 rounded-sm">
+      <div class="text-center mb-6 bg-black/30 p-2.5 ">
         <h3 class="text-xl font-semibold text-white mb-3">
           ${translateText("win_modal.support_openfront")}
         </h3>
         <p class="text-white mb-3">
           ${translateText("win_modal.territory_pattern")}
         </p>
-        <div
-          class="mx-auto w-full overflow-x-auto overflow-y-visible rounded-sm"
-        >
+        <div class="mx-auto w-full overflow-x-auto overflow-y-visible ">
           <div class="flex min-w-max items-start justify-start gap-4 px-1 py-1">
             ${this.patternContent}
           </div>
@@ -203,7 +201,7 @@ export class WinModal extends LitElement implements Controller {
 
   steamWishlist(): TemplateResult {
     return html`
-      <div class="text-center mb-6 bg-black/30 p-2.5 rounded-sm">
+      <div class="text-center mb-6 bg-black/30 p-2.5 ">
         <h3 class="text-xl font-semibold text-white mb-3">
           ${translateText("steam_wishlist.title")}
         </h3>
@@ -217,7 +215,7 @@ export class WinModal extends LitElement implements Controller {
 
   discordDisplay(): TemplateResult {
     return html`
-      <div class="text-center mb-6 bg-black/30 p-2.5 rounded-sm">
+      <div class="text-center mb-6 bg-black/30 p-2.5 ">
         <h3 class="text-xl font-semibold text-white mb-3">
           ${translateText("win_modal.join_discord")}
         </h3>
@@ -228,7 +226,7 @@ export class WinModal extends LitElement implements Controller {
           href="https://discord.com/invite/openfront"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-sm font-semibold transition-all duration-200 hover:bg-indigo-700 hover:-translate-y-px no-underline"
+          class="inline-block px-6 py-3 bg-indigo-600 text-white font-semibold transition-all duration-200 hover:bg-indigo-700 hover:-translate-y-px no-underline"
         >
           ${translateText("win_modal.join_server")}
         </a>

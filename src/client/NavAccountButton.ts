@@ -40,7 +40,7 @@ export function updateAccountNavButton(userMeResponse: UserMeResponse | false) {
     personIconEl?.classList.remove("hidden");
     emailBadgeEl?.classList.add("hidden");
     signInTextEl?.classList.add("hidden");
-    button?.classList.add("border", "border-white/20");
+    button?.classList.add("border", "border-lt-600");
   };
 
   const showAvatar = (src: string, alt?: string) => {
@@ -66,7 +66,7 @@ export function updateAccountNavButton(userMeResponse: UserMeResponse | false) {
     personIconEl?.classList.add("hidden");
     emailBadgeEl?.classList.add("hidden");
     signInTextEl?.classList.add("hidden");
-    button?.classList.remove("border", "border-white/20");
+    button?.classList.remove("border", "border-lt-600");
   };
 
   const showSignIn = () => {
@@ -75,7 +75,7 @@ export function updateAccountNavButton(userMeResponse: UserMeResponse | false) {
     emailBadgeEl?.classList.add("hidden");
     signInTextEl?.classList.remove("hidden");
     // Restore border when showing signin state
-    button?.classList.add("border", "border-white/20");
+    button?.classList.add("border", "border-lt-600");
   };
 
   const showEmailLoggedIn = () => {
@@ -83,7 +83,7 @@ export function updateAccountNavButton(userMeResponse: UserMeResponse | false) {
     personIconEl?.classList.remove("hidden");
     emailBadgeEl?.classList.remove("hidden");
     signInTextEl?.classList.add("hidden");
-    button?.classList.add("border", "border-white/20");
+    button?.classList.add("border", "border-lt-600");
   };
 
   const discord =

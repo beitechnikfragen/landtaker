@@ -155,7 +155,7 @@ export class InGamePromo extends LitElement implements Controller {
         id="in-game-promo-container"
         class="fixed left-0 z-[100] pointer-events-auto flex flex-col-reverse ${this
           .adsVisible
-          ? "bg-gray-800 rounded-tr-lg p-1"
+          ? "bg-lt-850 p-1"
           : ""}"
         style="bottom: -0.7cm"
       >

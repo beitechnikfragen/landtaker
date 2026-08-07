@@ -228,10 +228,8 @@ export class ClanGameHistoryView extends LitElement {
   render() {
     if (this.loadState === "forbidden") {
       return html`
-        <div
-          class="bg-white/5 rounded-xl border border-white/10 p-8 text-center"
-        >
-          <p class="text-white/40 text-sm">
+        <div class="bg-white/5 border border-lt-700 p-8 text-center">
+          <p class="text-lt-500 text-sm">
             ${translateText("clan_modal.history_members_only")}
           </p>
         </div>
@@ -247,7 +245,7 @@ export class ClanGameHistoryView extends LitElement {
     return html`
       <div
         role="tablist"
-        class="flex flex-wrap gap-1 p-1 bg-white/5 border border-white/10 rounded-xl"
+        class="flex flex-wrap gap-1 p-1 bg-white/5 border border-lt-700 "
       >
         ${FILTER_TABS.map((tab) => {
           const active = this.filter === tab.key;
@@ -262,9 +260,9 @@ export class ClanGameHistoryView extends LitElement {
               role="tab"
               aria-selected=${active}
               @click=${() => this.setFilter(tab.key)}
-              class="grow ${basis} px-3 py-1.5 text-xs font-bold uppercase tracking-wider whitespace-nowrap rounded-lg transition-colors ${active
-                ? "bg-malibu-blue/20 text-aquarius border border-malibu-blue/30"
-                : "text-white/50 hover:text-white hover:bg-white/5 border border-transparent"}"
+              class="grow ${basis} px-3 py-1.5 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${active
+                ? "bg-lt-accent/20 text-lt-accent border border-malibu-blue/30"
+                : "text-lt-500 hover:text-white hover:bg-white/5 border border-transparent"}"
             >
               ${translateText(tab.labelKey)}
             </button>
@@ -280,16 +278,14 @@ export class ClanGameHistoryView extends LitElement {
     }
     if (this.loadState === "failed") {
       return html`
-        <div
-          class="bg-white/5 rounded-xl border border-white/10 p-8 text-center"
-        >
-          <p class="text-white/40 text-sm mb-3">
+        <div class="bg-white/5 border border-lt-700 p-8 text-center">
+          <p class="text-lt-500 text-sm mb-3">
             ${translateText("clan_modal.history_unavailable")}
           </p>
           <button
             type="button"
             @click=${() => this.reload()}
-            class="text-xs font-bold text-white/60 hover:text-white uppercase tracking-wider px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/5 transition-colors"
+            class="text-xs font-bold text-lt-400 hover:text-white uppercase tracking-wider px-3 py-1.5 border border-lt-700 hover:border-lt-600 hover:bg-white/5 transition-colors"
           >
             ${translateText("leaderboard_modal.try_again")}
           </button>
@@ -298,10 +294,8 @@ export class ClanGameHistoryView extends LitElement {
     }
     if (this.games.length === 0) {
       return html`
-        <div
-          class="bg-white/5 rounded-xl border border-white/10 p-8 text-center"
-        >
-          <p class="text-white/40 text-sm">
+        <div class="bg-white/5 border border-lt-700 p-8 text-center">
+          <p class="text-lt-500 text-sm">
             ${translateText("clan_modal.history_empty")}
           </p>
         </div>
@@ -327,7 +321,7 @@ export class ClanGameHistoryView extends LitElement {
               >
                 <span class="h-px flex-1 bg-white/10"></span>
                 <h3
-                  class="text-xs font-bold uppercase tracking-widest text-white/70 whitespace-nowrap"
+                  class="text-xs font-bold uppercase tracking-widest text-lt-400 whitespace-nowrap"
                 >
                   ${formatDayHeader(group.day)}
                 </h3>
@@ -355,13 +349,13 @@ export class ClanGameHistoryView extends LitElement {
     if (this.appendFailed) {
       return html`
         <div class="text-center py-3">
-          <p class="text-white/40 text-xs mb-2">
+          <p class="text-lt-500 text-xs mb-2">
             ${translateText("clan_modal.history_load_more_failed")}
           </p>
           <button
             type="button"
             @click=${() => this.load({ append: true })}
-            class="text-xs font-bold text-white/60 hover:text-white uppercase tracking-wider px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/5 transition-colors"
+            class="text-xs font-bold text-lt-400 hover:text-white uppercase tracking-wider px-3 py-1.5 border border-lt-700 hover:border-lt-600 hover:bg-white/5 transition-colors"
           >
             ${translateText("leaderboard_modal.try_again")}
           </button>
@@ -403,9 +397,7 @@ export class ClanGameHistoryView extends LitElement {
     }
 
     return html`
-      <div
-        class="relative bg-white/5 border border-white/10 rounded-xl overflow-hidden"
-      >
+      <div class="relative bg-white/5 border border-lt-700 overflow-hidden">
         ${mapWebpPath
           ? html`<div
               class="relative w-full aspect-[30/11] overflow-hidden bg-surface"
@@ -432,7 +424,7 @@ export class ClanGameHistoryView extends LitElement {
                 ${this.renderResultBadge(game, winners)}
               </div>
               <div
-                class="absolute bottom-2 right-2 text-xs font-medium text-white bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md whitespace-nowrap"
+                class="absolute bottom-2 right-2 text-xs font-medium text-white bg-black/60 backdrop-blur-sm px-2 py-1 whitespace-nowrap"
               >
                 ${formatAbsoluteTime(game.start)}
               </div>
@@ -449,7 +441,7 @@ export class ClanGameHistoryView extends LitElement {
               title=${translateText("game_list.stats")}
               aria-label=${translateText("game_list.stats")}
               @click=${() => this.showStats(game.gameId)}
-              class="inline-flex w-8 h-8 items-center justify-center text-white bg-malibu-blue hover:bg-aquarius active:bg-malibu-blue/80 rounded-lg transition-all"
+              class="inline-flex w-8 h-8 items-center justify-center text-white bg-lt-accent hover:bg-lt-accent-hi active:bg-lt-accent/80 transition-all"
             >
               <img
                 src=${statsIcon}
@@ -465,7 +457,7 @@ export class ClanGameHistoryView extends LitElement {
               title=${translateText("common.click_to_copy")}
               aria-label=${translateText("common.click_to_copy")}
               @click=${() => this.copyGameLink(game.gameId)}
-              class="inline-flex w-8 h-8 items-center justify-center text-white bg-malibu-blue hover:bg-aquarius active:bg-malibu-blue/80 rounded-lg transition-all"
+              class="inline-flex w-8 h-8 items-center justify-center text-white bg-lt-accent hover:bg-lt-accent-hi active:bg-lt-accent/80 transition-all"
             >
               <img
                 src=${linkIcon}
@@ -483,7 +475,7 @@ export class ClanGameHistoryView extends LitElement {
               title=${translateText("clan_modal.history_watch_replay")}
               aria-label=${translateText("clan_modal.history_watch_replay")}
               @click=${() => this.watchReplay(game.gameId)}
-              class="inline-flex w-8 h-8 items-center justify-center text-white bg-malibu-blue hover:bg-aquarius active:bg-malibu-blue/80 rounded-lg transition-all"
+              class="inline-flex w-8 h-8 items-center justify-center text-white bg-lt-accent hover:bg-lt-accent-hi active:bg-lt-accent/80 transition-all"
             >
               <img
                 src=${replayIcon}
@@ -526,7 +518,7 @@ export class ClanGameHistoryView extends LitElement {
     return html`
       <div class="min-w-0">
         <div
-          class="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-0.5"
+          class="text-[10px] font-bold uppercase tracking-wider text-lt-500 mb-0.5"
         >
           ${label}
         </div>
@@ -568,7 +560,7 @@ export class ClanGameHistoryView extends LitElement {
       tint = "text-white bg-green-600 border-green-500";
     } else {
       label = translateText("clan_modal.history_result_defeat");
-      tint = "text-white bg-red-600 border-red-500";
+      tint = "text-white bg-lt-bad border-lt-bad";
     }
     return html`<span
       class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border shadow-lg ${tint}"
@@ -590,7 +582,7 @@ export class ClanGameHistoryView extends LitElement {
         ? this.renderPlayerSection(
             translateText("clan_modal.history_clan_winners"),
             winners,
-            "text-green-400",
+            "text-lt-ok",
             "winners",
           )
         : ""}
@@ -598,7 +590,7 @@ export class ClanGameHistoryView extends LitElement {
         ? this.renderPlayerSection(
             translateText("clan_modal.history_clan_members"),
             losers,
-            "text-white/40",
+            "text-lt-500",
             "losers",
           )
         : ""}
@@ -613,7 +605,7 @@ export class ClanGameHistoryView extends LitElement {
   ): TemplateResult {
     return html`
       <div
-        class="px-4 py-2 border-t border-white/5 text-xs text-white/60 flex flex-wrap items-center gap-x-1 gap-y-1"
+        class="px-4 py-2 border-t border-white/5 text-xs text-lt-400 flex flex-wrap items-center gap-x-1 gap-y-1"
         data-player-section=${sectionKey}
       >
         <span
@@ -652,7 +644,7 @@ export class ClanGameHistoryView extends LitElement {
       <span class="inline-flex items-center gap-1 min-w-0 max-w-full">
         <button
           type="button"
-          class="font-bold text-blue-300 truncate hover:underline"
+          class="font-bold text-lt-accent truncate hover:underline"
           title=${translateText("player_profile.view")}
           @click=${() => dispatchViewProfile(this, p.publicId)}
         >

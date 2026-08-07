@@ -86,6 +86,7 @@ import "./components/RankedModal";
 import "./components/baseComponents/Button";
 import "./components/baseComponents/Modal";
 import "./styles.css";
+import "./styles/core/landtaker.css";
 import "./styles/core/typography.css";
 import "./styles/core/variables.css";
 import "./styles/layout/container.css";
@@ -263,6 +264,26 @@ class Client {
     );
     document.fonts.add(openFrontFont);
     openFrontFont.load().catch(() => {});
+
+    // Landtaker UI faces. Loaded the same way as the display font above rather
+    // than via @font-face in CSS, because the CDN base is only known at runtime.
+    // Latin subsets only (~20 KB each); the fallback stack in styles.css covers
+    // the gap while these load.
+    for (const [family, weight, file] of [
+      ["Oswald", 500, "oswald-500"],
+      ["Oswald", 600, "oswald-600"],
+      ["Barlow Condensed", 500, "barlow-condensed-500"],
+      ["Barlow Condensed", 600, "barlow-condensed-600"],
+      ["Barlow Condensed", 700, "barlow-condensed-700"],
+    ] as const) {
+      const face = new FontFace(
+        family,
+        `url(${assetUrl(`fonts/${file}.woff2`)})`,
+        { weight: String(weight), display: "swap" },
+      );
+      document.fonts.add(face);
+      face.load().catch(() => {});
+    }
 
     const versionElements = document.querySelectorAll(
       "#game-version, .game-version-display",

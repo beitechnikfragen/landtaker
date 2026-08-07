@@ -85,17 +85,15 @@ export class StreamingNow extends LitElement {
         }
       </style>
       <div
-        class="flex flex-col bg-surface px-2 py-2 border-y border-white/10 sm:h-full sm:flex-1 sm:justify-center sm:border-y-0 sm:rounded-xl sm:px-3 sm:py-2"
+        class="flex flex-col bg-surface px-2 py-2 border-y border-lt-700 sm:h-full sm:flex-1 sm:justify-center sm:border-y-0 sm:sm:px-3 sm:py-2"
       >
         <div class="mb-2 flex items-center gap-2">
           <span class="h-2 w-2 animate-pulse rounded-full bg-red-500"></span>
-          <span
-            class="text-xs font-bold uppercase tracking-wider text-white/70"
-          >
+          <span class="text-xs font-bold uppercase tracking-wider text-lt-400">
             ${translateText("streaming_now.title")}
           </span>
           <span
-            class="ml-auto text-[11px] text-white/40"
+            class="ml-auto text-[11px] text-lt-500"
             title="${count}"
             aria-label="${count}"
             >${count}</span
@@ -139,11 +137,11 @@ export class StreamingNow extends LitElement {
           </span>
         </div>
         <div
-          class="w-full truncate text-[11px] font-medium text-white transition-colors group-hover:text-blue-300"
+          class="w-full truncate text-[11px] font-medium text-white transition-colors group-hover:text-lt-accent"
         >
           ${s.displayName}
         </div>
-        <div class="w-full truncate text-[10px] text-white/50">
+        <div class="w-full truncate text-[10px] text-lt-500">
           ${translateText("streaming_now.viewers", {
             count: formatViewers(s.viewers),
           })}

@@ -33,13 +33,13 @@ export function formatWindowDate(value: string): string | null {
 function rankStyle(rank: number): { color: string; icon: string } {
   if (rank === 1) {
     return {
-      color: "text-yellow-400 bg-yellow-400/10 ring-1 ring-yellow-400/20",
+      color: "text-lt-gold bg-yellow-400/10 ring-1 ring-yellow-400/20",
       icon: "👑",
     };
   }
   if (rank === 2) {
     return {
-      color: "text-slate-300 bg-slate-400/10 ring-1 ring-slate-400/20",
+      color: "text-lt-400 bg-slate-400/10 ring-1 ring-slate-400/20",
       icon: "🥈",
     };
   }
@@ -49,7 +49,7 @@ function rankStyle(rank: number): { color: string; icon: string } {
       icon: "🥉",
     };
   }
-  return { color: "text-white/40 bg-white/5", icon: String(rank) };
+  return { color: "text-lt-500 bg-white/5", icon: String(rank) };
 }
 
 @customElement("leaderboard-tribe-table")
@@ -103,7 +103,7 @@ export class LeaderboardTribeTable extends LitElement {
         class="flex flex-col items-center justify-center p-12 text-white h-full"
       >
         <div
-          class="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-6"
+          class="w-12 h-12 border-4 border-lt-accent/30 border-t-blue-500 rounded-full animate-spin mb-6"
         ></div>
         <p class="text-blue-200/80 text-sm font-bold tracking-widest uppercase">
           ${translateText("leaderboard_modal.loading")}
@@ -118,7 +118,7 @@ export class LeaderboardTribeTable extends LitElement {
         class="flex flex-col items-center justify-center p-12 text-white h-full"
       >
         <div
-          class="bg-red-500/10 p-6 rounded-full mb-6 border border-red-500/20 shadow-lg shadow-red-500/10"
+          class="bg-red-500/10 p-6 rounded-full mb-6 border border-lt-bad/20 shadow-lg shadow-red-500/10"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -139,7 +139,7 @@ export class LeaderboardTribeTable extends LitElement {
           ${this.error ?? translateText("leaderboard_modal.error")}
         </p>
         <button
-          class="px-8 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-xl text-sm font-bold uppercase transition-all active:scale-95"
+          class="px-8 py-3 bg-red-500/10 hover:bg-lt-bad/20 border border-lt-bad/30 text-sm font-bold uppercase transition-all active:scale-95"
           @click=${() => this.loadTribeLeaderboard()}
         >
           ${translateText("leaderboard_modal.try_again")}
@@ -151,7 +151,7 @@ export class LeaderboardTribeTable extends LitElement {
   private renderNoData() {
     return html`
       <div
-        class="flex flex-col items-center justify-center p-12 text-white/40 h-full"
+        class="flex flex-col items-center justify-center p-12 text-lt-500 h-full"
       >
         <div class="bg-white/5 p-6 rounded-full mb-6 border border-white/5">
           <svg
@@ -169,7 +169,7 @@ export class LeaderboardTribeTable extends LitElement {
             />
           </svg>
         </div>
-        <h3 class="text-xl font-bold text-white/60 mb-2">
+        <h3 class="text-xl font-bold text-lt-400 mb-2">
           ${translateText("leaderboard_modal.no_data_yet")}
         </h3>
         <p class="text-white/30 text-sm">
@@ -208,7 +208,7 @@ export class LeaderboardTribeTable extends LitElement {
 
     return html`
       <div
-        class="px-4 py-2 text-[11px] text-white/40 border-b border-white/5 bg-black/20"
+        class="px-4 py-2 text-[11px] text-lt-500 border-b border-white/5 bg-black/20"
       >
         ${translateText("leaderboard_modal.tribes_window", {
           days: data.windowDays,
@@ -248,7 +248,7 @@ export class LeaderboardTribeTable extends LitElement {
               </colgroup>
               <thead class="sticky top-0 z-10">
                 <tr
-                  class="text-white/40 text-[10px] uppercase tracking-wider border-b border-white/5 bg-[#1e2433]"
+                  class="text-lt-500 text-[10px] uppercase tracking-wider border-b border-white/5 bg-[#1e2433]"
                 >
                   <th class="py-4 px-4 text-center font-bold">
                     ${translateText("leaderboard_modal.rank")}
@@ -287,7 +287,7 @@ export class LeaderboardTribeTable extends LitElement {
                     >
                       <td class="py-3 px-4 text-center">
                         <div
-                          class="w-10 h-10 mx-auto flex items-center justify-center rounded-lg font-bold font-mono text-lg ${color}"
+                          class="w-10 h-10 mx-auto flex items-center justify-center font-bold font-mono text-lg ${color}"
                         >
                           ${icon}
                         </div>
@@ -305,7 +305,7 @@ export class LeaderboardTribeTable extends LitElement {
                             class="min-w-0"
                             .username=${tribe.ownerUsername}
                             .publicId=${tribe.ownerPublicId}
-                            .nameClass=${"text-[11px] text-white/50 hover:text-white/80 hover:underline transition-colors truncate text-left"}
+                            .nameClass=${"text-[11px] text-lt-500 hover:text-lt-100 hover:underline transition-colors truncate text-left"}
                             .onNameClick=${() =>
                               this.openProfile(tribe.ownerPublicId)}
                           ></player-name>
@@ -315,7 +315,7 @@ export class LeaderboardTribeTable extends LitElement {
                         ${this.renderBoostCell(tribe)}
                       </td>
                       <td
-                        class="py-3 px-4 text-right font-mono text-white/80"
+                        class="py-3 px-4 text-right font-mono text-lt-100"
                         title=${translateText(
                           "leaderboard_modal.tribes_games_tooltip",
                           { count: tribe.gamesAppeared.toLocaleString() },
@@ -337,7 +337,7 @@ export class LeaderboardTribeTable extends LitElement {
                             class="w-24 h-1 bg-white/10 rounded-full overflow-hidden"
                           >
                             <div
-                              class="h-full bg-blue-500/50 rounded-full"
+                              class="h-full bg-lt-accent/50 rounded-full"
                               style="width: ${(tribe.playerReach / maxReach) *
                               100}%"
                             ></div>

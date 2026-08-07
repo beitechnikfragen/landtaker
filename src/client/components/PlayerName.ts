@@ -56,7 +56,7 @@ export class PlayerName extends LitElement {
               type="button"
               class=${this.nameClass !== ""
                 ? this.nameClass
-                : "text-xs text-white/60 font-mono bg-white/5 px-2 py-0.5 rounded border border-white/5 hover:bg-white/10 hover:text-white transition-colors"}
+                : "text-xs text-lt-400 font-mono bg-white/5 px-2 py-0.5 border border-white/5 hover:bg-white/10 hover:text-white transition-colors"}
               title=${translateText("player_profile.view")}
               aria-label=${translateText("player_profile.view")}
               @click=${() => this.onNameClick?.()}

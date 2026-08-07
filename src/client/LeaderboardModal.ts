@@ -121,12 +121,12 @@ export class LeaderboardModal extends BaseModal {
       const start = new Date(this.clanDateRange.start).toLocaleDateString();
       const end = new Date(this.clanDateRange.end).toLocaleDateString();
       dateRange = html`<span
-        class="text-sm font-normal text-white/40 ml-2 wrap-break-words"
+        class="text-sm font-normal text-lt-500 ml-2 wrap-break-words"
         >(${start} - ${end})</span
       >`;
     }
     const refreshTime = html`<span
-      class="text-sm font-normal text-white/40 ml-2 wrap-break-words italic"
+      class="text-sm font-normal text-lt-500 ml-2 wrap-break-words italic"
       >(${translateText("leaderboard_modal.refresh_time")})</span
     >`;
 

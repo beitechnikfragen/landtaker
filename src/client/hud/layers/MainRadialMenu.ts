@@ -140,7 +140,7 @@ export class MainRadialMenu implements Controller {
 
     this.radialMenu.setCenterButtonAppearance(
       isFriendlyTarget ? donateTroopIcon : swordIcon,
-      isFriendlyTarget ? "#22d3ee" : "#0f2744",
+      isFriendlyTarget ? "#7fb069" : "#101418",
       isFriendlyTarget
         ? this.radialMenu.getDefaultCenterIconSize() * 0.75
         : this.radialMenu.getDefaultCenterIconSize(),

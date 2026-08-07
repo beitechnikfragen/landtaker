@@ -11,7 +11,7 @@ export class Footer extends LitElement {
   render() {
     return html`
       <footer
-        class="[.in-game_&]:hidden bg-zinc-900/90 backdrop-blur-md flex flex-col items-center justify-center gap-1 pt-1 pb-3 text-white/50 w-full border-t border-white/10 shrink-0 relative z-50 lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:gap-0"
+        class="[.in-game_&]:hidden bg-lt-900/90 backdrop-blur-md flex flex-col items-center justify-center gap-1 pt-1 pb-3 text-lt-500 w-full border-t border-lt-700 shrink-0 relative z-50 lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:gap-0"
       >
         <!-- Icons and legal links stay centred on the bar; on desktop they
              share it with the Steam promo, which gets its own grid column so

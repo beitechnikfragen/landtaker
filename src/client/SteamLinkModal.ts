@@ -60,7 +60,7 @@ function reasonMessage(
 }
 
 const BUTTON_BASE =
-  "flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl " +
+  "flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider " +
   "transition-all disabled:opacity-50 disabled:pointer-events-none border-0";
 
 /**
@@ -332,13 +332,11 @@ export class SteamLinkModal extends BaseModal {
           : translateText("steam_link_modal.load_error");
       return html`
         <div class="flex flex-col gap-4 p-6 text-center">
-          <p
-            class="steam-link-load-error-text text-red-300 text-sm font-medium"
-          >
+          <p class="steam-link-load-error-text text-lt-bad text-sm font-medium">
             ${loadErrorMessage}
           </p>
           <button
-            class="${BUTTON_BASE} bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80"
+            class="${BUTTON_BASE} bg-white/5 text-lt-400 border border-lt-700 hover:bg-white/10 hover:text-lt-100"
             @click=${() => this.close()}
           >
             ${translateText("common.close")}
@@ -350,11 +348,11 @@ export class SteamLinkModal extends BaseModal {
     if (this.redeemState === "success") {
       return html`
         <div class="flex flex-col gap-4 p-6 text-center">
-          <p class="text-white/90 text-sm font-medium">
+          <p class="text-lt-100 text-sm font-medium">
             ${translateText("steam_link_modal.success")}
           </p>
           <button
-            class="${BUTTON_BASE} bg-malibu-blue text-white hover:bg-aquarius"
+            class="${BUTTON_BASE} bg-lt-accent text-white hover:bg-lt-accent-hi"
             @click=${() => this.close()}
           >
             ${translateText("common.close")}
@@ -371,7 +369,7 @@ export class SteamLinkModal extends BaseModal {
           </p>
           <input
             type="text"
-            class="steam-link-code-input w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-center tracking-widest uppercase placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium"
+            class="steam-link-code-input w-full px-4 py-3 bg-white/5 border border-lt-700 text-white text-center tracking-widest uppercase placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-malibu-blue/50 focus:border-malibu-blue/50 transition-all font-medium"
             placeholder=${translateText("steam_link_modal.code_placeholder")}
             .value=${this.codeDraft}
             @input=${(e: Event) => this.handleCodeInput(e)}
@@ -380,19 +378,19 @@ export class SteamLinkModal extends BaseModal {
             }}
           />
           ${this.codeError
-            ? html`<p class="text-red-400 text-sm text-center">
+            ? html`<p class="text-lt-bad text-sm text-center">
                 ${this.codeError}
               </p>`
             : null}
           <div class="flex gap-3">
             <button
-              class="steam-link-cancel-btn ${BUTTON_BASE} bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80"
+              class="steam-link-cancel-btn ${BUTTON_BASE} bg-white/5 text-lt-400 border border-lt-700 hover:bg-white/10 hover:text-lt-100"
               @click=${() => this.close()}
             >
               ${translateText("common.cancel")}
             </button>
             <button
-              class="steam-link-code-submit-btn ${BUTTON_BASE} bg-malibu-blue text-white hover:bg-aquarius"
+              class="steam-link-code-submit-btn ${BUTTON_BASE} bg-lt-accent text-white hover:bg-lt-accent-hi"
               @click=${() => this.handleCodeSubmit()}
             >
               ${translateText("steam_link_modal.code_submit")}
@@ -444,20 +442,20 @@ export class SteamLinkModal extends BaseModal {
       <div class="flex flex-col gap-6 p-6">
         <p class="text-white text-lg font-medium text-center">${prompt}</p>
         ${this.redeemState === "failed"
-          ? html`<p class="text-red-400 text-sm text-center">
+          ? html`<p class="text-lt-bad text-sm text-center">
               ${reasonMessage(this.failureReason, this.retryAfterSeconds)}
             </p>`
           : null}
         <div class="flex gap-3">
           <button
-            class="steam-link-cancel-btn ${BUTTON_BASE} bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80"
+            class="steam-link-cancel-btn ${BUTTON_BASE} bg-white/5 text-lt-400 border border-lt-700 hover:bg-white/10 hover:text-lt-100"
             ?disabled=${this.redeemState === "redeeming"}
             @click=${() => this.close()}
           >
             ${translateText("common.cancel")}
           </button>
           <button
-            class="steam-link-confirm-btn ${BUTTON_BASE} bg-malibu-blue text-white hover:bg-aquarius"
+            class="steam-link-confirm-btn ${BUTTON_BASE} bg-lt-accent text-white hover:bg-lt-accent-hi"
             ?disabled=${confirmDisabled}
             @click=${() => this.handleConfirm()}
           >
