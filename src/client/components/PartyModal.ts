@@ -55,16 +55,15 @@ export class PartyModal extends BaseModal {
     super.disconnectedCallback();
   }
 
-  public override async open() {
-    super.open();
+  /** BaseModal calls these once the shell has opened/closed. */
+  protected override onOpen(): void {
     this.errorMessage = null;
-    await this.refresh();
+    void this.refresh();
     this.startPolling();
   }
 
-  public override close() {
+  protected override onClose(): void {
     this.stopPolling();
-    super.close();
   }
 
   /** Poll only while visible — a background tab should not hammer the API. */
@@ -358,36 +357,42 @@ export class PartyModal extends BaseModal {
     `;
   }
 
-  render() {
-    return html`
-      <o-modal
-        title=${translateText("party.title")}
-        translationKey="party.title"
-      >
-        ${modalHeader({
-          title: translateText("party.title"),
-          onBack: () => this.close(),
-        })}
+  createRenderRoot() {
+    return this;
+  }
 
-        <div class="p-4">
-          ${this.errorMessage && !this.needsSignIn
-            ? html`<div
-                class="mb-4 rounded bg-red-500/20 px-3 py-2 text-sm text-red-200"
-              >
-                ${this.errorMessage}
-              </div>`
-            : ""}
-          ${this.loading
-            ? html`<p class="text-white/60">
-                ${translateText("party.loading")}
-              </p>`
-            : this.needsSignIn
-              ? this.renderSignIn()
-              : this.party
-                ? this.renderParty(this.party)
-                : this.renderNoParty()}
-        </div>
-      </o-modal>
+  protected renderHeaderSlot() {
+    return modalHeader({
+      title: translateText("party.title"),
+      onBack: () => this.close(),
+      ariaLabel: translateText("common.back"),
+    });
+  }
+
+  /**
+   * BaseModal owns the <o-modal> shell; subclasses supply only its contents.
+   * Rendering a second <o-modal> from render() leaves it closed — inline pages
+   * never get the `open` attribute — which collapses the element to 0x0 and
+   * makes the page look blank.
+   */
+  protected renderBody(): TemplateResult {
+    return html`
+      <div class="custom-scrollbar p-6">
+        ${this.errorMessage && !this.needsSignIn
+          ? html`<div
+              class="mb-4 rounded bg-red-500/20 px-3 py-2 text-sm text-red-200"
+            >
+              ${this.errorMessage}
+            </div>`
+          : ""}
+        ${this.loading
+          ? html`<p class="text-white/60">${translateText("party.loading")}</p>`
+          : this.needsSignIn
+            ? this.renderSignIn()
+            : this.party
+              ? this.renderParty(this.party)
+              : this.renderNoParty()}
+      </div>
     `;
   }
 }
