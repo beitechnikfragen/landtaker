@@ -77,6 +77,17 @@ LEADER_ID=$(echo "$PARTY" | sed -n 's/.*"leaderId":"\([^"]*\)".*/\1/p')
 check "non-leader kick rejected" "403" \
     "$(status POST /parties/kick "$B" "{\"userId\":\"$LEADER_ID\"}")"
 
+echo "7b. bodyless POST — the shape a browser client sends"
+# Regression guard: Fastify 400s on an EMPTY body when content-type says
+# application/json. PartyApi used to set that header on every request, so
+# /parties/leave broke in the browser while passing here. Note there is no
+# -d flag below — that is the whole point of the case.
+curl -s -m 8 -o /dev/null -X POST "$BASE/parties" -H "Authorization: Bearer $C" \
+    -H 'Content-Type: application/json' -d '{}'
+check "leave works with no body at all" "200" \
+    "$(curl -s -m 8 -o /dev/null -w '%{http_code}' -X POST "$BASE/parties/leave" \
+        -H "Authorization: Bearer $C")"
+
 echo "8. leader leaves — leadership must transfer"
 curl -s -m 8 -o /dev/null -X POST "$BASE/parties/leave" -H "Authorization: Bearer $A"
 AFTER=$(curl -s -m 8 "$BASE/parties/@me" -H "Authorization: Bearer $B")

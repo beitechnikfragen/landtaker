@@ -101,7 +101,7 @@ const BARE_NAME_STATUSES = new Set(["premium", "indefinite"]);
  * base; everyone else gets "base.1234". The game explicitly forbids assembling
  * this client-side, so it is resolved here and here only.
  */
-function resolveDisplayUsername(
+export function resolveDisplayUsername(
   user: typeof users.$inferSelect,
 ): string | null {
   if (!user.usernameBase) return null;

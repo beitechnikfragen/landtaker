@@ -62,6 +62,11 @@ curl -s -X POST http://localhost:8787/auth/dev-login -H 'Content-Type: applicati
 - When the leader leaves, leadership passes to the longest-standing member; the
   party is deleted once the last member leaves, so no orphan rows accumulate.
 - Invite codes omit `0/O`, `1/I/L`, `5/S` and `8/B` — they get read aloud.
+- An empty JSON body parses as `{}` rather than 400 (see the content-type
+  parser in `app.ts`). Browser clients set `Content-Type: application/json`
+  globally and then POST to endpoints that take no arguments; Fastify's
+  default rejects that, so `/parties/leave` failed in the browser while
+  passing every curl test.
 
 Behaviour is covered end to end by `scripts/smoke-parties.sh` (needs a running
 backend); the database-free invariants have unit tests.
@@ -116,9 +121,9 @@ Still served by the upstream API — each has to be reimplemented here:
 - [ ] `/matchmaking/join` (WebSocket) + `/matchmaking/checkin`
 - [ ] Friends API
 - [ ] ELO calculation and leaderboards
-- [x] **Parties** (new) — REST routes done. Still missing: live updates over
-      WebSocket (members currently only see changes when they re-fetch), the
-      client UI, and placing a party on one team at match start
+- [x] **Parties** (new) — REST routes and client UI done (nav → Party).
+      Still missing: live updates over WebSocket (the modal polls every 5s
+      while open), and placing a party on one team at match start
       (`matchmakingTeams` in GameManager, and TeamAssignment in the
       deterministic core — that part needs tests).
 

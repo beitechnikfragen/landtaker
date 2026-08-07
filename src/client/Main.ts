@@ -27,7 +27,6 @@ import "./CosmeticsModal";
 import { CosmeticsModal } from "./CosmeticsModal";
 import { updateCrazyGamesNavButton } from "./CrazyGamesAccountButton";
 import { crazyGamesSDK } from "./CrazyGamesSDK";
-import { isDesktopShell } from "./DesktopShell";
 import "./FeaturedStream";
 import "./FlagInput";
 import { FlagInput } from "./FlagInput";
@@ -81,6 +80,7 @@ import "./components/DesktopNavBar";
 import "./components/Footer";
 import "./components/MainLayout";
 import "./components/MobileNavBar";
+import "./components/PartyModal";
 import "./components/PlayPage";
 import "./components/RankedModal";
 import "./components/baseComponents/Button";
@@ -234,6 +234,10 @@ class Client {
     modalRouter.register("ranked", {
       tag: "ranked-modal",
       pageId: "page-ranked",
+    });
+    modalRouter.register("party", {
+      tag: "party-modal",
+      pageId: "page-party",
     });
     modalRouter.register("troubleshooting", {
       tag: "troubleshooting-modal",

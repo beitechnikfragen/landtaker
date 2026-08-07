@@ -1,3 +1,8 @@
+import type {
+  Party,
+  PartyErrorCode,
+  PartyMember,
+} from "@game/PartyApiSchemas.ts";
 import { eq } from "drizzle-orm";
 import { randomInt } from "node:crypto";
 import { db } from "../db/index.ts";
@@ -31,37 +36,26 @@ function generateInviteCode(): string {
   return code;
 }
 
-export interface PartyMemberView {
-  userId: string;
-  publicId: string;
-  username: string | null;
-  isLeader: boolean;
-  joinedAt: string;
-}
-
-export interface PartyView {
-  id: string;
-  inviteCode: string;
-  isOpen: boolean;
-  maxMembers: number;
-  leaderId: string;
-  members: PartyMemberView[];
-}
-
-export type PartyError =
-  | "already_in_party"
-  | "not_found"
-  | "party_full"
-  | "not_a_member"
-  | "not_leader"
-  | "closed";
+/**
+ * Shapes come from the shared schema in core/, so the client and this service
+ * cannot drift: a field renamed there fails the build here.
+ */
+export type PartyMemberView = PartyMember;
+export type PartyView = Party;
+export type PartyError = PartyErrorCode;
 
 export type PartyResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: PartyError };
 
-/** Reads a party with its members. Returns null when it does not exist. */
-export async function getParty(partyId: string): Promise<PartyView | null> {
+/**
+ * Reads a party with its members. `viewerId` is echoed back as `viewerId` so
+ * the client knows which member is itself without having to infer it.
+ */
+export async function getParty(
+  partyId: string,
+  viewerId?: string,
+): Promise<PartyView | null> {
   const party = await db.query.parties.findFirst({
     where: eq(parties.id, partyId),
   });
@@ -86,6 +80,7 @@ export async function getParty(partyId: string): Promise<PartyView | null> {
     isOpen: party.isOpen,
     maxMembers: party.maxMembers,
     leaderId: party.leaderId,
+    ...(viewerId ? { viewerId } : {}),
     members: rows.map((row) => ({
       userId: row.userId,
       publicId: row.publicId,
@@ -109,7 +104,7 @@ export async function getPartyForUser(
     where: eq(partyMembers.userId, userId),
   });
   if (!membership) return null;
-  return getParty(membership.partyId);
+  return getParty(membership.partyId, userId);
 }
 
 export async function createParty(
@@ -147,7 +142,7 @@ export async function createParty(
           .values({ partyId: party.id, userId: leaderId });
         return party.id;
       });
-      const view = await getParty(partyId);
+      const view = await getParty(partyId, leaderId);
       if (!view) throw new Error("party vanished after creation");
       return { ok: true, value: view };
     } catch (err) {
@@ -174,7 +169,7 @@ export async function joinPartyByCode(
   if (existing) {
     // Re-joining the party you are already in is a no-op, not an error.
     if (existing.partyId === party.id) {
-      const view = await getParty(party.id);
+      const view = await getParty(party.id, userId);
       return view
         ? { ok: true, value: view }
         : { ok: false, error: "not_found" };
@@ -197,7 +192,7 @@ export async function joinPartyByCode(
     return { ok: false, error: "already_in_party" };
   }
 
-  const view = await getParty(party.id);
+  const view = await getParty(party.id, userId);
   return view ? { ok: true, value: view } : { ok: false, error: "not_found" };
 }
 
@@ -278,6 +273,6 @@ export async function kickFromParty(
 
   await db.delete(partyMembers).where(eq(partyMembers.userId, targetUserId));
 
-  const view = await getParty(party.id);
+  const view = await getParty(party.id, leaderId);
   return view ? { ok: true, value: view } : { ok: false, error: "not_found" };
 }

@@ -1,3 +1,4 @@
+import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import Fastify, { type FastifyError, type FastifyInstance } from "fastify";
 import { config, isProduction } from "./config.ts";
@@ -26,6 +27,35 @@ export async function buildApp(): Promise<FastifyInstance> {
     origin: config.CORS_ORIGIN.split(",").map((o) => o.trim()),
     credentials: true,
   });
+
+  // The client keeps its refresh token in an httpOnly cookie and calls
+  // /auth/refresh with `credentials: "include"` — see doRefreshJwt in
+  // src/client/Auth.ts. Without this the cookie is never readable.
+  await app.register(cookie);
+
+  /**
+   * Treat an empty JSON body as `{}` instead of 400.
+   *
+   * Fastify's default parser rejects a request that declares
+   * `Content-Type: application/json` but sends no body. Browser clients set
+   * that header globally and then POST to endpoints that take no arguments
+   * (e.g. /parties/leave), which made those calls fail in the browser while
+   * passing every curl-based test.
+   */
+  app.addContentTypeParser(
+    "application/json",
+    { parseAs: "string" },
+    (_req, body: string, done) => {
+      if (body === "") return done(null, {});
+      try {
+        done(null, JSON.parse(body));
+      } catch (err) {
+        const error = err as FastifyError;
+        error.statusCode = 400;
+        done(error, undefined);
+      }
+    },
+  );
 
   app.get("/health", async () => ({ status: "ok" }));
 

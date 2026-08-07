@@ -1,5 +1,5 @@
 import { and, eq, gt, isNull } from "drizzle-orm";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import {
   generateRefreshToken,
@@ -10,6 +10,27 @@ import { config, isProduction } from "../config.ts";
 import { db } from "../db/index.ts";
 import { refreshTokens, users } from "../db/schema.ts";
 import { createUser } from "../services/users.ts";
+
+/** Name of the httpOnly cookie carrying the refresh token. */
+const REFRESH_COOKIE = "refresh_token";
+
+/**
+ * Stores the refresh token in an httpOnly cookie so page scripts cannot read
+ * it — an XSS then cannot walk off with a long-lived session.
+ *
+ * SameSite=Lax rather than Strict: the client and API sit on different ports
+ * in development, and Lax still blocks the cross-site POSTs that matter.
+ * Secure is off in development because localhost is plain HTTP.
+ */
+function setRefreshCookie(reply: FastifyReply, token: string, expiresAt: Date) {
+  reply.setCookie(REFRESH_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: isProduction,
+    path: "/",
+    expires: expiresAt,
+  });
+}
 
 const RefreshBodySchema = z.object({ refreshToken: z.string().min(1) });
 const DevLoginBodySchema = z.object({
@@ -42,12 +63,18 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
    * refresh token.
    */
   app.post("/auth/refresh", async (request, reply) => {
-    const parsed = RefreshBodySchema.safeParse(request.body);
-    if (!parsed.success) {
-      return reply.code(400).send({ error: "refreshToken is required" });
+    // Two callers with different habits: the browser client sends nothing and
+    // relies on the httpOnly cookie (`credentials: "include"` in
+    // src/client/Auth.ts), while scripts and tests pass the token in the body.
+    const fromBody = RefreshBodySchema.safeParse(request.body);
+    const presented = fromBody.success
+      ? fromBody.data.refreshToken
+      : request.cookies[REFRESH_COOKIE];
+    if (!presented) {
+      return reply.code(401).send({ error: "No refresh token" });
     }
 
-    const tokenHash = hashRefreshToken(parsed.data.refreshToken);
+    const tokenHash = hashRefreshToken(presented);
     const existing = await db.query.refreshTokens.findFirst({
       where: and(
         eq(refreshTokens.tokenHash, tokenHash),
@@ -88,7 +115,13 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       userId: user.id,
       role: user.role,
     });
+    setRefreshCookie(reply, next.token, next.expiresAt);
+    // `jwt` and `expiresIn` are what the client destructures (doRefreshJwt in
+    // src/client/Auth.ts). `token`/`refreshToken` are kept alongside for the
+    // scripted callers that already read them.
     return reply.send({
+      jwt: access.token,
+      expiresIn: config.ACCESS_TOKEN_TTL_SECONDS,
       token: access.token,
       refreshToken: next.token,
       expiresAt: access.expiresAt.toISOString(),
@@ -99,16 +132,17 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
    * POST /auth/logout — revokes a single refresh token.
    */
   app.post("/auth/logout", async (request, reply) => {
-    const parsed = RefreshBodySchema.safeParse(request.body);
-    if (!parsed.success) {
-      return reply.code(400).send({ error: "refreshToken is required" });
+    const fromBody = RefreshBodySchema.safeParse(request.body);
+    const presented = fromBody.success
+      ? fromBody.data.refreshToken
+      : request.cookies[REFRESH_COOKIE];
+    if (presented) {
+      await db
+        .update(refreshTokens)
+        .set({ revokedAt: new Date() })
+        .where(eq(refreshTokens.tokenHash, hashRefreshToken(presented)));
     }
-    await db
-      .update(refreshTokens)
-      .set({ revokedAt: new Date() })
-      .where(
-        eq(refreshTokens.tokenHash, hashRefreshToken(parsed.data.refreshToken)),
-      );
+    reply.clearCookie(REFRESH_COOKIE, { path: "/" });
     // Always 204: revoking an already-dead token is not an error, and probing
     // for which tokens exist should not be possible.
     return reply.code(204).send();
@@ -181,7 +215,12 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
         role: user.role,
       });
 
+      // Set the cookie too, so hitting this route in a browser leaves a real
+      // session behind — that is how you sign in locally without OAuth.
+      setRefreshCookie(reply, refresh.token, refresh.expiresAt);
       return reply.send({
+        jwt: access.token,
+        expiresIn: config.ACCESS_TOKEN_TTL_SECONDS,
         token: access.token,
         refreshToken: refresh.token,
         expiresAt: access.expiresAt.toISOString(),

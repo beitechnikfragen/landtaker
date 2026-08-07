@@ -16,6 +16,7 @@
     "infra:down": "docker compose down"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.1.2",
     "@fastify/cors": "^11.0.1",
     "drizzle-orm": "^0.44.5",
     "fastify": "^5.6.1",
