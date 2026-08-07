@@ -185,14 +185,22 @@ export class HomeHero extends LitElement {
                   <div
                     class="lt-row flex items-center gap-3 px-4 py-2 text-[13px]"
                   >
-                    <!-- Placement carries the result: first place is the
-                           only one worth colouring. -->
+                    <!-- Placement carries the result; when the archive only
+                           knows win/loss, fall back to W/L. First place (or a
+                           win) is the only thing worth colouring. -->
                     <i
                       class="lt-num not-italic min-w-[26px] h-[20px] grid place-items-center border text-[12px] ${match.placement ===
-                      1
+                        1 ||
+                      match.placement === null ||
+                      (match.placement === undefined && match.won === true)
                         ? "bg-lt-accent text-lt-accent-ink border-lt-accent"
                         : "text-lt-400 border-lt-600"}"
-                      >${match.placement ?? "—"}</i
+                      >${match.placement ??
+                      (match.won === true
+                        ? "W"
+                        : match.won === false
+                          ? "L"
+                          : "—")}</i
                     >
                     <span class="flex-1 min-w-0 truncate text-lt-100"
                       >${match.map ?? "—"}</span
