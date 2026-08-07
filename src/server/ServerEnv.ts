@@ -4,6 +4,20 @@ import { GameEnv, parseGameEnv } from "../core/configuration/Config";
 import { GameID } from "../core/Schemas";
 import { generateID, simpleHash } from "../core/Util";
 
+/**
+ * Open lobbies per scheduled type when LOBBIES_PER_TYPE is unset. Three is a
+ * deliberate middle ground: more visible choice than the two upstream keeps,
+ * without spreading a small player base so thin that lobbies sit half-empty.
+ */
+const DEFAULT_LOBBIES_PER_TYPE = 3;
+
+/**
+ * Hard ceiling regardless of configuration. Every open lobby is a live game
+ * object on a worker, and the map playlist can only offer so many distinct
+ * maps before it has to repeat — past which "more choice" is an illusion.
+ */
+const MAX_LOBBIES_PER_TYPE = 8;
+
 const JwksSchema = z.object({
   keys: z
     .object({
@@ -112,6 +126,22 @@ export class ServerEnv {
   }
   static gameCreationRate(): number {
     return ServerEnv.gameEnv === GameEnv.Dev ? 5 * 1000 : 2 * 60 * 1000;
+  }
+  /**
+   * How many lobbies the master keeps open per scheduled type.
+   *
+   * Env-tunable because the right number depends on how many people are
+   * actually playing: more lobbies mean more choice, but with few players
+   * online they just fill more slowly, so extra choice reads as a longer
+   * wait. Unset or invalid falls back to the default rather than throwing —
+   * a bad value here should not stop the server from starting.
+   */
+  static lobbiesPerType(): number {
+    const raw = process.env.LOBBIES_PER_TYPE;
+    if (!raw) return DEFAULT_LOBBIES_PER_TYPE;
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n) || n < 1) return DEFAULT_LOBBIES_PER_TYPE;
+    return Math.min(n, MAX_LOBBIES_PER_TYPE);
   }
   static workerIndex(gameID: GameID): number {
     return simpleHash(gameID) % ServerEnv.numWorkers();

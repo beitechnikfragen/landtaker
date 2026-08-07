@@ -256,8 +256,18 @@ export const games = pgTable(
     mode: text("mode"),
     map: text("map"),
     rankedType: text("ranked_type"),
+    // Record schema version ("v0.0.2"). Promoted so a future migration can find
+    // the records written under an older shape without opening every blob.
+    version: text("version"),
+    // Winner as recorded: ["player", clientID, ...] | ["team", name, ...].
+    // Stored whole because its first element decides how to read the rest.
+    winner: jsonb("winner"),
     startedAt: timestamp("started_at", { withTimezone: true }),
     endedAt: timestamp("ended_at", { withTimezone: true }),
+    // Seconds of play, straight from the record — avoids ended-started
+    // subtraction at query time and stays correct if either bound is null.
+    durationSeconds: integer("duration_seconds"),
+    turnCount: integer("turn_count"),
     record: jsonb("record").notNull(),
     archivedAt: timestamp("archived_at", { withTimezone: true })
       .notNull()
@@ -269,6 +279,12 @@ export const games = pgTable(
 /**
  * Per-player match results. Split from `games` so leaderboards and player
  * history never scan the archived JSON blobs.
+ *
+ * Keyed by (gameId, clientID), not (gameId, playerName): nothing stops two
+ * players in one lobby from picking the same username — UsernameSchema has no
+ * uniqueness rule and `anonymizeNames` games actively produce collisions — so
+ * a name-keyed table would silently drop players. `clientID` is assigned by the
+ * game server and is unique within a game.
  */
 export const gameParticipants = pgTable(
   "game_participants",
@@ -276,19 +292,24 @@ export const gameParticipants = pgTable(
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
+    // Per-game player handle from the record (PlayerRecord.clientID).
+    clientId: text("client_id").notNull(),
     userId: uuid("user_id").references(() => users.id, {
       onDelete: "set null",
     }),
     // Kept even when userId is null (guest players).
     playerName: text("player_name"),
+    clanTag: text("clan_tag"),
     team: text("team"),
     placement: integer("placement"),
     won: boolean("won"),
     stats: jsonb("stats"),
   },
   (table) => [
-    primaryKey({ columns: [table.gameId, table.playerName] }),
+    primaryKey({ columns: [table.gameId, table.clientId] }),
     index("game_participants_user_idx").on(table.userId),
+    // Player history: "every game this account played", newest first.
+    index("game_participants_name_idx").on(table.playerName),
   ],
 );
 

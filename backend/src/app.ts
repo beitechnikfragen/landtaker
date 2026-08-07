@@ -3,7 +3,10 @@ import cors from "@fastify/cors";
 import Fastify, { type FastifyError, type FastifyInstance } from "fastify";
 import { config, isProduction } from "./config.ts";
 import { registerAuthRoutes } from "./routes/auth.ts";
+import { registerGameRoutes } from "./routes/games.ts";
+import { registerLeaderboardRoutes } from "./routes/leaderboard.ts";
 import { registerPartyRoutes } from "./routes/parties.ts";
+import { registerStubRoutes } from "./routes/stubs.ts";
 import { registerUserRoutes } from "./routes/users.ts";
 import { registerWellKnownRoutes } from "./routes/wellKnown.ts";
 
@@ -63,6 +66,11 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registerAuthRoutes(app);
   await registerUserRoutes(app);
   await registerPartyRoutes(app);
+  await registerGameRoutes(app);
+  await registerLeaderboardRoutes(app);
+  // Placeholder endpoints for features not built yet (clans, cosmetics,
+  // streams, news, Stripe) — see routes/stubs.ts.
+  await registerStubRoutes(app);
 
   app.setErrorHandler((error: FastifyError, request, reply) => {
     request.log.error({ err: error }, "unhandled error");

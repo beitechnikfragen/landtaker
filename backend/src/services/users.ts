@@ -102,7 +102,10 @@ const BARE_NAME_STATUSES = new Set(["premium", "indefinite"]);
  * this client-side, so it is resolved here and here only.
  */
 export function resolveDisplayUsername(
-  user: typeof users.$inferSelect,
+  user: Pick<
+    typeof users.$inferSelect,
+    "usernameBase" | "usernameDiscriminator" | "usernameStatus"
+  >,
 ): string | null {
   if (!user.usernameBase) return null;
   if (BARE_NAME_STATUSES.has(user.usernameStatus ?? "")) {

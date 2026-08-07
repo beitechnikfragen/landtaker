@@ -17,6 +17,7 @@ import type { ClanRole } from "./components/clan/ClanShared";
 import "./components/clan/ClanTransferView";
 import "./components/ConfirmDialog";
 import "./components/CopyButton";
+import { renderComingSoon } from "./components/ui/ComingSoon";
 import { modalHeader } from "./components/ui/ModalHeader";
 import { modalRouter } from "./ModalRouter";
 import type { ProfileOrigin } from "./PlayerProfileModal";
@@ -30,6 +31,15 @@ type View =
   | "requests"
   | "bans"
   | "my-requests";
+
+/**
+ * PLACEHOLDER: the clans backend does not exist yet — there are no /clans
+ * routes, and /public/clans/leaderboard is a stub returning an empty board
+ * (backend/src/routes/stubs.ts). The nav button stays visible so players see
+ * clans are planned, but the modal shows a "coming soon" panel instead of a
+ * browse list that can never load. Flip to false once the clans API lands.
+ */
+const CLANS_COMING_SOON = true;
 
 // List tabs share BaseModal's `activeTab` slot with detail tabs ("overview" /
 // "members" / "game-history"); which set is live depends on `view`.
@@ -104,6 +114,10 @@ export class ClanModal extends BaseModal {
   }
 
   protected modalConfig() {
+    // PLACEHOLDER: renderBody shows a "coming soon" panel, so tabs would only
+    // switch between identical screens. Restore the tabs below when the clans
+    // API lands (see backend/src/routes/stubs.ts).
+    if (CLANS_COMING_SOON) return {};
     return {
       tabs: this.onListView
         ? [
@@ -140,7 +154,9 @@ export class ClanModal extends BaseModal {
   }
 
   protected renderBody() {
-    return html`<div class="p-4 lg:p-[1.4rem]">${this.renderInner()}</div>`;
+    return html`<div class="p-4 lg:p-[1.4rem]">
+      ${CLANS_COMING_SOON ? renderComingSoon() : this.renderInner()}
+    </div>`;
   }
 
   protected onTabEnter(tab: string): void {

@@ -1,3 +1,5 @@
+import { Duos, HumansVsNations, Quads, Trios } from "@game/game/Game.ts";
+import { fixedTeamSize, partyFitsLobby } from "@game/game/TeamAssignment.ts";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../plugins/auth.ts";
@@ -25,6 +27,18 @@ const KickBodySchema = z.object({
 });
 
 /**
+ * Lobby shape for the fit check. `teamCount` mirrors the game's
+ * TeamCountConfig: a number means "that many teams" (seats vary with the
+ * player count), while Duos/Trios/Quads pin the seats per team.
+ */
+const FitQuerySchema = z.object({
+  teamCount: z.union([
+    z.coerce.number().int().positive(),
+    z.enum([Duos, Trios, Quads, HumansVsNations]),
+  ]),
+});
+
+/**
  * Maps a domain error to a status code. Kept in one place so every route
  * answers the same way for the same condition.
  */
@@ -45,6 +59,38 @@ export async function registerPartyRoutes(app: FastifyInstance): Promise<void> {
   /** The caller's current party, or null. */
   app.get("/parties/@me", { preHandler: requireAuth }, async (request, reply) =>
     reply.send({ party: await getPartyForUser(request.userId!) }),
+  );
+
+  /**
+   * GET /parties/@me/fit?teamCount=...
+   *
+   * Answers whether the caller's party can be seated together in a lobby of
+   * the given shape, so the client can refuse the join up front with a clear
+   * reason instead of someone getting kicked or split once the match starts.
+   *
+   * Callers not in a party always fit — there is nothing to keep together.
+   */
+  app.get(
+    "/parties/@me/fit",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const parsed = FitQuerySchema.safeParse(request.query);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: "teamCount is required" });
+      }
+
+      const party = await getPartyForUser(request.userId!);
+      if (!party) return reply.send({ fits: true, partySize: 0, seats: null });
+
+      const seats = fixedTeamSize(parsed.data.teamCount);
+      return reply.send({
+        fits: partyFitsLobby(party.members.length, parsed.data.teamCount),
+        partySize: party.members.length,
+        // null when the lobby's team size depends on the final player count, so
+        // the client can word the message as a limit rather than a guess.
+        seats,
+      });
+    },
   );
 
   app.post("/parties", { preHandler: requireAuth }, async (request, reply) => {

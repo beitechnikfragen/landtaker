@@ -238,14 +238,28 @@ export class MasterLobbyService {
         });
       }
 
-      if (lobbies.length >= 2) {
+      if (lobbies.length >= ServerEnv.lobbiesPerType()) {
         continue;
+      }
+
+      // With several lobbies open per type, two of them landing on the same
+      // map would show choice without offering any. Ask the playlist again
+      // for a config on a map that is not already listed; give up after a few
+      // tries and take what we get, since the playlist may be shorter than
+      // the number of open lobbies.
+      const openMaps = new Set(
+        lobbies.map((l) => l.gameConfig?.gameMap).filter(Boolean),
+      );
+      let gameConfig = await this.playlist.gameConfig(type);
+      for (let attempt = 0; attempt < 4; attempt++) {
+        if (!openMaps.has(gameConfig.gameMap)) break;
+        gameConfig = await this.playlist.gameConfig(type);
       }
 
       this.sendMessageToWorker({
         type: "createGame",
         gameID: generateID(),
-        gameConfig: await this.playlist.gameConfig(type),
+        gameConfig,
         publicGameType: type,
       } satisfies MasterCreateGame);
     }

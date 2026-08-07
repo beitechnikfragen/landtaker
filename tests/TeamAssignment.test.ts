@@ -1,5 +1,17 @@
-import { ColoredTeams, PlayerInfo, PlayerType } from "../src/core/game/Game";
-import { assignTeams } from "../src/core/game/TeamAssignment";
+import {
+  ColoredTeams,
+  Duos,
+  HumansVsNations,
+  PlayerInfo,
+  PlayerType,
+  Quads,
+  Trios,
+} from "../src/core/game/Game";
+import {
+  assignTeams,
+  fixedTeamSize,
+  partyFitsLobby,
+} from "../src/core/game/TeamAssignment";
 
 const teams = [ColoredTeams.Red, ColoredTeams.Blue];
 
@@ -455,6 +467,42 @@ describe("assignTeams", () => {
     expect(blueHumans.length).toBe(1);
     for (const n of nations) {
       expect(result.get(n)).toEqual(ColoredTeams.Blue);
+    }
+  });
+});
+
+describe("partyFitsLobby", () => {
+  // Fixed-size modes: a party larger than a team provably cannot be seated
+  // together, so the join is refused up front rather than kicking someone or
+  // splitting them once the match starts.
+  it.each([
+    [Duos, 2],
+    [Trios, 3],
+    [Quads, 4],
+  ])("caps a party at the team size in %s", (mode, seats) => {
+    expect(fixedTeamSize(mode)).toBe(seats);
+    expect(partyFitsLobby(seats, mode)).toBe(true);
+    expect(partyFitsLobby(seats + 1, mode)).toBe(false);
+  });
+
+  it("lets a smaller party into a fixed-size lobby", () => {
+    expect(partyFitsLobby(2, Quads)).toBe(true);
+    expect(partyFitsLobby(1, Duos)).toBe(true);
+  });
+
+  // Variable-size lobbies: seats are ceil(players / teams) and keep changing
+  // while people join, so no honest promise can be made at join time. These
+  // parties are grouped by preference instead.
+  it("does not block on lobbies whose team size is not fixed", () => {
+    expect(fixedTeamSize(4)).toBeNull();
+    expect(partyFitsLobby(8, 4)).toBe(true);
+    expect(fixedTeamSize(HumansVsNations)).toBeNull();
+    expect(partyFitsLobby(8, HumansVsNations)).toBe(true);
+  });
+
+  it("treats a solo player as fitting anywhere", () => {
+    for (const mode of [Duos, Trios, Quads, 2, HumansVsNations] as const) {
+      expect(partyFitsLobby(1, mode)).toBe(true);
     }
   });
 });

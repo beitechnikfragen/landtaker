@@ -172,3 +172,44 @@ export function assignTeamsLobbyPreview(
 export function getMaxTeamSize(numPlayers: number, numTeams: number): number {
   return Math.ceil(numPlayers / numTeams);
 }
+
+/**
+ * Fixed seats per team for the modes that pin it, or null when the size is
+ * derived from the lobby's population and therefore not knowable up front.
+ *
+ * A numeric teamCount means "this many teams", so seats depend on how many
+ * players end up joining (getMaxTeamSize). Humans-vs-Nations has no fixed
+ * human team size either.
+ */
+export function fixedTeamSize(teamCount: TeamCountConfig): number | null {
+  switch (teamCount) {
+    case Duos:
+      return 2;
+    case Trios:
+      return 3;
+    case Quads:
+      return 4;
+    default:
+      return null;
+  }
+}
+
+/**
+ * Whether a party of `partySize` can be seated together in a lobby.
+ *
+ * Only answers false for the modes with a fixed team size — there a party
+ * larger than a team provably cannot stay together, so refusing the join up
+ * front beats kicking someone or silently splitting them later.
+ *
+ * For variable-size lobbies this returns true: seats depend on the final
+ * player count, which is still changing while people join, so a hard promise
+ * here could not be kept. Those parties are grouped by preference instead
+ * (the same soft path friends use in assignTeams).
+ */
+export function partyFitsLobby(
+  partySize: number,
+  teamCount: TeamCountConfig,
+): boolean {
+  const seats = fixedTeamSize(teamCount);
+  return seats === null || partySize <= seats;
+}

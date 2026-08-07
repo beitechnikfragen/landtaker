@@ -384,6 +384,8 @@
     "cap_tooltip": "Recipient’s remaining capacity",
     "click_to_copy": "Click to copy",
     "close": "Close",
+    "coming_soon": "Coming soon",
+    "coming_soon_description": "This feature is still being built. Check back later!",
     "confirm": "Confirm",
     "copied": "Copied!",
     "copy": "Copy",
