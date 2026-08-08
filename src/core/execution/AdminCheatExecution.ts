@@ -99,6 +99,18 @@ export class AdminCheatExecution implements Execution {
         return this.stealGold();
       case "mark_traitor":
         return this.markTraitor();
+      case "gift_gold":
+        return this.giftGold();
+      case "gift_troops":
+        return this.giftTroops();
+      case "gift_god_mode":
+        return this.giftGodMode();
+      case "revive_player":
+        return this.revivePlayer();
+      case "gift_unit":
+        return this.giftUnit();
+      case "pardon_player":
+        return this.pardonPlayer();
     }
   }
 
@@ -358,6 +370,131 @@ export class AdminCheatExecution implements Execution {
     const target = this.target();
     if (target === null || target === this.player) return;
     target.markTraitor();
+  }
+
+  // -------------------------------------------------------------------------
+  // Giving
+  //
+  // The mirror of the taking actions above. Same target resolution, same
+  // validation — an admin running an event or compensating a player should not
+  // have to reach for a worse-behaved code path than the punitive one.
+  // -------------------------------------------------------------------------
+
+  /** Grants gold to a target out of thin air; the caller pays nothing. */
+  private giftGold(): void {
+    const target = this.target();
+    const amount = this.amount();
+    if (target === null || amount === null) return;
+    target.addGold(toInt(amount));
+  }
+
+  private giftTroops(): void {
+    const target = this.target();
+    const amount = this.amount();
+    if (target === null || amount === null) return;
+    target.addTroops(amount);
+  }
+
+  /** Toggles a target's immunity — a shield for someone being spawn-camped. */
+  private giftGodMode(): void {
+    const target = this.target();
+    if (target === null) return;
+    target.setAdminGodMode(this.params.enabled === true);
+  }
+
+  /**
+   * Brings an eliminated player back by handing them territory around the
+   * selected tile.
+   *
+   * There is no separate "dead" flag to clear: isAlive() is simply
+   * tiles.size > 0, so giving land IS the revival. The tiles come from the
+   * caller's own conquest of them being reversed — target.conquer() takes them
+   * from whoever holds them now, which is how a normal capture works too.
+   */
+  private revivePlayer(): void {
+    const target = this.target();
+    if (target === null) return;
+    if (target === this.player) return;
+    if (target.isAlive()) {
+      console.warn("admin cheat revive_player: target is already alive");
+      return;
+    }
+
+    const tile = this.params.tile;
+    if (tile === undefined || !this.mg.isValidRef(tile)) {
+      console.warn(`admin cheat revive_player: invalid tile ${tile}`);
+      return;
+    }
+    if (!this.mg.isLand(tile)) {
+      console.warn("admin cheat revive_player: not a land tile");
+      return;
+    }
+
+    // A single tile technically revives them but leaves them instantly dead
+    // again to the first attacker, so give a small contiguous pocket. Capped
+    // low: this is a rescue, not a gift of the map.
+    const radius = Math.min(Math.floor(this.params.amount ?? 3), 10);
+    const seen = new Set<TileRef>([tile]);
+    let frontier: TileRef[] = [tile];
+    for (let step = 0; step <= radius && frontier.length > 0; step++) {
+      const next: TileRef[] = [];
+      for (const current of frontier) {
+        if (this.mg.isLand(current) && this.mg.owner(current) !== target) {
+          target.conquer(current);
+        }
+        for (const neighbor of this.mg.neighbors(current)) {
+          if (seen.has(neighbor) || !this.mg.isLand(neighbor)) continue;
+          seen.add(neighbor);
+          next.push(neighbor);
+        }
+      }
+      frontier = next;
+    }
+
+    // Without troops the revived player cannot hold or expand from the pocket.
+    if (target.troops() <= 0) {
+      target.addTroops(this.mg.config().maxTroops(target) / 10);
+    }
+  }
+
+  /**
+   * Builds a unit for a target at the selected tile, covering the cost.
+   *
+   * Delegates to ConstructionExecution exactly as spawn_unit does, so every
+   * per-type rule (nuke trajectories, warship patrol tiles, placement
+   * validity) still applies — the gift is the cost, not the rules.
+   */
+  private giftUnit(): void {
+    const target = this.target();
+    if (target === null) return;
+    const { unitType, tile } = this.params;
+    if (unitType === undefined) {
+      console.warn("admin cheat gift_unit: no unit type");
+      return;
+    }
+    if (tile === undefined || !this.mg.isValidRef(tile)) {
+      console.warn(`admin cheat gift_unit: invalid tile ${tile}`);
+      return;
+    }
+    if (this.mg.config().isUnitDisabled(unitType)) {
+      console.warn(`admin cheat gift_unit: ${unitType} is disabled`);
+      return;
+    }
+
+    const cost = this.mg.unitInfo(unitType).cost(this.mg, target);
+    if (cost > 0n) target.addGold(cost);
+    this.mg.addExecution(new ConstructionExecution(target, unitType, tile));
+  }
+
+  /**
+   * Clears a target's traitor mark and doomsday clock — the counterpart to
+   * mark_traitor, for undoing a punishment or a mistake.
+   */
+  private pardonPlayer(): void {
+    const target = this.target();
+    if (target === null) return;
+    (target as unknown as { markedTraitorTick: number }).markedTraitorTick = -1;
+    target.clearDoomsdayClock();
   }
 
   isActive(): boolean {

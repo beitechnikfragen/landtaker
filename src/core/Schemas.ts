@@ -615,13 +615,22 @@ export const ADMIN_CHEAT_ACTIONS = [
   "god_mode",
   "clear_traitor",
   "clear_doomsday",
-  // Acting on another player
+  // Acting on another player — taking
   "kill_player",
   "force_alliance",
   "break_alliance",
   "set_relation",
   "steal_gold",
   "mark_traitor",
+  // Acting on another player — giving. The mirror of the block above: an
+  // admin running events or compensating a player needs to hand things out,
+  // not only take them away.
+  "gift_gold",
+  "gift_troops",
+  "gift_god_mode",
+  "revive_player",
+  "gift_unit",
+  "pardon_player",
 ] as const;
 
 export const AdminCheatIntentSchema = z.object({

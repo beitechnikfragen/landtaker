@@ -140,31 +140,24 @@ export class DesktopNavBar extends LitElement {
       >
         <!-- Brand sits at the left edge, separated by a rule rather than
              centred — the row then reads left-to-right like a title bar. -->
-        <!-- Brand column, as in the mock: the mark plus the wordmark set in
-             the display face. Type instead of the lockup's baked-in wordmark,
-             because the SVG renders its lettering at a fraction of the mark's
-             height — this stays razor-sharp at any size. -->
+        <!-- Brand: ONE image, not a mark plus type.
+             The wordmark used to be live text in the display face, which made
+             its width depend on whether that webfont had loaded — before it
+             did, the fallback rendered wider and pushed the wordmark across
+             the divider. An SVG has a fixed aspect ratio and cannot do that.
+             It is also the artwork itself rather than an approximation of it. -->
         <div
-          class="flex items-center gap-2.5 pl-3 pr-4 mr-1 border-r border-lt-700 shrink-0"
+          class="flex flex-col items-center justify-center gap-1 pl-4 pr-6 mr-1 border-r border-lt-700 shrink-0"
         >
-          <!-- The mark carries the brand, so it gets almost the full bar
-               height; wordmark and version stack beside it. -->
           <img
-            class="block h-[clamp(48px,4.5vw,72px)] w-[clamp(48px,4.5vw,72px)] shrink-0"
-            src=${assetUrl("images/logo/mark.svg")}
-            alt=""
-            aria-hidden="true"
+            class="block h-[clamp(46px,4.4vw,66px)] w-auto shrink-0"
+            src=${assetUrl("images/logo/lockup-horizontal.svg")}
+            alt="Landtaker"
           />
-          <div class="flex flex-col items-center gap-1">
-            <span
-              class="lt-display text-[clamp(17px,1.55vw,26px)] leading-none !tracking-[0.18em] text-lt-100 whitespace-nowrap"
-              >LANDTAKER</span
-            >
-            <div
-              id="game-version"
-              class="lt-label !text-[10px] !tracking-[0.3em] text-center w-full"
-            ></div>
-          </div>
+          <div
+            id="game-version"
+            class="lt-label !text-[10px] !tracking-[0.3em] text-center w-full"
+          ></div>
         </div>
         <!-- The tab strip is the row's shock absorber: brand and status
              cells keep their size, this shrinks (tab padding scales with it)
