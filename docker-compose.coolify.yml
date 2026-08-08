@@ -1,0 +1,81 @@
+# Landtaker production stack for Coolify (Docker Compose resource).
+#
+# One stack, four services. Point a Coolify "Docker Compose" resource at this
+# file; set the environment variables in Coolify's UI (they land in every
+# service below via ${...}); attach domains in Coolify:
+#
+#   game    -> https://<DOMAIN>          (port 80)
+#   backend -> https://api.<DOMAIN>      (port 8787)
+#
+# The api. subdomain is NOT a choice: both the client and the game server
+# derive the API base as https://api.<DOMAIN> from the JWT audience
+# (src/client/Api.ts getApiBase, src/server/ServerEnv.ts jwtIssuer).
+#
+# postgres/redis stay internal — no domains, no published ports. The postgres
+# volume is what survives deploys; see docs/DEPLOY.md for the rollout story.
+services:
+  game:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    restart: unless-stopped
+    environment:
+      GAME_ENV: prod
+      DOMAIN: ${DOMAIN}
+      SUBDOMAIN: main
+      NUM_WORKERS: ${NUM_WORKERS:-2}
+      API_KEY: ${API_KEY}
+      ADMIN_BOT_API_KEY: ${ADMIN_BOT_API_KEY}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-1x00000000000000000000AA}
+      GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${BACKEND_NODE_ENV:-production}
+      PORT: 8787
+      DATABASE_URL: postgres://openfront:${POSTGRES_PASSWORD}@postgres:5432/openfront
+      REDIS_URL: redis://redis:6379
+      JWT_ISSUER: https://api.${DOMAIN}
+      JWT_AUDIENCE: ${DOMAIN}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      API_KEY: ${API_KEY}
+      CORS_ORIGIN: https://${DOMAIN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: openfront
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: openfront
+    volumes:
+      # THE stateful piece. Deploys rebuild containers; this volume persists.
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openfront -d openfront"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    # Presence, party fanout and matchmaking state are ephemeral by design —
+    # a restart drops players to the lobby, which is recoverable. No disk.
+    command: redis-server --save "" --appendonly no
+
+volumes:
+  postgres-data:
