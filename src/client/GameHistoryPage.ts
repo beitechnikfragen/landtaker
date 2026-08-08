@@ -30,8 +30,15 @@ export class GameHistoryPage extends LitElement {
   }
 
   private onUserMe = (event: Event) => {
-    const detail = (event as CustomEvent).detail as UserMeResponse | undefined;
-    this.applyPublicId(detail?.player?.publicId ?? "");
+    const detail = (event as CustomEvent).detail as
+      | UserMeResponse
+      | false
+      | undefined;
+    this.applyPublicId(
+      detail === false || detail === undefined
+        ? ""
+        : (detail.player?.publicId ?? ""),
+    );
   };
 
   private async loadIdentity(): Promise<void> {
@@ -51,7 +58,15 @@ export class GameHistoryPage extends LitElement {
     void this.loadIdentity();
   }
 
-  public close(): void {}
+  // Mirrors BaseModal.close()'s inline-page branch (src/client/components/BaseModal.ts:237-241):
+  // hand off to showPage, which hides this element (adds .hidden to the
+  // current .page-content) and reveals page-play. Needed so Navigation.ts's
+  // click-outside handler (Navigation.ts:130-149) — which calls close()
+  // INSTEAD of showPage("page-play") whenever close is a function — actually
+  // dismisses this page.
+  public close(): void {
+    window.showPage?.("page-play");
+  }
 
   // Called by GameStatsModal's back button.
   public returnToGames(): void {
@@ -112,6 +127,7 @@ export class GameHistoryPage extends LitElement {
   // Same navigation the account modal performs: push the game URL and let
   // Main's join-changed listener route into the replay.
   private viewGame(gameId: string): void {
+    this.close();
     const encodedGameId = encodeURIComponent(gameId);
     const newUrl = `/${ClientEnv.workerPath(gameId)}/game/${encodedGameId}`;
     history.pushState({ join: gameId }, "", newUrl);
