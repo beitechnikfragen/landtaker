@@ -33,6 +33,12 @@ export class PhoneWidget extends LitElement {
       if (controller.machine.state === "ringing") this.expanded = true;
       this.tick++;
     });
+    // controller/game are plain fields (not @state/@property), so assigning
+    // them above does not schedule a re-render on its own. They hold large
+    // object graphs (GameView is the whole game state) that we don't want
+    // Lit deep-watching, so we nudge a single update here instead of making
+    // the fields reactive.
+    this.requestUpdate();
   }
 
   disconnectedCallback(): void {
