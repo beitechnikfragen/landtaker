@@ -50,6 +50,13 @@ export type FriendEvent =
       username: string | null;
       inviteCode: string;
       createdAt: string;
+    }
+  | {
+      type: "party_join";
+      from: string;
+      gameId: string;
+      source: "public" | "private" | "host" | "matchmaking";
+      createdAt: string;
     };
 
 type AddressedEvent = { to: string; event: FriendEvent };
