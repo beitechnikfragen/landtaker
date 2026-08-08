@@ -2,11 +2,14 @@ import {
   type AdminAuditListResponse,
   AdminAuditListResponseSchema,
   type AdminBanCreate,
+  type AdminFeedbackListResponse,
+  AdminFeedbackListResponseSchema,
   type AdminUserDetail,
   AdminUserDetailSchema,
   type AdminUserListResponse,
   AdminUserListResponseSchema,
   type AdminUserPatch,
+  type FeedbackStatus,
 } from "../core/AdminApiSchemas";
 import { getApiBase } from "./Api";
 import { getAuthHeader } from "./Auth";
@@ -380,6 +383,68 @@ export async function adjustAdminCurrency(
     return await res.json();
   } catch (err) {
     console.warn("adjustAdminCurrency: request failed", err);
+    return { error: "Request failed" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Feedback
+// ---------------------------------------------------------------------------
+
+export async function fetchAdminFeedback(query: {
+  status?: string;
+  limit?: number;
+}): Promise<AdminFeedbackListResponse | AdminApiError> {
+  const params = new URLSearchParams();
+  if (query.status) params.set("status", query.status);
+  if (query.limit !== undefined) params.set("limit", String(query.limit));
+
+  try {
+    const res = await adminFetch(`/admin/feedback?${params}`);
+    if (!res.ok) {
+      return { error: await readError(res, "Failed to load feedback") };
+    }
+    const parsed = AdminFeedbackListResponseSchema.safeParse(await res.json());
+    if (!parsed.success) {
+      console.warn("fetchAdminFeedback: validation failed", parsed.error);
+      return { error: "Server sent an unexpected response" };
+    }
+    return parsed.data;
+  } catch (err) {
+    console.warn("fetchAdminFeedback: request failed", err);
+    return { error: "Request failed" };
+  }
+}
+
+export async function setAdminFeedbackStatus(
+  id: string,
+  status: FeedbackStatus,
+): Promise<{ status: string } | AdminApiError> {
+  try {
+    const res = await adminFetch(`/admin/feedback/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) return { error: await readError(res, "Failed to update") };
+    return await res.json();
+  } catch (err) {
+    console.warn("setAdminFeedbackStatus: request failed", err);
+    return { error: "Request failed" };
+  }
+}
+
+export async function deleteAdminFeedback(
+  id: string,
+): Promise<{ deleted: true } | AdminApiError> {
+  try {
+    const res = await adminFetch(`/admin/feedback/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) return { error: await readError(res, "Failed to delete") };
+    return { deleted: true };
+  } catch (err) {
+    console.warn("deleteAdminFeedback: request failed", err);
     return { error: "Request failed" };
   }
 }

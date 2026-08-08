@@ -3,14 +3,16 @@ import {
   AdminCreditAdjustSchema,
   AdminUserPatchSchema,
   AdminUserQuerySchema,
+  FeedbackStatusSchema,
 } from "@game/AdminApiSchemas.ts";
-import { and, count, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { db } from "../db/index.ts";
 import {
   bans,
   cosmetics,
+  feedbackReports,
   shopConfig,
   shopPurchases,
   shopRotations,
@@ -614,6 +616,165 @@ export async function registerAdminRoutes(app: FastifyInstance): Promise<void> {
         currencyType: parsed.data.currencyType,
         balance: next,
       });
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // Feedback triage
+  // -------------------------------------------------------------------------
+
+  /**
+   * GET /admin/feedback — submitted bug reports and ideas, newest first.
+   *
+   * Joins the reporter's username so the list is readable without a second
+   * lookup per row; guests have no user row and surface via contactEmail.
+   */
+  app.get(
+    "/admin/feedback",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const parsed = z
+        .object({
+          status: FeedbackStatusSchema.optional(),
+          limit: z.coerce.number().int().min(1).max(200).default(50),
+          offset: z.coerce.number().int().min(0).default(0),
+        })
+        .safeParse(request.query);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: "Invalid query" });
+      }
+      const { status, limit, offset } = parsed.data;
+      const where = status ? eq(feedbackReports.status, status) : undefined;
+
+      const [rows, totalRows, statusRows] = await Promise.all([
+        db
+          .select({
+            id: feedbackReports.id,
+            type: feedbackReports.type,
+            status: feedbackReports.status,
+            message: feedbackReports.message,
+            userId: feedbackReports.userId,
+            contactEmail: feedbackReports.contactEmail,
+            context: feedbackReports.context,
+            createdAt: feedbackReports.createdAt,
+            updatedAt: feedbackReports.updatedAt,
+            usernameBase: users.usernameBase,
+            usernameDiscriminator: users.usernameDiscriminator,
+            usernameStatus: users.usernameStatus,
+          })
+          .from(feedbackReports)
+          .leftJoin(users, eq(users.id, feedbackReports.userId))
+          .where(where)
+          .orderBy(desc(feedbackReports.createdAt))
+          .limit(limit)
+          .offset(offset),
+        db.select({ value: count() }).from(feedbackReports).where(where),
+        // Counts are unfiltered on purpose: the filter chips must show how many
+        // sit in every state, including the one not currently selected.
+        db
+          .select({ status: feedbackReports.status, value: count() })
+          .from(feedbackReports)
+          .groupBy(feedbackReports.status),
+      ]);
+
+      const counts: Record<string, number> = {};
+      for (const row of statusRows) counts[row.status] = row.value;
+
+      return reply.send({
+        reports: rows.map((row) => ({
+          id: row.id,
+          type: row.type,
+          status: row.status,
+          message: row.message,
+          userId: row.userId,
+          username: row.userId
+            ? resolveDisplayUsername({
+                usernameBase: row.usernameBase,
+                usernameDiscriminator: row.usernameDiscriminator,
+                usernameStatus: row.usernameStatus,
+              })
+            : null,
+          contactEmail: row.contactEmail,
+          context: row.context,
+          createdAt: row.createdAt.toISOString(),
+          updatedAt: row.updatedAt.toISOString(),
+        })),
+        total: totalRows[0]?.value ?? 0,
+        counts,
+      });
+    },
+  );
+
+  /**
+   * PATCH /admin/feedback/:id — move a report through triage.
+   *
+   * updatedAt is set here rather than by a trigger, as the schema comment on
+   * the column says: it equals createdAt until the admin area touches it.
+   */
+  app.patch<{ Params: { id: string } }>(
+    "/admin/feedback/:id",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const parsed = z
+        .object({ status: FeedbackStatusSchema })
+        .safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: "Invalid status" });
+      }
+
+      const updated = await db
+        .update(feedbackReports)
+        .set({ status: parsed.data.status, updatedAt: new Date() })
+        .where(eq(feedbackReports.id, request.params.id))
+        .returning({ id: feedbackReports.id, status: feedbackReports.status });
+
+      if (updated.length === 0) {
+        return reply.code(404).send({ error: "Report not found" });
+      }
+
+      await recordAudit({
+        actorId: request.userId!,
+        actorName: await actorName(request.userId!),
+        action: "feedback.status",
+        targetId: request.params.id,
+        detail: { status: parsed.data.status },
+        log: request.log,
+      });
+
+      return reply.send(updated[0]);
+    },
+  );
+
+  /**
+   * DELETE /admin/feedback/:id — remove a report outright.
+   *
+   * For spam and abuse only. Rejecting is the normal way to close something
+   * unwanted; deleting loses a real report permanently, which the schema
+   * comment on userId explicitly warns against.
+   */
+  app.delete<{ Params: { id: string } }>(
+    "/admin/feedback/:id",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const deleted = await db
+        .delete(feedbackReports)
+        .where(eq(feedbackReports.id, request.params.id))
+        .returning({ id: feedbackReports.id });
+
+      if (deleted.length === 0) {
+        return reply.code(404).send({ error: "Report not found" });
+      }
+
+      await recordAudit({
+        actorId: request.userId!,
+        actorName: await actorName(request.userId!),
+        action: "feedback.delete",
+        targetId: request.params.id,
+        detail: {},
+        log: request.log,
+      });
+
+      return reply.send({ deleted: true });
     },
   );
 

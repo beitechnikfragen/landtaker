@@ -81,6 +81,24 @@ export class AdminCheatExecution implements Execution {
         return this.forceAlliance();
       case "break_alliance":
         return this.breakAlliance();
+      case "max_troops":
+        return this.maxTroops();
+      case "capture_radius":
+        return this.captureRadius();
+      case "upgrade_structures":
+        return this.upgradeStructures();
+      case "clear_units":
+        return this.clearUnits();
+      case "clear_traitor":
+        return this.clearTraitor();
+      case "clear_doomsday":
+        return this.clearDoomsday();
+      case "set_relation":
+        return this.setRelation();
+      case "steal_gold":
+        return this.stealGold();
+      case "mark_traitor":
+        return this.markTraitor();
     }
   }
 
@@ -231,6 +249,115 @@ export class AdminCheatExecution implements Execution {
     const alliance = this.player.allianceWith(target);
     if (alliance === null) return;
     this.player.breakAlliance(alliance);
+  }
+
+  /** Fills the troop pool to the configured ceiling for this player. */
+  private maxTroops(): void {
+    this.player.setTroops(this.mg.config().maxTroops(this.player));
+  }
+
+  /**
+   * Takes every land tile within `amount` tiles of the selected one.
+   *
+   * A breadth-first walk rather than a square scan: territory has to stay
+   * contiguous for borders to make sense, and BFS over land only guarantees
+   * that. Capped so a fat-fingered radius cannot try to conquer the map in one
+   * tick — the tile loop is O(area) and runs inside a single execution.
+   */
+  private captureRadius(): void {
+    const tile = this.params.tile;
+    if (tile === undefined || !this.mg.isValidRef(tile)) {
+      console.warn(`admin cheat capture_radius: invalid tile ${tile}`);
+      return;
+    }
+    const radius = Math.min(Math.floor(this.params.amount ?? 5), 30);
+    if (!Number.isFinite(radius) || radius < 1) return;
+
+    const seen = new Set<TileRef>([tile]);
+    let frontier: TileRef[] = [tile];
+    for (let step = 0; step <= radius && frontier.length > 0; step++) {
+      const next: TileRef[] = [];
+      for (const current of frontier) {
+        if (this.mg.isLand(current) && this.mg.owner(current) !== this.player) {
+          this.player.conquer(current);
+        }
+        for (const neighbor of this.mg.neighbors(current)) {
+          if (seen.has(neighbor) || !this.mg.isLand(neighbor)) continue;
+          seen.add(neighbor);
+          next.push(neighbor);
+        }
+      }
+      frontier = next;
+    }
+  }
+
+  /** Upgrades every structure that can be upgraded, ignoring cost. */
+  private upgradeStructures(): void {
+    // Snapshot: upgrading mutates the player's live unit array.
+    for (const unit of [...this.player.units()]) {
+      if (this.player.canUpgradeUnit(unit)) {
+        this.player.upgradeUnit(unit);
+      }
+    }
+  }
+
+  /** Deletes all of the caller's own units — a way out of a stuck board. */
+  private clearUnits(): void {
+    for (const unit of [...this.player.units()]) {
+      unit.delete(false);
+    }
+  }
+
+  /**
+   * Clears the traitor mark. `markedTraitorTick` is the raw field the decay
+   * timer reads; -1 is its "never betrayed" sentinel (PlayerImpl).
+   */
+  private clearTraitor(): void {
+    (
+      this.player as unknown as { markedTraitorTick: number }
+    ).markedTraitorTick = -1;
+  }
+
+  private clearDoomsday(): void {
+    this.player.clearDoomsdayClock();
+  }
+
+  /**
+   * Sets how a target feels about the caller.
+   *
+   * Relations are a -100..100 score internally, but nothing exposes that raw
+   * value: `relation()` and `allRelationsSorted()` both return the derived
+   * four-value Relation enum, and updateRelation only takes a delta. So the
+   * score is first driven to the floor with an oversized negative delta (which
+   * updateRelation clamps to -100), then raised by the wanted amount. Two
+   * clamped deltas land on an exact value without ever reading it.
+   */
+  private setRelation(): void {
+    const target = this.target();
+    if (target === null || target === this.player) return;
+    const wanted = this.params.amount;
+    if (wanted === undefined || !Number.isFinite(wanted)) {
+      console.warn(`admin cheat set_relation: bad amount ${wanted}`);
+      return;
+    }
+    const clamped = Math.max(-100, Math.min(100, wanted));
+    target.updateRelation(this.player, -1000);
+    target.updateRelation(this.player, clamped + 100);
+  }
+
+  /** Moves a target's entire gold balance to the caller. */
+  private stealGold(): void {
+    const target = this.target();
+    if (target === null || target === this.player) return;
+    const taken = target.removeGold(target.gold());
+    if (taken > 0n) this.player.addGold(taken);
+  }
+
+  /** Marks a target as a traitor, as breaking an alliance would. */
+  private markTraitor(): void {
+    const target = this.target();
+    if (target === null || target === this.player) return;
+    target.markTraitor();
   }
 
   isActive(): boolean {

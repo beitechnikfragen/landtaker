@@ -3,6 +3,7 @@ import { html } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import type {
   AdminAuditEntry,
+  AdminFeedback,
   AdminUserDetail,
   AdminUserPatch,
   AdminUserSummary,
@@ -13,8 +14,10 @@ import {
   adjustAdminCredits,
   banAdminUser,
   deleteAdminCosmetic,
+  deleteAdminFeedback,
   fetchAdminAudit,
   fetchAdminCosmetics,
+  fetchAdminFeedback,
   fetchAdminMe,
   fetchAdminRotation,
   fetchAdminShopConfig,
@@ -25,6 +28,7 @@ import {
   patchAdminUser,
   saveAdminCosmetic,
   saveAdminShopConfig,
+  setAdminFeedbackStatus,
 } from "./AdminApi";
 import { BaseModal } from "./components/BaseModal";
 import { modalHeader } from "./components/ui/ModalHeader";
@@ -88,6 +92,12 @@ export class AdminModal extends BaseModal {
     payload: "",
   };
 
+  // Feedback tab
+  @state() private feedback: AdminFeedback[] = [];
+  @state() private feedbackCounts: Record<string, number> = {};
+  @state() private feedbackFilter: string = "new";
+  @state() private loadingFeedback = false;
+
   @state() private error: string | null = null;
   @state() private notice: string | null = null;
 
@@ -109,6 +119,7 @@ export class AdminModal extends BaseModal {
       tabs: [
         { key: "users", label: translateText("admin.tab_users") },
         { key: "shop", label: translateText("admin.tab_shop") },
+        { key: "feedback", label: translateText("admin.tab_feedback") },
         { key: "audit", label: translateText("admin.tab_audit") },
       ],
     };
@@ -125,6 +136,7 @@ export class AdminModal extends BaseModal {
     if (key === "users" && this.users.length === 0) void this.loadUsers();
     if (key === "audit") void this.loadAudit();
     if (key === "shop") void this.loadShop();
+    if (key === "feedback") void this.loadFeedback();
   }
 
   private async checkAuthorization(): Promise<void> {
@@ -189,6 +201,23 @@ export class AdminModal extends BaseModal {
       endsAt: string;
       cosmeticIds: string[];
     };
+  }
+
+  private async loadFeedback(): Promise<void> {
+    this.loadingFeedback = true;
+    const result = await fetchAdminFeedback({
+      // "all" is a UI-only value; the API takes an absent status to mean the
+      // same thing, so it is dropped rather than sent.
+      status: this.feedbackFilter === "all" ? undefined : this.feedbackFilter,
+      limit: 100,
+    });
+    this.loadingFeedback = false;
+    if (isAdminApiError(result)) {
+      this.error = result.error;
+      return;
+    }
+    this.feedback = result.reports;
+    this.feedbackCounts = result.counts;
   }
 
   private async selectUser(id: string): Promise<void> {
@@ -311,7 +340,134 @@ export class AdminModal extends BaseModal {
         ? this.renderAudit()
         : tab === "shop"
           ? this.renderShop()
-          : this.renderUsers()}
+          : tab === "feedback"
+            ? this.renderFeedback()
+            : this.renderUsers()}
+    `;
+  }
+
+  // ---- Feedback tab ----
+
+  private renderFeedback(): TemplateResult {
+    const filters = ["new", "triaged", "resolved", "rejected", "all"];
+    return html`
+      <div class="p-4">
+        <div class="mb-3 flex flex-wrap gap-1">
+          ${filters.map((key) => {
+            const active = this.feedbackFilter === key;
+            const n = key === "all" ? undefined : this.feedbackCounts[key];
+            return html`
+              <button
+                class="rounded border px-3 py-1 text-xs ${active
+                  ? "border-blue-500 bg-blue-600 text-white"
+                  : "border-lt-600 text-lt-300 hover:bg-lt-800"}"
+                @click=${() => {
+                  this.feedbackFilter = key;
+                  void this.loadFeedback();
+                }}
+              >
+                ${translateText(`admin.feedback_${key}`)}${n !== undefined
+                  ? ` (${n})`
+                  : ""}
+              </button>
+            `;
+          })}
+        </div>
+        ${this.loadingFeedback
+          ? this.renderLoadingSpinner()
+          : this.feedback.length === 0
+            ? html`<div
+                class="rounded border border-lt-600 p-8 text-center text-lt-400"
+              >
+                ${translateText("admin.no_feedback")}
+              </div>`
+            : html`<div class="flex flex-col gap-2">
+                ${this.feedback.map((report) => this.renderReport(report))}
+              </div>`}
+      </div>
+    `;
+  }
+
+  private renderReport(report: AdminFeedback): TemplateResult {
+    const setStatus = async (status: string) => {
+      const result = await setAdminFeedbackStatus(
+        report.id,
+        status as Parameters<typeof setAdminFeedbackStatus>[1],
+      );
+      if (isAdminApiError(result)) this.error = result.error;
+      else void this.loadFeedback();
+    };
+
+    const typeColor =
+      report.type === "bug"
+        ? "bg-red-900/60 text-red-300"
+        : report.type === "idea"
+          ? "bg-blue-900/60 text-blue-300"
+          : "bg-lt-700 text-lt-300";
+
+    return html`
+      <div class="rounded border border-lt-600 p-3 text-white">
+        <div class="mb-2 flex flex-wrap items-center gap-2 text-xs">
+          <span class="rounded px-2 py-0.5 uppercase ${typeColor}"
+            >${report.type}</span
+          >
+          <span class="text-lt-400">
+            ${report.username ??
+            report.contactEmail ??
+            translateText("admin.feedback_guest")}
+          </span>
+          <span class="text-lt-500"
+            >${new Date(report.createdAt).toLocaleString()}</span
+          >
+          <span class="ml-auto text-lt-500">${report.status}</span>
+        </div>
+
+        <!-- Player-submitted text. Interpolated as a Lit text binding, which
+             escapes it — never unsafeHTML, or a report could inject markup
+             into the panel. -->
+        <p class="mb-2 whitespace-pre-wrap break-words text-sm">
+          ${report.message}
+        </p>
+
+        ${report.context
+          ? html`<details class="mb-2">
+              <summary class="cursor-pointer text-xs text-lt-400">
+                ${translateText("admin.feedback_context")}
+              </summary>
+              <pre
+                class="mt-1 overflow-x-auto rounded bg-lt-800 p-2 font-mono text-[10px] text-lt-300"
+              >
+${JSON.stringify(report.context, null, 2)}</pre
+              >
+            </details>`
+          : null}
+
+        <div class="flex flex-wrap gap-1">
+          ${["triaged", "resolved", "rejected"]
+            .filter((s) => s !== report.status)
+            .map(
+              (s) => html`
+                <button
+                  class="rounded border border-lt-600 px-2 py-0.5 text-xs hover:bg-lt-700"
+                  @click=${() => void setStatus(s)}
+                >
+                  ${translateText(`admin.feedback_mark_${s}`)}
+                </button>
+              `,
+            )}
+          <button
+            class="ml-auto rounded border border-red-700 px-2 py-0.5 text-xs text-red-400 hover:bg-red-900/40"
+            title=${translateText("admin.feedback_delete_hint")}
+            @click=${async () => {
+              const result = await deleteAdminFeedback(report.id);
+              if (isAdminApiError(result)) this.error = result.error;
+              else void this.loadFeedback();
+            }}
+          >
+            ${translateText("admin.delete")}
+          </button>
+        </div>
+      </div>
     `;
   }
 

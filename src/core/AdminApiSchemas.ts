@@ -164,6 +164,48 @@ export const AdminBanCreateSchema = z.object({
 export type AdminBanCreate = z.infer<typeof AdminBanCreateSchema>;
 
 // ---------------------------------------------------------------------------
+// Feedback triage
+// ---------------------------------------------------------------------------
+
+/**
+ * Triage states. The schema comment on `feedback_reports.status` deliberately
+ * left the vocabulary open until the admin area existed — this is it.
+ */
+export const FeedbackStatusSchema = z.enum([
+  "new",
+  "triaged",
+  "resolved",
+  "rejected",
+]);
+export type FeedbackStatus = z.infer<typeof FeedbackStatusSchema>;
+
+export const AdminFeedbackSchema = z.object({
+  id: z.uuid(),
+  type: z.string(),
+  status: z.string(),
+  message: z.string(),
+  /** Null for guests, who are identified by contactEmail instead. */
+  userId: z.uuid().nullable(),
+  username: z.string().nullable(),
+  contactEmail: z.string().nullable(),
+  /** Client version, user agent, screen size — shape varies, rendered as JSON. */
+  context: z.unknown(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+export type AdminFeedback = z.infer<typeof AdminFeedbackSchema>;
+
+export const AdminFeedbackListResponseSchema = z.object({
+  reports: AdminFeedbackSchema.array(),
+  total: z.number().int(),
+  /** Count per status for the filter chips, so the UI need not fetch them all. */
+  counts: z.record(z.string(), z.number().int()),
+});
+export type AdminFeedbackListResponse = z.infer<
+  typeof AdminFeedbackListResponseSchema
+>;
+
+// ---------------------------------------------------------------------------
 // Audit log
 // ---------------------------------------------------------------------------
 
