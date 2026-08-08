@@ -6,7 +6,9 @@ import { z } from "zod";
  * starts.
  */
 const ConfigSchema = z.object({
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
 
   // 8787 is not arbitrary: the game server derives its API base from the JWT
   // audience, and for `localhost` that resolves to http://localhost:8787
@@ -40,6 +42,33 @@ const ConfigSchema = z.object({
   API_KEY: z.string().default("WARNING_DEV_API_KEY_DO_NOT_USE_IN_PRODUCTION"),
 
   CORS_ORIGIN: z.string().default("http://localhost:9000"),
+
+  // Discord OAuth. Absent => the /auth/login/discord routes are not registered
+  // at all, so a missing credential surfaces as "route not found" at boot
+  // rather than a broken redirect for a player mid-login.
+  DISCORD_CLIENT_ID: z.string().optional(),
+  DISCORD_CLIENT_SECRET: z.string().optional(),
+  // Must match a redirect entered in the Discord developer portal EXACTLY,
+  // including scheme and trailing slash — Discord compares it verbatim.
+  DISCORD_REDIRECT_URI: z
+    .string()
+    .default("http://localhost:8787/auth/callback/discord"),
+
+  // Where a login may send the browser back to. Comma-separated, compared by
+  // origin. Without this an open redirect would let any site harvest a session
+  // by pointing redirect_uri at itself.
+  ALLOWED_REDIRECT_ORIGINS: z.string().default("http://localhost:9000"),
+
+  // Magic-link email via Resend (https://resend.com). Absent => the
+  // /auth/magic-link route is not registered, so the button reports failure
+  // instead of silently accepting an address that never receives mail.
+  RESEND_API_KEY: z.string().optional(),
+  // Must be on a domain verified in Resend, with SPF and DKIM published —
+  // otherwise the mail is rejected or filed as spam.
+  EMAIL_FROM: z.string().default("Landtaker <noreply@landtaker.io>"),
+  EMAIL_PRODUCT_NAME: z.string().default("Landtaker"),
+  // Short by design: the link is a bearer credential sitting in an inbox.
+  MAGIC_LINK_TTL_MINUTES: z.coerce.number().int().positive().default(15),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

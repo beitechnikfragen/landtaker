@@ -205,6 +205,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Values must read on the dark panel even when no accent class is set.
+   :where() keeps specificity at zero so text-lt-ok etc. still win. */
+:where(.lt-kv > :last-child) {
+  color: var(--color-lt-100);
+}
+
 /* The live status line above the hero: a dot, then facts about the servers. */
 .lt-status {
   display: inline-flex;

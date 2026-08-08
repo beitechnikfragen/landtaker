@@ -193,9 +193,6 @@
     <div
       class="in-[.in-game]:hidden flex-1 relative overflow-hidden h-full transition-[margin] duration-500 ease-out will-change-[margin-left] flex flex-col"
     >
-      <!-- Desktop Top Bar -->
-      <desktop-nav-bar></desktop-nav-bar>
-
       <div
         id="turnstile-container"
         class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-99999"
@@ -205,111 +202,120 @@
       <banned-modal></banned-modal>
       <marketing-consent-toast></marketing-consent-toast>
 
-      <!-- Main container with responsive padding -->
-      <main-layout class="contents">
-        <play-page class="contents"></play-page>
-        <matchmaking-modal
-          id="page-matchmaking"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></matchmaking-modal>
-        <news-modal
-          id="page-news"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></news-modal>
-        <single-player-modal
-          id="page-single-player"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></single-player-modal>
-        <host-lobby-modal
-          id="page-host-lobby"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></host-lobby-modal>
-        <join-lobby-modal
-          id="page-join-lobby"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></join-lobby-modal>
-        <store-modal
-          id="page-item-store"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></store-modal>
-        <user-setting
-          id="page-settings"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></user-setting>
-        <leaderboard-modal
-          id="page-leaderboard"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></leaderboard-modal>
-        <troubleshooting-modal
-          id="page-troubleshooting"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></troubleshooting-modal>
+      <!-- The shell: nav AND content live inside one centred column, as in
+           the mock — the chrome is inset, never edge-to-edge. -->
+      <div
+        class="w-full max-w-[1300px] mx-auto lg:px-7 flex-1 min-h-0 flex flex-col"
+      >
+        <!-- Desktop Top Bar -->
+        <desktop-nav-bar></desktop-nav-bar>
 
-        <clan-modal
-          id="page-clan"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></clan-modal>
-        <account-modal
-          id="page-account"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></account-modal>
-        <game-stats-modal
-          id="page-stats"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></game-stats-modal>
-        <game-history-page
-          id="page-history"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></game-history-page>
-        <player-profile-modal
-          id="page-profile"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></player-profile-modal>
-        <help-modal
-          id="page-help"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></help-modal>
-        <language-modal
-          id="page-language"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></language-modal>
-        <flag-input-modal
-          id="flag-input-modal"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></flag-input-modal>
-        <cosmetics-modal
-          id="cosmetics-modal"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></cosmetics-modal>
-        <ranked-modal
-          id="page-ranked"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></ranked-modal>
-        <party-modal
-          id="page-party"
-          inline
-          class="hidden w-full h-full page-content relative z-50"
-        ></party-modal>
-      </main-layout>
+        <!-- Main container with responsive padding -->
+        <main-layout class="contents">
+          <play-page class="contents"></play-page>
+          <matchmaking-modal
+            id="page-matchmaking"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></matchmaking-modal>
+          <news-modal
+            id="page-news"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></news-modal>
+          <single-player-modal
+            id="page-single-player"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></single-player-modal>
+          <host-lobby-modal
+            id="page-host-lobby"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></host-lobby-modal>
+          <join-lobby-modal
+            id="page-join-lobby"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></join-lobby-modal>
+          <store-modal
+            id="page-item-store"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></store-modal>
+          <user-setting
+            id="page-settings"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></user-setting>
+          <leaderboard-modal
+            id="page-leaderboard"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></leaderboard-modal>
+          <troubleshooting-modal
+            id="page-troubleshooting"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></troubleshooting-modal>
+
+          <clan-modal
+            id="page-clan"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></clan-modal>
+          <account-modal
+            id="page-account"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></account-modal>
+          <game-stats-modal
+            id="page-stats"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></game-stats-modal>
+          <game-history-page
+            id="page-history"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></game-history-page>
+          <player-profile-modal
+            id="page-profile"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></player-profile-modal>
+          <help-modal
+            id="page-help"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></help-modal>
+          <language-modal
+            id="page-language"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></language-modal>
+          <flag-input-modal
+            id="flag-input-modal"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></flag-input-modal>
+          <cosmetics-modal
+            id="cosmetics-modal"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></cosmetics-modal>
+          <ranked-modal
+            id="page-ranked"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></ranked-modal>
+          <party-modal
+            id="page-party"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></party-modal>
+        </main-layout>
+      </div>
 
       <div class="[.in-game_&]:hidden mt-auto flex flex-col shrink-0">
         <page-footer></page-footer>
@@ -324,16 +330,17 @@
 
     <!-- Bottom HUD: <sm=column, sm..lg=2col (HUD left | events right), lg+=3col grid centered -->
     <div
-      class="fixed bottom-0 left-0 w-full z-[200] flex flex-col pointer-events-none sm:flex-row sm:items-end lg:grid lg:grid-cols-[1fr_500px_1fr] lg:items-end min-[1200px]:px-4"
+      class="fixed bottom-0 left-0 w-full z-[200] flex flex-col pointer-events-none sm:flex-row sm:items-end lg:grid lg:grid-cols-[1fr_minmax(0,760px)_1fr] lg:items-end min-[1200px]:px-4"
       style="
         padding-bottom: env(safe-area-inset-bottom);
         padding-left: env(safe-area-inset-left);
         padding-right: env(safe-area-inset-right);
       "
     >
-      <!-- HUD: <sm contents (children join outer flex), sm+ flex-col 460px, lg+ col-2 -->
+      <!-- HUD: <sm contents (children join outer flex), sm+ flex-col 760px, lg+ col-2.
+           Mock's bb: rate/troops/gold, attack ratio, build rail — one slab. -->
       <div
-        class="contents sm:flex sm:flex-col sm:pointer-events-none w-full sm:w-[500px] lg:col-start-2 sm:z-10"
+        class="contents sm:flex sm:flex-col sm:pointer-events-none w-full sm:w-[min(760px,100%)] lg:col-start-2 sm:z-10 sm:mx-auto"
       >
         <attacks-display
           class="w-full pointer-events-auto order-1 sm:order-none"
@@ -346,19 +353,26 @@
         </div>
       </div>
 
-      <!-- events+chat: <sm between attacks and control (order-2), sm+ right side, lg+ col-3 -->
+      <!-- chat: <sm between attacks and control (order-2), sm+ right side, lg+ col-3.
+           The event feed itself lives top-right, under the game controls. -->
       <div
         class="flex flex-col pointer-events-none items-end order-2 sm:order-none sm:flex-1 lg:col-start-3 lg:self-end lg:justify-end"
       >
         <chat-display
           class="w-full sm:w-auto pointer-events-auto"
         ></chat-display>
-        <events-display
-          class="w-full sm:w-auto pointer-events-auto"
-        ></events-display>
-        <actionable-events
-          class="w-full sm:w-auto pointer-events-auto"
-        ></actionable-events>
+        <!-- On desktop the feed detaches and pins top-right under the game
+             controls, as in the mock; on mobile it stays in this column. -->
+        <div
+          class="contents lg:flex lg:flex-col lg:gap-1 lg:fixed lg:right-0 lg:top-[56px] min-[1200px]:right-4 min-[1200px]:top-[68px] lg:z-[900] lg:items-end lg:max-h-[calc(100vh-190px)]"
+        >
+          <events-display
+            class="w-full sm:w-auto pointer-events-auto lg:min-h-0"
+          ></events-display>
+          <actionable-events
+            class="w-full sm:w-auto pointer-events-auto"
+          ></actionable-events>
+        </div>
       </div>
     </div>
 
@@ -387,6 +401,10 @@
     <performance-overlay></performance-overlay>
     <player-info-overlay></player-info-overlay>
     <heads-up-message></heads-up-message>
+
+    <!-- Friends dock: bottom-right on every main-menu page, hidden in game.
+         A direct <body> child so it survives page switches. -->
+    <friends-panel></friends-panel>
 
     <!-- Featured stream: direct <body> child (NOT inside the in-[.in-game]:hidden
          home container) so the Twitch iframe is never display:none'd during a game,

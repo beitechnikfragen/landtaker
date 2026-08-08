@@ -17,6 +17,10 @@ COPY eslint.config.js ./
 COPY index.html ./
 COPY resources ./resources
 COPY proprietary ./proprietary
+# Third asset root (see vite.config.ts sourceDirs): the Landtaker marks, rank
+# insignia and fonts. Without it the build emits no brand assets at all —
+# the deployed site then renders with a missing logo and blank rank badges.
+COPY brand ./brand
 COPY src ./src
 
 ARG GIT_COMMIT=unknown
@@ -55,8 +59,12 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 RUN rm -f /etc/nginx/sites-enabled/default
 
 # Script that generates the create-game worker upstream at container start.
+# The sed strips CR: a CRLF checkout (Windows, or a repo without
+# .gitattributes) turns the shebang into "#!/bin/sh\r", which Linux reports
+# as the baffling "exec: no such file or directory".
 COPY generate-nginx-upstream.sh /usr/local/bin/generate-nginx-upstream.sh
-RUN chmod +x /usr/local/bin/generate-nginx-upstream.sh
+RUN sed -i 's/\r$//' /usr/local/bin/generate-nginx-upstream.sh \
+    && chmod +x /usr/local/bin/generate-nginx-upstream.sh
 
 # Copy production node_modules from prod-deps stage (cached separately from build)
 COPY --from=prod-deps /usr/src/app/node_modules ./node_modules
@@ -89,5 +97,13 @@ else
     exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
 fi
 EOF
-RUN chmod +x /usr/local/bin/start.sh
+# Same CR-stripping as above: the heredoc inherits the Dockerfile's own line
+# endings, so a CRLF checkout would poison start.sh too.
+RUN sed -i 's/\r$//' /usr/local/bin/start.sh && chmod +x /usr/local/bin/start.sh
+
+# nginx fronts everything inside the container. Declared explicitly because
+# reverse proxies (Coolify/Traefik) derive the routing target from the
+# exposed port — without this the domain points at nothing.
+EXPOSE 80
+
 ENTRYPOINT ["/usr/local/bin/start.sh"]

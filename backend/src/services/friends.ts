@@ -95,14 +95,10 @@ async function areFriends(x: string, y: string): Promise<boolean> {
 /**
  * Resolves the `:publicId` path segment to an account.
  *
- * The client sends whatever the user typed into the add-friend box, and
- * FriendsList.handleSend explicitly allows a display name there — it rewrites
- * `wonder #5005` to `wonder.5005` and hands it over unchanged. So accept both
- * forms: a publicId, or a `base.discriminator` display name. Bare names
- * (premium holders, no discriminator) resolve too.
- *
- * Lookup is exact-match only. No prefix or fuzzy search — that would turn this
- * into an account enumeration oracle.
+ * Deliberately publicId ONLY. Name lookup was removed: bare names are only
+ * unique by accident, `name.1234` leaks the discriminator scheme, and both
+ * together made the add-friend box an account enumeration oracle. The id is
+ * shown in the account modal and is what players share.
  */
 async function findTarget(identifier: string) {
   const byPublicId = await db
@@ -110,34 +106,7 @@ async function findTarget(identifier: string) {
     .from(users)
     .where(eq(users.publicId, identifier))
     .limit(1);
-  if (byPublicId[0]) return byPublicId[0];
-
-  const dot = identifier.lastIndexOf(".");
-  if (dot > 0) {
-    const base = identifier.slice(0, dot);
-    const discriminator = identifier.slice(dot + 1);
-    const byName = await db
-      .select(entryColumns)
-      .from(users)
-      .where(
-        and(
-          eq(users.usernameBase, base),
-          eq(users.usernameDiscriminator, discriminator),
-        ),
-      )
-      .limit(1);
-    if (byName[0]) return byName[0];
-  }
-
-  // A bare name only identifies an account when it is unique. Entitled holders
-  // render without a discriminator, but the column still holds one, so match on
-  // the base alone and require exactly one hit.
-  const byBase = await db
-    .select(entryColumns)
-    .from(users)
-    .where(eq(users.usernameBase, identifier))
-    .limit(2);
-  return byBase.length === 1 ? byBase[0] : null;
+  return byPublicId[0] ?? null;
 }
 
 /**

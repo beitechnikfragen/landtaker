@@ -55,6 +55,9 @@ export const users = pgTable(
 
     adfree: boolean("adfree").notNull().default(false),
     unlimitedRanked: boolean("unlimited_ranked").notNull().default(false),
+    // Soft currency for the store-to-be. Earned/spent nowhere yet; the
+    // column exists so the balance has a home before the first sink does.
+    credits: integer("credits").notNull().default(0),
     canCreatePublicLobbies: boolean("can_create_public_lobbies")
       .notNull()
       .default(false),
@@ -146,6 +149,35 @@ export const refreshTokens = pgTable(
   (table) => [index("refresh_tokens_user_idx").on(table.userId)],
 );
 
+/**
+ * Single-use sign-in tokens delivered by email (magic links).
+ *
+ * Hashed like refresh tokens: the plaintext only ever exists in the email, so
+ * a database leak cannot be replayed into a session. `consumedAt` enforces
+ * one-time use — a link forwarded, logged by a mail scanner, or left in an
+ * inbox must not sign anyone in twice.
+ *
+ * `email` is stored alongside the user because the address may be new to the
+ * account: signing in this way is also how an email gets attached.
+ */
+export const loginTokens = pgTable(
+  "login_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    email: text("email").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  },
+  (table) => [index("login_tokens_user_idx").on(table.userId)],
+);
+
 // ---------------------------------------------------------------------------
 // Social
 // ---------------------------------------------------------------------------
@@ -191,6 +223,42 @@ export const friendRequests = pgTable(
   (table) => [
     uniqueIndex("friend_requests_pair").on(table.fromUserId, table.toUserId),
     index("friend_requests_to_idx").on(table.toUserId),
+  ],
+);
+
+/**
+ * Direct messages between friends. Sender/recipient are stored as-is (not as
+ * an ordered pair like friendships): a message HAS a direction, and the
+ * conversation view needs it. History survives an unfriend — the rows only
+ * disappear when an account does (cascade).
+ */
+export const friendMessages = pgTable(
+  "friend_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    senderId: uuid("sender_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    recipientId: uuid("recipient_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // The conversation query looks both ways; one index per direction keeps
+    // it an index scan whichever side the caller is on.
+    index("friend_messages_pair_idx").on(
+      table.senderId,
+      table.recipientId,
+      table.createdAt,
+    ),
+    index("friend_messages_recipient_idx").on(
+      table.recipientId,
+      table.createdAt,
+    ),
   ],
 );
 

@@ -1,6 +1,7 @@
 import { LitElement, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { assetUrl } from "../../core/AssetUrls";
+import { translateText } from "../Utils";
 
 /**
  * Rank insignia for a given elo.
@@ -77,7 +78,10 @@ export function rankFromElo(elo: number): Rank {
   };
 }
 
-export function rankBadgeUrl(rank: Rank, small = false): string {
+export function rankBadgeUrl(
+  rank: Pick<Rank, "tier" | "division">,
+  small = false,
+): string {
   return assetUrl(
     `images/ranks/${rank.tier.key}${rank.division}${small ? "@small" : ""}.webp`,
   );
@@ -122,7 +126,9 @@ export class RankBadge extends LitElement {
         ${this.showLabel || this.showProgress
           ? html`<div class="min-w-0 flex-1">
               ${this.showLabel
-                ? html`<div class="lt-display text-[19px] leading-none">
+                ? html`<div
+                    class="lt-display text-[19px] leading-none text-lt-100"
+                  >
                     ${rank.label}
                   </div>`
                 : nothing}
@@ -133,9 +139,12 @@ export class RankBadge extends LitElement {
                     </div>
                     <div class="lt-label !text-[12px] !text-lt-400">
                       ${rank.toNext === null
-                        ? html`<span class="text-lt-accent">Max division</span>`
-                        : html`<span class="text-lt-100">${rank.toNext}</span>
-                            elo to next`}
+                        ? html`<span class="text-lt-accent"
+                            >${translateText("rank.max_division")}</span
+                          >`
+                        : translateText("rank.elo_to_next", {
+                            elo: rank.toNext,
+                          })}
                     </div>
                   `
                 : nothing}

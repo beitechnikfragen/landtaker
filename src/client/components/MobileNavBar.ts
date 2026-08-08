@@ -122,23 +122,35 @@ export class MobileNavBar extends LitElement {
           data-page="page-history"
           data-i18n="main.match_history"
         ></button>
-        <button
-          class="no-crazygames nav-menu-item block w-full text-left font-bold uppercase tracking-[0.05em] text-lt-400 transition-all duration-200 cursor-pointer hover:text-blue-600 hover:translate-x-2.5 hover:drop-shadow-[0_0_20px_rgba(37,99,235,0.5)] [&.active]:text-blue-600 [&.active]:translate-x-2.5 [&.active]:drop-shadow-[0_0_20px_rgba(37,99,235,0.5)] text-[clamp(18px,2.8vh,32px)] py-[clamp(0.2rem,0.8vh,0.75rem)]"
-          data-page="page-clan"
-          data-i18n="main.clans"
-        ></button>
+        <!-- Clans and Store: visible but not open yet — same treatment as the
+             desktop nav, dimmed label plus a full-opacity SOON chip. -->
         <div
-          class="no-crazygames nav-menu-item flex items-center w-full cursor-pointer"
-          data-page="page-item-store"
-          @click=${this._notifications.onStoreClick}
+          class="no-crazygames flex items-center gap-3 w-full"
+          data-i18n-title="main.coming_soon"
         >
           <button
-            class="block text-left font-bold uppercase tracking-[0.05em] text-lt-400 transition-all duration-200 cursor-pointer hover:text-blue-600 hover:translate-x-2.5 hover:drop-shadow-[0_0_20px_rgba(37,99,235,0.5)] [&.active]:text-blue-600 [&.active]:translate-x-2.5 [&.active]:drop-shadow-[0_0_20px_rgba(37,99,235,0.5)] text-[clamp(18px,2.8vh,32px)] py-[clamp(0.2rem,0.8vh,0.75rem)]"
+            class="block text-left font-bold uppercase tracking-[0.05em] text-lt-400 opacity-40 cursor-not-allowed text-[clamp(18px,2.8vh,32px)] py-[clamp(0.2rem,0.8vh,0.75rem)]"
+            disabled
+            data-i18n="main.clans"
+          ></button>
+          <span
+            class="lt-num text-[11px] font-bold uppercase tracking-[0.08em] bg-lt-accent text-lt-accent-ink px-1.5 leading-[18px]"
+            data-i18n="main.soon"
+          ></span>
+        </div>
+        <div
+          class="no-crazygames flex items-center gap-3 w-full"
+          data-i18n-title="main.coming_soon"
+        >
+          <button
+            class="block text-left font-bold uppercase tracking-[0.05em] text-lt-400 opacity-40 cursor-not-allowed text-[clamp(18px,2.8vh,32px)] py-[clamp(0.2rem,0.8vh,0.75rem)]"
+            disabled
             data-i18n="main.store"
           ></button>
-          ${this._notifications.showStoreDot()
-            ? this._renderDot("bg-red-500")
-            : ""}
+          <span
+            class="lt-num text-[11px] font-bold uppercase tracking-[0.08em] bg-lt-accent text-lt-accent-ink px-1.5 leading-[18px]"
+            data-i18n="main.soon"
+          ></span>
         </div>
         <button
           class="nav-menu-item block w-full text-left font-bold uppercase tracking-[0.05em] text-lt-400 transition-all duration-200 cursor-pointer hover:text-blue-600 hover:translate-x-2.5 hover:drop-shadow-[0_0_20px_rgba(37,99,235,0.5)] [&.active]:text-blue-600 [&.active]:translate-x-2.5 [&.active]:drop-shadow-[0_0_20px_rgba(37,99,235,0.5)] text-[clamp(18px,2.8vh,32px)] py-[clamp(0.2rem,0.8vh,0.75rem)]"

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import newsItems from "resources/news.json" with { type: "json" };
 
 /**
  * PLACEHOLDER ROUTES.
@@ -80,12 +81,12 @@ export async function registerStubRoutes(app: FastifyInstance): Promise<void> {
     });
   });
 
-  // PLACEHOLDER: no news source yet. The client parses this with
-  // z.array(NewsItemSchema) (src/core/ApiSchemas.ts) and falls back to the
-  // bundled resources/news.json on any failure; an empty array is valid and
-  // simply shows no news. TODO: serve real news entries.
+  // News comes straight from the game's bundled resources/news.json — one
+  // source of truth for the box on the home page. The client parses this with
+  // z.array(NewsItemSchema) and falls back to the same bundled file on
+  // failure, so the two can never disagree.
   app.get("/news.json", async (_request, reply) => {
-    return reply.header("cache-control", "public, max-age=60").send([]);
+    return reply.header("cache-control", "public, max-age=60").send(newsItems);
   });
 
   /**

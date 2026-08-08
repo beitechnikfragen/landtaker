@@ -45,32 +45,70 @@ export class DesktopNavBar extends LitElement {
     });
   }
 
+  /**
+   * A tab that exists but isn't live yet: dimmed, unclickable, with a SOON
+   * chip. Deliberately NOT a nav-menu-item — Main.ts binds navigation to that
+   * class, and a disabled attribute alone would not stop that listener.
+   */
+  private renderComingSoon(labelKey: string) {
+    return html`
+      <!-- Chip text via data-i18n, NOT translateText: this bar renders once,
+           before the language files load, and never re-renders — a render-time
+           translation would freeze as the raw key. -->
+      <div
+        class="relative flex items-stretch"
+        data-i18n-title="main.coming_soon"
+      >
+        <!-- Only the label dims — the SOON chip stays at full opacity so it
+             actually reads. -->
+        <button
+          class="lt-nav-item cursor-not-allowed opacity-40"
+          disabled
+          data-i18n=${labelKey}
+        ></button>
+        <span
+          class="absolute top-2 right-0 lt-num text-[10px] font-bold uppercase tracking-[0.08em] bg-lt-accent text-lt-accent-ink px-1.5 leading-[16px] pointer-events-none"
+          data-i18n="main.soon"
+        ></span>
+      </div>
+    `;
+  }
+
   render() {
     window.currentPageId ??= "page-play";
     const currentPage = window.currentPageId;
 
     return html`
       <nav
-        class="hidden lg:flex w-full h-[76px] bg-lt-900/90 backdrop-blur-md items-stretch shrink-0 z-50 relative border-b border-lt-700"
+        class="hidden lg:flex w-full h-[84px] bg-lt-900/90 backdrop-blur-md items-stretch shrink-0 z-50 relative border-b border-lt-700"
       >
         <!-- Brand sits at the left edge, separated by a rule rather than
              centred — the row then reads left-to-right like a title bar. -->
-        <!-- Brand column: the lockup at full readable size with the version
-             centred beneath it, not squeezed beside it. -->
+        <!-- Brand column, as in the mock: the mark plus the wordmark set in
+             the display face. Type instead of the lockup's baked-in wordmark,
+             because the SVG renders its lettering at a fraction of the mark's
+             height — this stays razor-sharp at any size. -->
         <div
-          class="flex flex-col items-center justify-center gap-1 pl-5 pr-7 mr-2 border-r border-lt-700"
+          class="flex items-center gap-3.5 pl-4 pr-7 mr-2 border-r border-lt-700"
         >
-          <div class="h-12">
-            <img
-              class="block h-full aspect-[3943/1442]"
-              src=${assetUrl("images/logo/lockup-horizontal.svg")}
-              alt="Landtaker"
-            />
+          <!-- The mark carries the brand, so it gets almost the full bar
+               height; wordmark and version stack beside it. -->
+          <img
+            class="block h-[72px] w-[72px] shrink-0"
+            src=${assetUrl("images/logo/mark.svg")}
+            alt=""
+            aria-hidden="true"
+          />
+          <div class="flex flex-col items-center gap-1">
+            <span
+              class="lt-display text-[26px] leading-none !tracking-[0.24em] text-lt-100"
+              >LANDTAKER</span
+            >
+            <div
+              id="game-version"
+              class="lt-label !text-[10px] !tracking-[0.3em] text-center w-full"
+            ></div>
           </div>
-          <div
-            id="game-version"
-            class="lt-label !text-[10px] !tracking-[0.3em] text-center w-full"
-          ></div>
         </div>
         <button
           class="nav-menu-item lt-nav-item ${currentPage === "page-play"
@@ -100,26 +138,9 @@ export class DesktopNavBar extends LitElement {
               `
             : ""}
         </div>
-        <div class="relative no-crazygames flex items-stretch">
-          <button
-            class="nav-menu-item lt-nav-item ${currentPage === "page-item-store"
-              ? "active"
-              : ""}"
-            data-page="page-item-store"
-            data-i18n="main.store"
-            @click=${this._notifications.onStoreClick}
-          ></button>
-          ${this._notifications.showStoreDot()
-            ? html`
-                <span
-                  class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"
-                ></span>
-                <span
-                  class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
-                ></span>
-              `
-            : ""}
-        </div>
+        <!-- Store isn't stocked yet: the tab is visible so the plan reads,
+             but disabled until there is something to sell. -->
+        ${this.renderComingSoon("main.store")}
         <button
           class="nav-menu-item lt-nav-item"
           data-page="page-settings"
@@ -135,16 +156,10 @@ export class DesktopNavBar extends LitElement {
           data-page="page-history"
           data-i18n="main.match_history"
         ></button>
-        <button
-          class="no-crazygames nav-menu-item lt-nav-item"
-          data-page="page-clan"
-          data-i18n="main.clans"
-        ></button>
-        <button
-          class="no-crazygames nav-menu-item lt-nav-item"
-          data-page="page-party"
-          data-i18n="main.party"
-        ></button>
+        <!-- Clans exist upstream but aren't wired to our backend yet. -->
+        ${this.renderComingSoon("main.clans")}
+        <!-- Party moved into the social dock (friends-panel), so the nav
+             stays about pages; page-party still exists for deep links. -->
         <div class="relative flex items-stretch">
           <button
             class="nav-menu-item lt-nav-item"
