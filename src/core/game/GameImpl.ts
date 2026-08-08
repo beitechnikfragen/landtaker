@@ -1030,6 +1030,7 @@ export class GameImpl implements Game {
     channel: TextChatChannel,
     sender: Player,
     recipient: Player,
+    whisperWith?: Player,
   ): void {
     this.addUpdate({
       type: GameUpdateType.DisplayTextChatEvent,
@@ -1038,6 +1039,12 @@ export class GameImpl implements Game {
       senderID: sender.smallID(),
       senderName: sender.displayName(),
       recipientID: recipient.smallID(),
+      ...(whisperWith
+        ? {
+            whisperWithID: whisperWith.smallID(),
+            whisperWithName: whisperWith.displayName(),
+          }
+        : {}),
     });
   }
 

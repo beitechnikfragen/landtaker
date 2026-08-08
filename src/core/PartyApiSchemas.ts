@@ -14,6 +14,10 @@ export const PartyMemberSchema = z.object({
   username: z.string().nullable(),
   isLeader: z.boolean(),
   joinedAt: z.iso.datetime(),
+  // Resolved from the same presence keys the friends list uses. Optional so a
+  // response from an older backend still parses; absent reads as "unknown"
+  // rather than being rendered as online.
+  online: z.boolean().optional(),
 });
 export type PartyMember = z.infer<typeof PartyMemberSchema>;
 
