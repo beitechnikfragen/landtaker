@@ -38,6 +38,12 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(cors, {
     origin: config.CORS_ORIGIN.split(",").map((o) => o.trim()),
     credentials: true,
+    // Spelled out because the default list is GET/HEAD/POST only. The admin
+    // panel edits users with PATCH and saves shop config with PUT, and a
+    // preflight that omits them fails as an opaque "NetworkError" in the
+    // browser — the request never reaches Fastify, so nothing is logged
+    // server-side either.
+    methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   });
 
   // The client keeps its refresh token in an httpOnly cookie and calls
