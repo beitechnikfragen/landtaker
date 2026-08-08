@@ -204,6 +204,11 @@ export class FriendsPanel extends LitElement {
       return;
     }
 
+    if (event.type === "party_join") {
+      this.followLeaderIntoLobby(event.gameId, event.source);
+      return;
+    }
+
     // A direct message. Identify the other party: for our own echoed sends
     // that's the recipient, otherwise the sender.
     const mine = event.message.from === this.myPublicId();
@@ -222,6 +227,32 @@ export class FriendsPanel extends LitElement {
       this.unread = next;
       if (!this.friends.some((f) => f.publicId === other)) void this.refresh();
     }
+  }
+
+  /**
+   * The leader entered a lobby — go there too.
+   *
+   * Dispatched as the same `join-lobby` event the lobby cards fire, so the
+   * follower takes the identical code path (Main.handleJoinLobby). `followed`
+   * stops that handler from re-broadcasting, which would otherwise ping-pong
+   * the join around the party.
+   *
+   * Ignored while already in a game: yanking someone out of a running match
+   * because a teammate queued elsewhere would be worse than not following.
+   */
+  private followLeaderIntoLobby(
+    gameId: string,
+    source: "public" | "private" | "host" | "matchmaking",
+  ) {
+    if (document.body.classList.contains("in-game")) return;
+
+    document.dispatchEvent(
+      new CustomEvent("join-lobby", {
+        detail: { gameID: gameId, source, followed: true },
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   private toggleOpen() {

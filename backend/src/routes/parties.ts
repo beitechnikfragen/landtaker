@@ -37,6 +37,11 @@ const InviteBodySchema = z.object({
   publicId: z.string().trim().min(1).max(128),
 });
 
+const JoinBroadcastBodySchema = z.object({
+  gameId: z.string().trim().min(1).max(64),
+  source: z.enum(["public", "private", "host", "matchmaking"]),
+});
+
 /**
  * Lobby shape for the fit check. `teamCount` mirrors the game's
  * TeamCountConfig: a number means "that many teams" (seats vary with the
@@ -138,6 +143,50 @@ export async function registerPartyRoutes(app: FastifyInstance): Promise<void> {
         createdAt: new Date().toISOString(),
       });
       return reply.send({ ok: true });
+    },
+  );
+
+  /**
+   * POST /parties/@me/join-broadcast — the leader entered a lobby; tell every
+   * other member so their client follows into the same game.
+   *
+   * LEADER ONLY. Any member being able to drag the party into a lobby turns
+   * one misclick into everyone's problem, and two members joining different
+   * games at once would split the party with no way to tell which won.
+   *
+   * The event is not published back to the leader: their client is already in
+   * the lobby, and echoing would make it act on its own join.
+   */
+  app.post(
+    "/parties/@me/join-broadcast",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const parsed = JoinBroadcastBodySchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: "invalid_body" });
+      }
+      const party = await getPartyForUser(request.userId!);
+      if (!party) return sendError(reply, "not_a_member");
+      if (party.leaderId !== request.userId) {
+        return sendError(reply, "not_leader");
+      }
+
+      const leader = party.members.find((m) => m.userId === request.userId);
+      if (!leader) return sendError(reply, "not_a_member");
+
+      const event = {
+        type: "party_join" as const,
+        from: leader.publicId,
+        gameId: parsed.data.gameId,
+        source: parsed.data.source,
+        createdAt: new Date().toISOString(),
+      };
+      await Promise.all(
+        party.members
+          .filter((member) => member.userId !== request.userId)
+          .map((member) => publishToUser(member.userId, event)),
+      );
+      return reply.send({ ok: true, followers: party.members.length - 1 });
     },
   );
 

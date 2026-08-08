@@ -643,6 +643,16 @@ export const FriendStreamEventSchema = z.discriminatedUnion("type", [
     inviteCode: z.string(),
     createdAt: z.iso.datetime(),
   }),
+  // The party leader entered a lobby; every other member follows into the
+  // same game. `source` mirrors the client's JoinLobbyEvent so a followed
+  // join behaves exactly like the one the leader performed.
+  z.object({
+    type: z.literal("party_join"),
+    from: z.string(),
+    gameId: z.string(),
+    source: z.enum(["public", "private", "host", "matchmaking"]),
+    createdAt: z.iso.datetime(),
+  }),
 ]);
 export type FriendStreamEvent = z.infer<typeof FriendStreamEventSchema>;
 
