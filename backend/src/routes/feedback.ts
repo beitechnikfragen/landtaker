@@ -40,6 +40,23 @@ const FeedbackContextSchema = z
     screen: z.string().max(32).optional(),
     instanceId: z.string().max(64).optional(),
     currentPage: z.string().max(128).optional(),
+    // Present only when the report was written during a match. Declared
+    // explicitly rather than left to `.loose()` so the nesting is bounded:
+    // a loose object would happily accept a megabyte of arbitrary JSON here,
+    // and this column is read by a human, not queried.
+    match: z
+      .object({
+        gameID: z.string().max(128).optional(),
+        source: z.string().max(32).optional(),
+        map: z.string().max(64).optional(),
+        gameMode: z.string().max(32).optional(),
+        difficulty: z.string().max(32).optional(),
+        spectating: z.boolean().optional(),
+        humanPlayers: z.number().int().nonnegative().max(1000).optional(),
+        elapsedSeconds: z.number().int().nonnegative().optional(),
+      })
+      .strict()
+      .optional(),
   })
   .loose();
 

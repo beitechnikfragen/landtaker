@@ -1303,7 +1303,9 @@ export class HelpModal extends BaseModal {
       console.warn("Feedback modal element not found");
       return;
     }
-    feedbackModal.open();
+    // Reached from inside the help modal, so that is where the reporter was
+    // when they decided to write — not "feedback", which is where they end up.
+    feedbackModal.open({ origin: "help" });
   }
 
   protected onOpen(): void {

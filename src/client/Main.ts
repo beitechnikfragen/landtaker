@@ -29,6 +29,7 @@ import { CosmeticsModal } from "./CosmeticsModal";
 import { updateCrazyGamesNavButton } from "./CrazyGamesAccountButton";
 import { crazyGamesSDK } from "./CrazyGamesSDK";
 import "./FeaturedStream";
+import { clearActiveMatch, setActiveMatch } from "./FeedbackContextRegistry";
 import { FeedbackModal } from "./FeedbackModal";
 import "./FlagInput";
 import { FlagInput } from "./FlagInput";
@@ -84,6 +85,7 @@ import "./components/MarketingConsentToast";
 import { installSafariPinchZoomBlocker } from "./utilities/DisableSafariPinchZoom";
 
 import "./components/DesktopNavBar";
+import "./components/FeedbackFab";
 import "./components/Footer";
 import "./components/MainLayout";
 import "./components/MobileNavBar";
@@ -989,6 +991,7 @@ class Client {
       console.log("joining lobby, stopping existing game");
       this.lobbyHandle.stop(true);
       document.body.classList.remove("in-game");
+      clearActiveMatch();
     }
     if (lobby.source === "public") {
       this.joinModal?.open({
@@ -1118,6 +1121,14 @@ class Client {
       crazyGamesSDK.gameplayStart();
       document.body.classList.add("in-game");
 
+      // Record what match this is, so a bug report written mid-game carries a
+      // game id and a point in time instead of just "it broke". Cleared again
+      // when the game stops — see clearActiveMatch below.
+      setActiveMatch({
+        gameID: lobby.gameID,
+        source: lobby.source ?? "public",
+      });
+
       // Ensure there's a homepage entry in history before adding the lobby entry
       if (window.location.hash === "" || window.location.hash === "#") {
         history.replaceState(null, "", window.location.origin + "#refresh");
@@ -1164,6 +1175,9 @@ class Client {
     }
 
     document.body.classList.remove("in-game");
+    // A stale match id on a menu report is worse than none: it sends whoever
+    // reads it chasing the wrong game.
+    clearActiveMatch();
 
     if (this.joinModal.isOpen()) {
       this.joinModal.close();

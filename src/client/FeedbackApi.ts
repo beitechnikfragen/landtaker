@@ -1,6 +1,7 @@
 import { getApiBase } from "./Api";
 import { getAuthHeader } from "./Auth";
 import { ClientEnv } from "./ClientEnv";
+import { getActiveMatch } from "./FeedbackContextRegistry";
 
 /**
  * Client for POST /feedback.
@@ -20,6 +21,8 @@ export interface FeedbackContext {
   screen?: string;
   instanceId?: string;
   currentPage?: string;
+  /** Present only during a match. Shape owned by FeedbackContextRegistry. */
+  match?: Record<string, unknown>;
 }
 
 export type SubmitFeedbackResult =
@@ -37,7 +40,7 @@ export type SubmitFeedbackResult =
  * that from the connection, where it cannot be forged).
  */
 export function collectFeedbackContext(currentPage: string): FeedbackContext {
-  return {
+  const context: FeedbackContext = {
     // The single most useful field: it turns "it broke" into a specific build.
     clientVersion: ClientEnv.gitCommit(),
     userAgent: navigator.userAgent,
@@ -45,8 +48,18 @@ export function collectFeedbackContext(currentPage: string): FeedbackContext {
     screen: `${window.screen.width}x${window.screen.height}`,
     // web | desktop | crazygames — very different environments.
     instanceId: ClientEnv.instanceId(),
+    // Where the player pressed the button: a modal name, "in-game", or "menu".
+    // Must be captured BEFORE the feedback modal opens, or it reads "feedback".
     currentPage,
   };
+
+  // Only present during a match. Turns "the map broke" into a specific game
+  // id, map and point in time — see FeedbackContextRegistry for what is and
+  // is not recorded, and why.
+  const match = getActiveMatch();
+  if (match !== null) context.match = match;
+
+  return context;
 }
 
 export async function submitFeedback(input: {

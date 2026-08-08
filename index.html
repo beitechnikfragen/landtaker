@@ -430,6 +430,15 @@
          component is position:fixed and self-manages visibility (pauses in-game). -->
     <featured-stream></featured-stream>
 
+    <!-- Feedback button: a direct <body> child for the same reason as the two
+         above — it must stay reachable DURING a match, and anything inside the
+         in-[.in-game]:hidden home container is display:none'd once a game
+         starts. A bug is usually noticed while playing, so a report button
+         that vanishes exactly then would only ever collect menu feedback.
+         The component is position:fixed and hides itself while the feedback
+         modal is open. -->
+    <feedback-fab></feedback-fab>
+
     <!-- Scripts -->
     <script>
       // Remove preload class after everything is loaded

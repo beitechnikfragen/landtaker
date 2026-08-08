@@ -38,6 +38,17 @@ class ModalRouter {
   }
 
   /**
+   * The modal the user is currently looking at, or null on the plain page.
+   *
+   * Exposed for feedback reports: "which screen was open when they hit the
+   * button" is the difference between a reproducible bug and a shrug. Read it
+   * BEFORE opening the feedback modal, or the answer is always "feedback".
+   */
+  activeName(): string | null {
+    return this.currentName;
+  }
+
+  /**
    * Parse `window.location.hash` for `#modal=<name>&...`. If present and
    * registered, open the modal with the remaining keys as args. Returns true
    * if the hash was a recognized modal route (the caller can skip other

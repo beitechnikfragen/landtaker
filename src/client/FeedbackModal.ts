@@ -48,17 +48,34 @@ export class FeedbackModal extends BaseModal {
   @state() private isLoggedIn = false;
   @state() private showTechnicalDetails = false;
 
+  /**
+   * The screen the user came FROM, handed in by whoever opened this modal.
+   *
+   * Cannot be derived here: by the time this modal is open, the router's
+   * active modal is "feedback", so asking at read time would make every
+   * report claim it was written from the feedback screen. Falls back to
+   * "unknown" rather than lying with a plausible-looking default.
+   */
+  @state() private origin = "unknown";
+
   protected modalConfig() {
     return { maxWidth: "42rem" };
   }
 
-  protected onOpen(): void {
+  protected onOpen(args?: Record<string, unknown>): void {
     // Reset on every open: a stale success banner or a previous draft would
     // both be confusing.
     this.status = { kind: "idle" };
     this.message = "";
     this.email = "";
     this.type = "bug";
+    // Collapsed again too — an expanded panel left over from a previous
+    // report is an odd thing to reopen into.
+    this.showTechnicalDetails = false;
+    this.origin =
+      typeof args?.origin === "string" && args.origin.length > 0
+        ? args.origin
+        : "unknown";
     void this.refreshLoginState();
   }
 
@@ -116,7 +133,7 @@ export class FeedbackModal extends BaseModal {
       type: this.type,
       message: this.trimmedMessage,
       contactEmail: this.email.trim().length > 0 ? this.email.trim() : null,
-      context: collectFeedbackContext(this.routerName ?? "feedback"),
+      context: collectFeedbackContext(this.origin),
       turnstileToken,
     });
 
@@ -176,7 +193,7 @@ export class FeedbackModal extends BaseModal {
   }
 
   private renderTechnicalDetails(): TemplateResult {
-    const context = collectFeedbackContext(this.routerName ?? "feedback");
+    const context = collectFeedbackContext(this.origin);
     return html`
       <div class="mt-4">
         <button
