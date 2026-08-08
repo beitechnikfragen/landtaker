@@ -131,6 +131,11 @@ export class DesktopNavBar extends LitElement {
           data-i18n="main.leaderboard"
         ></button>
         <button
+          class="nav-menu-item lt-nav-item"
+          data-page="page-history"
+          data-i18n="main.match_history"
+        ></button>
+        <button
           class="no-crazygames nav-menu-item lt-nav-item"
           data-page="page-clan"
           data-i18n="main.clans"
