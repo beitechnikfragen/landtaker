@@ -191,6 +191,9 @@ export const UserMeResponseSchema = z.object({
   player: z.object({
     publicId: z.string(),
     adfree: z.boolean(),
+    // Store balance. Optional so responses from an API without the field
+    // still parse; absent renders the same as zero.
+    credits: z.number().optional(),
     // True when the player's active subscription tier exempts them from the
     // free-ranked-play limits.
     unlimitedRanked: z.boolean(),
@@ -588,8 +591,60 @@ export const FriendEntrySchema = z.object({
   // `username ?? publicId`; identify players by publicId only.
   username: z.string().nullable().optional(),
   createdAt: z.iso.datetime(),
+  // Live presence, filled in by GET /friends and kept fresh by the friends
+  // event stream. Absent on request entries, where it has no meaning.
+  online: z.boolean().optional(),
 });
 export type FriendEntry = z.infer<typeof FriendEntrySchema>;
+
+/** One direct message between friends, as the wire carries it. */
+export const FriendMessageSchema = z.object({
+  id: z.string(),
+  // publicIds on the wire, never internal ids.
+  from: z.string(),
+  to: z.string(),
+  body: z.string(),
+  createdAt: z.iso.datetime(),
+});
+export type FriendMessage = z.infer<typeof FriendMessageSchema>;
+
+export const FriendMessagesResponseSchema = z.object({
+  // Oldest first, ready to render top-to-bottom.
+  results: FriendMessageSchema.array(),
+});
+export type FriendMessagesResponse = z.infer<
+  typeof FriendMessagesResponseSchema
+>;
+
+/** Events on GET /friends/events (SSE). */
+export const FriendStreamEventSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("message"), message: FriendMessageSchema }),
+  z.object({
+    type: z.literal("presence"),
+    publicId: z.string(),
+    online: z.boolean(),
+  }),
+  // Party chat rides the same per-user stream: members need not be friends,
+  // and the panel holds exactly one connection either way. Ephemeral — party
+  // chat has no history endpoint, what you missed is gone.
+  z.object({
+    type: z.literal("party_message"),
+    from: z.string(),
+    username: z.string().nullable(),
+    body: z.string(),
+    createdAt: z.iso.datetime(),
+  }),
+  // A friend inviting the recipient into their party. Carries the invite
+  // code so accepting is one ordinary join — no server-side invite state.
+  z.object({
+    type: z.literal("party_invite"),
+    from: z.string(),
+    username: z.string().nullable(),
+    inviteCode: z.string(),
+    createdAt: z.iso.datetime(),
+  }),
+]);
+export type FriendStreamEvent = z.infer<typeof FriendStreamEventSchema>;
 
 export const FriendRequestsResponseSchema = z.object({
   incoming: FriendEntrySchema.array(),

@@ -69,6 +69,7 @@ export async function buildUserMeResponse(
     player: {
       publicId: user.publicId,
       adfree: user.adfree,
+      credits: user.credits,
       unlimitedRanked: user.unlimitedRanked,
       canCreatePublicLobbies: user.canCreatePublicLobbies,
       username: resolveDisplayUsername(user),

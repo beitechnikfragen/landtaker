@@ -3,7 +3,12 @@ import { customElement, query, state } from "lit/decorators.js";
 import { DirectiveResult } from "lit/directive.js";
 import { unsafeHTML, UnsafeHTMLDirective } from "lit/directives/unsafe-html.js";
 import { EventBus } from "../../../core/EventBus";
-import { AllPlayers, MessageType } from "../../../core/game/Game";
+import {
+  AllPlayers,
+  MESSAGE_TYPE_CATEGORIES,
+  MessageCategory,
+  MessageType,
+} from "../../../core/game/Game";
 import {
   AllianceExpiredUpdate,
   AllianceRequestReplyUpdate,
@@ -26,12 +31,7 @@ import { GameView, PlayerView, UnitView } from "../../view";
 
 import { PlaySoundEffectEvent } from "../../sound/Sounds";
 import { UIState } from "../../UIState";
-import {
-  getMessageTypeClasses,
-  renderNumber,
-  renderTroops,
-  translateText,
-} from "../../Utils";
+import { renderNumber, renderTroops, translateText } from "../../Utils";
 
 interface GameEvent {
   description: string;
@@ -44,23 +44,45 @@ interface GameEvent {
   unitView?: UnitView;
 }
 
-const TIER_1_TYPES: ReadonlySet<MessageType> = new Set([
+/** Incoming ordnance and landings: pinned above the feed, red inset. */
+const HOT_TYPES: ReadonlySet<MessageType> = new Set([
   MessageType.NUKE_INBOUND,
   MessageType.HYDROGEN_BOMB_INBOUND,
   MessageType.MIRV_INBOUND,
-  MessageType.NUKE_DETONATED,
   MessageType.NAVAL_INVASION_INBOUND,
-  MessageType.ATTACK_REQUEST,
-  MessageType.ALLIANCE_ACCEPTED,
-  MessageType.ALLIANCE_REJECTED,
-  MessageType.ALLIANCE_BROKEN,
-  MessageType.RENEW_ALLIANCE,
-  MessageType.CONQUERED_PLAYER,
-  MessageType.CHAT,
-  MessageType.DONATION_RECEIVED,
 ]);
 
-const isTier1 = (type: MessageType): boolean => TIER_1_TYPES.has(type);
+const isHot = (type: MessageType): boolean => HOT_TYPES.has(type);
+
+/** Feed text colour per category — muted versions of the semantic palette. */
+const CATEGORY_COLORS: Record<MessageCategory, string> = {
+  [MessageCategory.ATTACK]: "#e8a37c",
+  [MessageCategory.NUKE]: "#e07a8a",
+  [MessageCategory.ALLIANCE]: "#9ccf8f",
+  [MessageCategory.TRADE]: "var(--color-lt-gold)",
+  [MessageCategory.CHAT]: "#8fb8d9",
+};
+
+const FILTER_CHIPS: { category: MessageCategory | null; key: string }[] = [
+  { category: null, key: "events_display.filter_all" },
+  { category: MessageCategory.ATTACK, key: "events_display.filter_war" },
+  { category: MessageCategory.NUKE, key: "events_display.filter_nuke" },
+  { category: MessageCategory.ALLIANCE, key: "events_display.filter_pact" },
+  { category: MessageCategory.CHAT, key: "events_display.filter_chat" },
+];
+
+/** One stroke path per category, drawn at 24×24. */
+const CATEGORY_ICON_PATHS: Record<MessageCategory, string> = {
+  [MessageCategory.ATTACK]: "M15 4l5 5-9 9-5-5zM3 21l6-6",
+  [MessageCategory.NUKE]:
+    "M12 2c2.5 3 4 6.5 4 10a4 4 0 0 1-8 0c0-3.5 1.5-7 4-10zM9 20h6",
+  [MessageCategory.ALLIANCE]:
+    "M16 21v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+  [MessageCategory.TRADE]:
+    "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v10M9.5 9.5h4a1.8 1.8 0 0 1 0 3.6h-3a1.8 1.8 0 0 0 0 3.6h4",
+  [MessageCategory.CHAT]:
+    "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2z",
+};
 
 @customElement("events-display")
 export class EventsDisplay extends LitElement implements Controller {
@@ -73,6 +95,9 @@ export class EventsDisplay extends LitElement implements Controller {
   private userSettings = new UserSettings();
 
   @state() private _isVisible: boolean = false;
+
+  /** null shows everything; a category narrows the scrolling feed. */
+  @state() private _activeFilter: MessageCategory | null = null;
 
   @query(".events-container")
   private _eventsContainer?: HTMLDivElement;
@@ -91,39 +116,6 @@ export class EventsDisplay extends LitElement implements Controller {
       this._importantEventsContainer.scrollTop =
         this._importantEventsContainer.scrollHeight;
     }
-  }
-
-  private renderButton(options: {
-    content: any; // Can be string, TemplateResult, or other renderable content
-    onClick?: () => void;
-    className?: string;
-    disabled?: boolean;
-    translate?: boolean;
-    hidden?: boolean;
-  }) {
-    const {
-      content,
-      onClick,
-      className = "",
-      disabled = false,
-      translate = true,
-      hidden = false,
-    } = options;
-
-    if (hidden) {
-      return html``;
-    }
-
-    return html`
-      <button
-        class="${className}"
-        @click=${onClick}
-        ?disabled=${disabled}
-        ?translate=${translate}
-      >
-        ${content}
-      </button>
-    `;
   }
 
   private updateMap = [
@@ -214,12 +206,11 @@ export class EventsDisplay extends LitElement implements Controller {
     }
 
     let remainingEvents = this.events.filter((event) => {
-      const expired = this.game.ticks() - event.createdAt >= 80;
-      const isInboundWarning =
-        event.type === MessageType.NUKE_INBOUND ||
-        event.type === MessageType.HYDROGEN_BOMB_INBOUND ||
-        event.type === MessageType.MIRV_INBOUND ||
-        event.type === MessageType.NAVAL_INVASION_INBOUND;
+      const isInboundWarning = isHot(event.type);
+      // Inbound warnings live exactly as long as the threat does; everything
+      // else ages out of the feed after 30s so the timestamps stay meaningful.
+      const expired =
+        !isInboundWarning && this.game.ticks() - event.createdAt >= 300;
       const unitGone =
         isInboundWarning &&
         event.unitView !== undefined &&
@@ -560,58 +551,122 @@ export class EventsDisplay extends LitElement implements Controller {
       : event.description;
   }
 
-  private renderBetrayalDebuffTimer() {
-    const myPlayer = this.game.myPlayer();
-    if (!myPlayer || !myPlayer.isTraitor()) {
-      return html``;
+  /** Elapsed time since the event, mock-style: "now", then m:ss. */
+  private formatAge(createdAt: number): string {
+    const seconds = Math.max(
+      0,
+      Math.floor((this.game.ticks() - createdAt) / 10),
+    );
+    if (seconds < 2) return translateText("events_display.now");
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+  }
+
+  private categoryIcon(category: MessageCategory, extraClass = "") {
+    return html`<svg
+      viewBox="0 0 24 24"
+      class="w-3.5 h-3.5 shrink-0 mt-0.5 ${extraClass}"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.7"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d=${CATEGORY_ICON_PATHS[category]} />
+    </svg>`;
+  }
+
+  private onRowClick(event: GameEvent) {
+    if (event.focusID) {
+      this.emitGoToPlayerEvent(event.focusID);
+    } else if (event.unitView) {
+      this.emitGoToUnitEvent(event.unitView);
     }
+  }
 
-    const remainingTicks = myPlayer.getTraitorRemainingTicks();
-    const remainingSeconds = Math.ceil(remainingTicks / 10);
-
-    if (remainingSeconds <= 0) {
-      return html``;
-    }
-
+  /** Pinned threat row: red inset bar, red icon, age on the right. */
+  private renderHotRow(event: GameEvent) {
     return html`
-      ${this.renderButton({
-        content: html`${translateText("events_display.betrayal_debuff_ends", {
-          time: remainingSeconds,
-        })}`,
-        className: "text-left text-lt-gold",
-        translate: false,
-      })}
+      <div
+        class="flex gap-2 items-start px-2.5 py-2 text-[13px] leading-snug text-lt-100 bg-lt-bad/10 [box-shadow:inset_3px_0_0_var(--color-lt-bad)] border-b border-lt-700/60 last:border-b-0 ${event.unitView ||
+        event.focusID
+          ? "cursor-pointer hover:bg-lt-bad/20"
+          : ""}"
+        @click=${() => this.onRowClick(event)}
+      >
+        <span class="text-lt-bad">
+          ${this.categoryIcon(MESSAGE_TYPE_CATEGORIES[event.type])}
+        </span>
+        <div class="flex-1 min-w-0 font-medium">
+          ${this.getEventDescription(event)}
+        </div>
+        <span
+          class="shrink-0 text-[13px] font-bold tabular-nums text-lt-bad"
+          translate="no"
+          >${this.formatAge(event.createdAt)}</span
+        >
+      </div>
+    `;
+  }
+
+  private renderBetrayalRow() {
+    const myPlayer = this.game.myPlayer();
+    if (!myPlayer || !myPlayer.isTraitor()) return html``;
+    const remainingSeconds = Math.ceil(
+      myPlayer.getTraitorRemainingTicks() / 10,
+    );
+    if (remainingSeconds <= 0) return html``;
+    return html`
+      <div
+        class="flex gap-2 items-start px-2.5 py-2 text-[13px] leading-snug text-lt-gold bg-lt-gold/10 [box-shadow:inset_3px_0_0_var(--color-lt-gold)] border-b border-lt-700/60 last:border-b-0"
+      >
+        <div class="flex-1 min-w-0 font-medium">
+          ${translateText("events_display.betrayal_debuff_ends", {
+            time: remainingSeconds,
+          })}
+        </div>
+      </div>
     `;
   }
 
   private renderEventRow(event: GameEvent) {
+    const category = MESSAGE_TYPE_CATEGORIES[event.type];
     return html`
-      <tr>
-        <td
-          class="lg:px-2 lg:py-1 p-1 text-left ${getMessageTypeClasses(
-            event.type,
-          )}"
+      <div
+        class="flex gap-2 items-start px-2.5 py-1.5 text-[12.5px] leading-snug border-b border-lt-700/45 last:border-b-0 ${event.focusID ||
+        event.unitView
+          ? "cursor-pointer hover:bg-white/5"
+          : ""}"
+        style="color: ${CATEGORY_COLORS[category]}"
+        @click=${() => this.onRowClick(event)}
+      >
+        ${this.categoryIcon(category)}
+        <div class="flex-1 min-w-0">${this.getEventDescription(event)}</div>
+        <span
+          class="shrink-0 text-[11px] tabular-nums text-lt-500"
+          translate="no"
+          >${this.formatAge(event.createdAt)}</span
         >
-          ${event.focusID
-            ? this.renderButton({
-                content: this.getEventDescription(event),
-                onClick: () => {
-                  if (event.focusID) this.emitGoToPlayerEvent(event.focusID);
-                },
-                className: "text-left",
-              })
-            : event.unitView
-              ? this.renderButton({
-                  content: this.getEventDescription(event),
-                  onClick: () => {
-                    if (event.unitView) this.emitGoToUnitEvent(event.unitView);
-                  },
-                  className: "text-left",
-                })
-              : this.getEventDescription(event)}
-        </td>
-      </tr>
+      </div>
     `;
+  }
+
+  private renderFilterChips() {
+    return FILTER_CHIPS.map(
+      (chip) => html`
+        <button
+          class="lt-label !text-[10px] border px-1.5 py-px transition-colors ${this
+            ._activeFilter === chip.category
+            ? "!text-lt-accent border-lt-accent/50"
+            : "border-lt-600 hover:!text-lt-100"}"
+          @click=${() => {
+            this._activeFilter = chip.category;
+          }}
+        >
+          ${translateText(chip.key)}
+        </button>
+      `,
+    );
   }
 
   render() {
@@ -626,64 +681,57 @@ export class EventsDisplay extends LitElement implements Controller {
       myPlayer.getTraitorRemainingTicks() > 0
     );
 
-    const tier1Events: GameEvent[] = [];
-    let tier2Events: GameEvent[] = [];
+    const hotEvents: GameEvent[] = [];
+    const feedEvents: GameEvent[] = [];
     for (const event of this.events) {
-      (isTier1(event.type) ? tier1Events : tier2Events).push(event);
+      (isHot(event.type) ? hotEvents : feedEvents).push(event);
     }
-    tier1Events.sort((a, b) => a.createdAt - b.createdAt);
-    tier2Events.sort((a, b) => a.createdAt - b.createdAt);
-    tier2Events = tier2Events.slice(-4);
+    hotEvents.sort((a, b) => a.createdAt - b.createdAt);
+    feedEvents.sort((a, b) => a.createdAt - b.createdAt);
+
+    const visibleFeed =
+      this._activeFilter === null
+        ? feedEvents
+        : feedEvents.filter(
+            (e) => MESSAGE_TYPE_CATEGORIES[e.type] === this._activeFilter,
+          );
 
     if (
-      tier1Events.length === 0 &&
-      tier2Events.length === 0 &&
+      hotEvents.length === 0 &&
+      feedEvents.length === 0 &&
       !showBetrayalTimer
     ) {
       return html``;
     }
 
     return html`
-      <div class="flex flex-col gap-1 w-full min-[1200px]:w-96">
-        ${tier2Events.length > 0
+      <div
+        class="w-full lg:w-[322px] bg-[rgb(11_14_17/0.94)] border border-lt-700 backdrop-blur-sm pointer-events-auto flex flex-col lg:max-h-[inherit] min-h-0"
+      >
+        <!-- header: title + category chips -->
+        <div
+          class="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-lt-700"
+        >
+          <span class="lt-label !text-[11px] mr-auto"
+            >${translateText("events_display.title")}</span
+          >
+          ${this.renderFilterChips()}
+        </div>
+        <!-- pinned: inbound threats + betrayal debuff, never scroll away -->
+        ${hotEvents.length > 0 || showBetrayalTimer
           ? html`
-              <div
-                class="bg-lt-850/92 backdrop-blur-sm max-h-[12vh] lg:max-h-[22vh] overflow-y-auto opacity-90 events-container"
-              >
-                <table
-                  class="w-full border-collapse text-white text-xs lg:text-sm pointer-events-auto"
-                >
-                  <tbody>
-                    ${tier2Events.map((event) => this.renderEventRow(event))}
-                  </tbody>
-                </table>
+              <div class="border-b border-lt-700 important-events-container">
+                ${hotEvents.map((event) => this.renderHotRow(event))}
+                ${showBetrayalTimer ? this.renderBetrayalRow() : ""}
               </div>
             `
           : ""}
-        ${tier1Events.length > 0 || showBetrayalTimer
-          ? html`
-              <div
-                class="bg-lt-850 backdrop-blur-sm max-h-[30vh] lg:max-h-[40vh] overflow-y-auto shadow-lg border-l-4 border-lt-bad important-events-container"
-              >
-                <table
-                  class="w-full border-collapse text-white text-base lg:text-lg font-medium pointer-events-auto"
-                >
-                  <tbody>
-                    ${tier1Events.map((event) => this.renderEventRow(event))}
-                    ${showBetrayalTimer
-                      ? html`
-                          <tr>
-                            <td class="lg:px-2 lg:py-1 p-1 text-left">
-                              ${this.renderBetrayalDebuffTimer()}
-                            </td>
-                          </tr>
-                        `
-                      : ""}
-                  </tbody>
-                </table>
-              </div>
-            `
-          : ""}
+        <!-- the feed -->
+        <div
+          class="max-h-[18vh] lg:max-h-none lg:flex-1 lg:min-h-0 overflow-y-auto events-container"
+        >
+          ${visibleFeed.map((event) => this.renderEventRow(event))}
+        </div>
       </div>
     `;
   }

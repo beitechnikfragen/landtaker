@@ -4,12 +4,11 @@ import { UserMeResponse } from "../../core/ApiSchemas";
 import { PublicGames } from "../../core/Schemas";
 import { hasLinkedAccount } from "../Api";
 import { translateText } from "../Utils";
-import "./RankBadge";
-import { rankFromElo } from "./RankBadge";
 
 /**
  * Live status cells on the right of the top bar: how many players are in
- * public lobbies, and the signed-in player's rank.
+ * public lobbies, and the signed-in player's credit balance. The rank lives
+ * in the commander rail, where it has room to mean something.
  *
  * Split out of DesktopNavBar so the bar stays markup and this holds the two
  * subscriptions. Each cell renders only when it has real data — an empty
@@ -62,11 +61,11 @@ export class NavStatusCells extends LitElement {
 
   render() {
     const waiting = this.playersWaiting();
-    const elo =
-      hasLinkedAccount(this.userMeResponse) && this.userMeResponse !== false
-        ? this.userMeResponse.player?.leaderboard?.oneVone?.elo
-        : undefined;
-    const hasElo = typeof elo === "number" && Number.isFinite(elo);
+    const signedIn =
+      hasLinkedAccount(this.userMeResponse) && this.userMeResponse !== false;
+    const credits = signedIn
+      ? ((this.userMeResponse as UserMeResponse).player?.credits ?? 0)
+      : null;
 
     return html`
       ${waiting !== null
@@ -77,11 +76,40 @@ export class NavStatusCells extends LitElement {
             <span class="lt-num text-[15px]">${waiting}</span>
           </div>`
         : nothing}
-      ${hasElo
-        ? html`<div class="lt-nav-cell cursor-default">
-            <rank-badge .elo=${elo} .size=${24}></rank-badge>
-            <span class="lt-label !text-[13px] !text-lt-100"
-              >${rankFromElo(elo).label}</span
+      ${credits !== null
+        ? html`<div
+            class="lt-nav-cell cursor-default relative"
+            translate="no"
+            title=${translateText("main.coming_soon")}
+          >
+            <!-- Dimmed like Store/Clans: the balance is real, but there is
+                 nothing to spend it on yet. The chip stays full-opacity. -->
+            <span class="flex items-center gap-2 opacity-40">
+              <svg
+                viewBox="0 0 24 24"
+                class="w-[18px] h-[18px] text-lt-400"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path
+                  d="M12 7v10M9.5 9.5h4a1.8 1.8 0 0 1 0 3.6h-3a1.8 1.8 0 0 0 0 3.6h4"
+                />
+              </svg>
+              <span class="lt-label !text-[13px]"
+                >${translateText("nav.credits")}</span
+              >
+              <span class="lt-num text-[15px] text-lt-100"
+                >${credits.toLocaleString("en-US")}</span
+              >
+            </span>
+            <span
+              class="absolute top-2 right-0 lt-num text-[10px] font-bold uppercase tracking-[0.08em] bg-lt-accent text-lt-accent-ink px-1.5 leading-[16px] pointer-events-none"
+              >${translateText("main.soon")}</span
             >
           </div>`
         : nothing}

@@ -37,17 +37,14 @@ import { ImmunityBarVisibleEvent } from "./ImmunityTimer";
 import { CloseRadialMenuEvent } from "./RadialMenu";
 import "./RelationSmiley";
 import { SpawnBarVisibleEvent } from "./SpawnTimer";
-const soldierIconAquarius = assetUrl("images/SoldierIconAquarius.svg");
 const allianceIcon = assetUrl("images/AllianceIcon.svg");
 const traitorIcon = assetUrl("images/TraitorIcon.svg");
 const warshipIcon = assetUrl("images/BattleshipIconWhite.svg");
 const cityIcon = assetUrl("images/CityIconWhite.svg");
 const factoryIcon = assetUrl("images/FactoryIconWhite.svg");
-const goldCoinIcon = assetUrl("images/GoldCoinIcon.svg");
 const missileSiloIcon = assetUrl("images/MissileSiloIconWhite.svg");
 const portIcon = assetUrl("images/PortIcon.svg");
 const samLauncherIcon = assetUrl("images/SamLauncherIconWhite.svg");
-const soldierIcon = assetUrl("images/SoldierIcon.svg");
 
 function euclideanDistWorld(
   coord: { x: number; y: number },
@@ -212,16 +209,13 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
 
   private displayUnitCount(player: PlayerView, type: UnitType, icon: string) {
     return !this.game.config().isUnitDisabled(type)
-      ? html`<div
-          class="flex items-center justify-center gap-0.5 lg:gap-1 p-0.5 lg:p-1 border border-gray-500 text-[10px] lg:text-xs w-9 lg:w-12 h-6 lg:h-7"
-          translate="no"
-        >
+      ? html`<span class="inline-flex items-center gap-1.5" translate="no">
           <img
             src=${icon}
-            class="w-3 h-3 lg:w-4 lg:h-4 object-contain shrink-0"
+            class="w-3.5 h-3.5 object-contain shrink-0 opacity-70"
           />
           <span>${player.totalUnitLevels(type)}</span>
-        </div>`
+        </span>`
       : "";
   }
 
@@ -260,47 +254,72 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
     </span>`;
   }
 
+  /** The relation chip at the header's right edge: one word, one colour. */
+  private renderRelationChip(
+    player: PlayerView,
+    myPlayer: PlayerView | null,
+  ): TemplateResult | "" {
+    if (!myPlayer || myPlayer === player) return "";
+
+    const traitorTicks = player.getTraitorRemainingTicks();
+    if (traitorTicks > 0) {
+      return html`<span
+        class="ml-auto shrink-0 flex items-center gap-1 lt-label !text-[11px] !text-lt-bad border border-lt-bad/45 px-2 py-0.5"
+        translate="no"
+      >
+        <img src=${traitorIcon} alt="" class="w-3.5 h-3.5" />
+        ${renderDuration(Math.floor(traitorTicks / 10))}
+      </span>`;
+    }
+
+    if (myPlayer.isAlliedWith(player)) {
+      const alliance = myPlayer
+        .alliances()
+        .find((a) => a.other === player.id());
+      return html`<span
+        class="ml-auto shrink-0 flex items-center gap-1 lt-label !text-[11px] !text-lt-ok border border-lt-ok/45 px-2 py-0.5"
+        translate="no"
+      >
+        <img src=${allianceIcon} alt="" class="w-3.5 h-3.5" />
+        ${alliance !== undefined ? this.allianceExpirationText(alliance) : ""}
+      </span>`;
+    }
+
+    if (player.type() === PlayerType.Nation) {
+      const relation =
+        this.playerProfile?.relations[myPlayer.smallID()] ?? Relation.Neutral;
+      if (relation === Relation.Neutral) return "";
+      const tone =
+        relation === Relation.Hostile
+          ? "!text-lt-bad border-lt-bad/45"
+          : relation === Relation.Distrustful
+            ? "!text-lt-gold border-lt-gold/45"
+            : "!text-lt-ok border-lt-ok/45";
+      return html`<span
+        class="ml-auto shrink-0 lt-label !text-[11px] ${tone} border px-2 py-0.5"
+        >${this.getRelationName(relation)}</span
+      >`;
+    }
+
+    return "";
+  }
+
+  private renderStatCell(label: string, value: string, valueClass = "") {
+    return html`<div class="bg-[rgb(20_24_28/0.96)] px-3 py-1.5">
+      <span class="lt-label !text-[10px] block">${label}</span>
+      <span class="text-base font-bold tabular-nums leading-tight ${valueClass}"
+        >${value}</span
+      >
+    </div>`;
+  }
+
   private renderPlayerInfo(player: PlayerView) {
     const myPlayer = this.game.myPlayer();
     const isFriendly = myPlayer?.isFriendly(player);
-    const isAllied = myPlayer?.isAlliedWith(player);
-    const traitorTicks = player.getTraitorRemainingTicks();
-    let allianceHtml: TemplateResult | null = null;
-    let betrayalHtml: TemplateResult | null = null;
-    const maxTroops = this.game.config().maxTroops(player);
     const attackingTroops = player
       .outgoingAttacks()
       .map((a) => a.troops)
       .reduce((a, b) => a + b, 0);
-    const totalTroops = player.troops();
-
-    if (isAllied) {
-      const alliance = myPlayer
-        ?.alliances()
-        .find((alliance) => alliance.other === player.id());
-      if (alliance !== undefined) {
-        allianceHtml = html` <div
-          class="flex items-center  mr-0 gap-1 text-sm font-bold leading-tight"
-        >
-          <img src=${allianceIcon} width="20" height="20" />
-          ${this.allianceExpirationText(alliance)}
-        </div>`;
-      }
-    }
-
-    if (traitorTicks > 0) {
-      betrayalHtml = html`<img
-          src=${traitorIcon}
-          alt=""
-          class="w-4 h-4 shrink-0"
-        />
-        <span
-          class="text-sm text-red-900 
-          drop-shadow-[-.2px_-.2px_.8px_rgba(0,0,0,.7),.2px_.2px_.8px_rgba(0,0,0,.7)]"
-        >
-          ${renderDuration(Math.floor(traitorTicks / 10))}
-        </span>`;
-    }
 
     let playerType = "";
     switch (player.type()) {
@@ -316,153 +335,77 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
     }
     const playerTeam = getTranslatedPlayerTeamLabel(player.team());
 
-    return html`
-      <div class="flex items-start gap-1 lg:gap-2 p-1 lg:p-1.5">
-        <!-- Left: Gold & Troop bar -->
-        <div class="flex flex-col gap-1 shrink-0 w-28 md:w-36">
-          <div class="flex items-center gap-1">
-            <div
-              class="flex items-center justify-center px-1 py-0.5 border border-yellow-400 font-bold text-lt-gold text-sm lg:gap-1"
-              translate="no"
-            >
-              <img src=${goldCoinIcon} width="13" height="13" />
-              <span class="px-0.5">${renderNumber(player.gold())}</span>
-            </div>
-            <div
-              class="flex flex-1 flex-col items-center justify-center text-xs font-bold ${attackingTroops >
-              0
-                ? "text-lt-accent"
-                : "text-lt-500"} drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
-              translate="no"
-            >
-              <span class="flex items-center gap-px leading-none text-xs"
-                ><img
-                  class="w-2.5 h-2.5 inline-block ${attackingTroops > 0
-                    ? ""
-                    : "brightness-0 invert opacity-40"}"
-                  src=${attackingTroops > 0 ? soldierIconAquarius : soldierIcon}
-                  alt=""
-                  aria-hidden="true"
-                />↑</span
-              >
-              <span class="tabular-nums leading-none text-sm mt-0.5"
-                >${renderTroops(attackingTroops)}</span
-              >
-            </div>
-          </div>
-          <div class="w-28 md:w-36" translate="no">
-            ${this.renderTroopBar(totalTroops, attackingTroops, maxTroops)}
-          </div>
-        </div>
-        <!-- Right: Player identity + Units below -->
-        <div class="flex flex-col justify-between self-stretch flex-grow-1">
-          <div
-            class="flex items-center gap-1 gap-y-2 md:gap-2 font-bold text-sm lg:text-lg ${this.getPlayerNameColor(
-              isFriendly ?? false,
-            )}"
-          >
-            ${player.cosmetics.flag
-              ? html`<img
-                  class="h-6 object-contain"
-                  src=${assetUrl(player.cosmetics.flag!)}
-                />`
-              : html``}
-            <span>${player.displayName()}</span>
-            ${this.getRelationSmiley(player, myPlayer)}
-            ${playerTeam !== "" && player.type() !== PlayerType.Bot
-              ? html`<div class="flex flex-col leading-tight">
-                  <span class="text-lt-400 text-xs font-normal"
-                    >${playerType}</span
-                  >
-                  <span class="text-xs font-normal text-lt-400"
-                    >[<span
-                      style="color: ${themeProvider
-                        .current()
-                        .teamColor(player.team()!)
-                        .toHex()}"
-                      >${playerTeam}</span
-                    >]</span
-                  >
-                </div>`
-              : html`<span class="text-lt-400 text-xs font-normal"
-                  >${playerType}</span
-                >`}
-            ${this.renderPlayerNameIcons(player)}
-            <span class="flex ml-auto items-center shrink-0 "
-              >${betrayalHtml ?? ""}</span
-            >
-            ${allianceHtml ?? ""}
-          </div>
-          <div class="flex gap-0.5 lg:gap-1 items-center mt-0.5">
-            ${this.displayUnitCount(player, UnitType.City, cityIcon)}
-            ${this.displayUnitCount(player, UnitType.Factory, factoryIcon)}
-            ${this.displayUnitCount(player, UnitType.Port, portIcon)}
-            ${this.displayUnitCount(
-              player,
-              UnitType.MissileSilo,
-              missileSiloIcon,
-            )}
-            ${this.displayUnitCount(
-              player,
-              UnitType.SAMLauncher,
-              samLauncherIcon,
-            )}
-            ${this.displayUnitCount(player, UnitType.Warship, warshipIcon)}
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  private renderTroopBar(
-    totalTroops: number,
-    attackingTroops: number,
-    maxTroops: number,
-  ) {
-    const base = Math.max(maxTroops, 1);
-    const greenPercentRaw = (totalTroops / base) * 100;
-    const orangePercentRaw = (attackingTroops / base) * 100;
-
-    const greenPercent = Math.max(0, Math.min(100, greenPercentRaw));
-    const orangePercent = Math.max(
-      0,
-      Math.min(100 - greenPercent, orangePercentRaw),
+    const validTiles = Math.max(
+      this.game.numLandTiles() - this.game.numTilesWithFallout(),
+      1,
     );
+    const landPercent = (player.numTilesOwned() / validTiles) * 100;
+    const landText =
+      landPercent >= 10 ? landPercent.toFixed(0) : landPercent.toFixed(1);
 
     return html`
-      <div
-        class="w-full h-5 lg:h-6 border border-lt-600 bg-lt-900/60 overflow-hidden relative"
-      >
-        <div class="relative h-full">
-          <div
-            class="absolute inset-y-0 left-0 w-full origin-left bg-sky-700 transition-transform duration-200 ease-out"
-            style="transform: scaleX(${greenPercent / 100});"
-          ></div>
-          <div
-            class="absolute inset-y-0 left-0 w-full origin-left bg-lt-troop transition-transform duration-200 ease-out"
-            style="transform: translateX(${greenPercent}%) scaleX(${orangePercent /
-            100});"
-          ></div>
-        </div>
-        <div
-          class="absolute inset-0 flex items-center justify-between px-1.5 text-sm font-bold leading-none pointer-events-none"
-          translate="no"
+      <!-- Header: flag · name · kind · relation chip -->
+      <div class="flex items-center gap-2.5 px-3 py-2 border-b border-lt-700">
+        ${player.cosmetics.flag
+          ? html`<img
+              class="h-[17px] w-[26px] object-cover border border-lt-600 shrink-0"
+              src=${assetUrl(player.cosmetics.flag!)}
+            />`
+          : html``}
+        <span
+          class="font-[family-name:var(--font-lt-display)] font-semibold uppercase tracking-[0.04em] text-[17px] leading-none truncate ${this.getPlayerNameColor(
+            isFriendly ?? false,
+          )}"
+          >${player.displayName()}</span
         >
-          <span class="text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
-            >${renderTroops(totalTroops)}</span
-          >
-          <span class="text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
-            >${renderTroops(maxTroops)}</span
-          >
-        </div>
-        <img
-          src=${soldierIcon}
-          alt=""
-          aria-hidden="true"
-          width="14"
-          height="14"
-          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 brightness-0 invert drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] pointer-events-none"
-        />
+        <span class="lt-label !text-[11px] shrink-0">${playerType}</span>
+        ${playerTeam !== "" && player.type() !== PlayerType.Bot
+          ? html`<span
+              class="lt-label !text-[11px] shrink-0"
+              style="color: ${themeProvider
+                .current()
+                .teamColor(player.team()!)
+                .toHex()}"
+              >${playerTeam}</span
+            >`
+          : html``}
+        ${this.getRelationSmiley(player, myPlayer)}
+        ${this.renderPlayerNameIcons(player)}
+        ${this.renderRelationChip(player, myPlayer)}
+      </div>
+      <!-- Stat grid: troops / gold / land / attacking -->
+      <div class="grid grid-cols-4 gap-px bg-lt-700" translate="no">
+        ${this.renderStatCell(
+          translateText("player_panel.troops"),
+          renderTroops(player.troops()),
+          "text-lt-100",
+        )}
+        ${this.renderStatCell(
+          translateText("player_panel.gold"),
+          renderNumber(player.gold()),
+          "text-lt-gold",
+        )}
+        ${this.renderStatCell(
+          translateText("player_panel.land"),
+          `${landText}%`,
+          "text-lt-100",
+        )}
+        ${this.renderStatCell(
+          translateText("player_panel.attacking"),
+          renderTroops(attackingTroops),
+          attackingTroops > 0 ? "text-lt-accent" : "text-lt-500",
+        )}
+      </div>
+      <!-- Structures strip -->
+      <div
+        class="flex items-center gap-3.5 px-3 py-1.5 border-t border-lt-700 text-lt-400 text-xs tabular-nums"
+      >
+        ${this.displayUnitCount(player, UnitType.City, cityIcon)}
+        ${this.displayUnitCount(player, UnitType.Factory, factoryIcon)}
+        ${this.displayUnitCount(player, UnitType.Port, portIcon)}
+        ${this.displayUnitCount(player, UnitType.MissileSilo, missileSiloIcon)}
+        ${this.displayUnitCount(player, UnitType.SAMLauncher, samLauncherIcon)}
+        ${this.displayUnitCount(player, UnitType.Warship, warshipIcon)}
       </div>
     `;
   }
@@ -512,7 +455,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
         @contextmenu=${(e: MouseEvent) => e.preventDefault()}
       >
         <div
-          class="bg-lt-850/92 backdrop-blur-sm shadow-xs min-[1200px]:sm:shadow-lg text-white text-lg lg:text-base w-full sm:w-[500px] overflow-hidden ${containerClasses}"
+          class="bg-[rgb(11_14_17/0.92)] border border-lt-700 backdrop-blur-sm text-white text-base w-full sm:w-auto sm:min-w-[392px] sm:max-w-[560px] overflow-hidden ${containerClasses}"
         >
           ${this.player !== null ? this.renderPlayerInfo(this.player) : ""}
           ${this.unit !== null ? this.renderUnitInfo(this.unit) : ""}
