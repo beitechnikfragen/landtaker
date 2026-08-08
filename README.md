@@ -10,27 +10,31 @@ Landtaker is an online real-time strategy game focused on territorial control an
 
 Landtaker is a fork of [OpenFront.io](https://openfront.io/), which is itself a fork/rewrite of WarFront.io. Credit to https://github.com/openfrontio/OpenFrontIO and https://github.com/WarFrontIO. This project is not affiliated with or endorsed by OpenFront Inc.
 
-![CI](https://github.com/openfrontio/OpenFrontIO/actions/workflows/ci.yml/badge.svg)
-[![Crowdin](https://badges.crowdin.net/openfront-mls/localized.svg)](https://crowdin.com/project/openfront-mls)
-[![CLA assistant](https://cla-assistant.io/readme/badge/openfrontio/OpenFrontIO)](https://cla-assistant.io/openfrontio/OpenFrontIO)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Assets: CC BY-SA 4.0](https://img.shields.io/badge/Assets-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 
 ## License
 
-OpenFront source code is licensed under the **GNU Affero General Public License v3.0**
+Source code is licensed under the **GNU Affero General Public License v3.0**.
+Running a modified version as a network service obliges you to offer its
+source — this repository is that offer.
 
-Current copyright notices appear in:
+Assets under `/resources` are CC BY-SA 4.0 and **require attribution to
+"OpenFront" or "OpenFront Inc."** (see [LICENSE-ASSETS](LICENSE-ASSETS)). The
+game ships a large amount of that art, so the credit is carried in the footer:
 
-- Footer: "© OpenFront and Contributors"
-- Loading screen: "© OpenFront and Contributors"
+- Footer: "© Landtaker · built on OpenFront™ and Contributors"
 
-Modified versions must preserve these notices in reasonably visible locations.
-
-See the [LICENSE](LICENSE) for complete requirements.
+Keep that line, or replace the CC BY-SA assets first. See the
+[LICENSE](LICENSE) for the code's complete requirements.
 
 For asset licensing, see [LICENSE-ASSETS](LICENSE-ASSETS).  
 For license history, see [LICENSING.md](LICENSING.md).
+
+## 💬 Community
+
+- Discord: https://discord.gg/FztuCAcVGD
+- Reddit: https://www.reddit.com/r/landtaker/
 
 ## 🌟 Features
 
@@ -50,8 +54,8 @@ For license history, see [LICENSING.md](LICENSING.md).
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/openfrontio/OpenFrontIO.git
-   cd OpenFrontIO
+   git clone https://github.com/beitechnikfragen/landtaker.git
+   cd landtaker
    ```
 
 2. **Install dependencies**
@@ -98,7 +102,7 @@ npm run start:server-dev
 
 Sometimes it's useful to connect to production servers when replaying a game, testing user profiles, purchases, or login flow.
 
-> To replay a production game, make sure you're on the same commit that the game you want to replay was executed on, you can find the `gitCommit` value via `https://api.openfront.io/game/[gameId]`.
+> To replay a production game, make sure you're on the same commit that the game you want to replay was executed on, you can find the `gitCommit` value via `https://api.landtaker.io/game/[gameId]`.
 > Unfinished games cannot be replayed on localhost.
 
 To connect to staging api servers:
@@ -142,8 +146,10 @@ npm run dev:prod
 
 - `/src/client` - Frontend game client
 - `/src/core` - Deterministic game simulation
-- `/src/server` - Backend game server
-- `/resources` - Static assets (images, maps, etc.)
+- `/src/server` - Backend game server (lobbies, match relay)
+- `/backend` - Our own API: accounts, ranked, friends, parties (Fastify + Postgres)
+- `/resources` - Upstream static assets (images, maps, sounds) — CC BY-SA 4.0
+- `/brand` - Landtaker marks, rank insignia and fonts — see `brand/LICENSE`
 
 ## 🤝 Contributing
 
