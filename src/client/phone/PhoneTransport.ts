@@ -26,7 +26,12 @@ export class PhoneTransport {
     private readonly myId: ClientID,
     private readonly send: (to: ClientID, data: string) => void,
     private readonly onConnectionFailed?: (peer: ClientID) => void,
-  ) {}
+  ) {
+    // TEMP diagnostics: remove once the phone audio bug is found
+    console.log(
+      `[phone] PhoneTransport constructed myId=${JSON.stringify(this.myId)}`,
+    );
+  }
 
   get micDenied(): boolean {
     return this._micDenied;
@@ -35,6 +40,10 @@ export class PhoneTransport {
   // Bringt das Mesh auf den Stand der Teilnehmerliste: neue Peers aufbauen,
   // verschwundene abbauen.
   async syncPeers(peers: ClientID[]): Promise<void> {
+    // TEMP diagnostics: remove once the phone audio bug is found
+    console.log(
+      `[phone] syncPeers called incoming=${JSON.stringify(peers)} currentPeerKeys=${JSON.stringify([...this.peers.keys()])}`,
+    );
     const wanted = new Set(peers);
     for (const [id, peer] of [...this.peers]) {
       if (wanted.has(id)) continue;
@@ -43,6 +52,10 @@ export class PhoneTransport {
       this.peers.delete(id);
     }
     if (peers.length === 0) {
+      // TEMP diagnostics: remove once the phone audio bug is found
+      console.log(
+        `[phone] syncPeers taking EARLY RETURN (peers.length === 0) — stopping mic, no peer connection will be created`,
+      );
       this.stopMic();
       return;
     }
@@ -69,6 +82,10 @@ export class PhoneTransport {
     } catch {
       return;
     }
+    // TEMP diagnostics: remove once the phone audio bug is found
+    console.log(
+      `[phone] handleSignal inbound type=${msg.type} from=${from} dataLength=${data.length}`,
+    );
     // Do not block peer creation / signaling on the mic: getUserMedia() can
     // take seconds (permission prompt), and an incoming offer/candidate
     // must not be delayed by it. Kick off ensureMic() in the background —
@@ -118,6 +135,10 @@ export class PhoneTransport {
   }
 
   private createPeer(id: ClientID): Peer {
+    // TEMP diagnostics: remove once the phone audio bug is found
+    console.log(
+      `[phone] createPeer constructing RTCPeerConnection for id=${id}`,
+    );
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     const audio = new PhoneAudio();
     audio.setVolume(this.volume);
@@ -177,6 +198,10 @@ export class PhoneTransport {
   }
 
   private async makeOffer(id: ClientID, peer: Peer): Promise<void> {
+    // TEMP diagnostics: remove once the phone audio bug is found
+    console.log(
+      `[phone] makeOffer to id=${id} myId=${JSON.stringify(this.myId)} myId<id=${this.myId < id}`,
+    );
     try {
       const offer = await peer.pc.createOffer();
       await peer.pc.setLocalDescription(offer);
@@ -197,6 +222,8 @@ export class PhoneTransport {
   private async ensureMic(): Promise<void> {
     if (this.localStream || this._micDenied) return;
     if (this.micPromise) return this.micPromise;
+    // TEMP diagnostics: remove once the phone audio bug is found
+    console.log(`[phone] ensureMic starting getUserMedia()`);
     this.micPromise = (async () => {
       try {
         this.localStream = await navigator.mediaDevices.getUserMedia({
@@ -206,9 +233,15 @@ export class PhoneTransport {
             autoGainControl: true,
           },
         });
+        // TEMP diagnostics: remove once the phone audio bug is found
+        console.log(
+          `[phone] ensureMic success trackCount=${this.localStream.getAudioTracks().length}`,
+        );
         this.setMuted(this.muted);
         this.attachMicToExistingPeers();
       } catch {
+        // TEMP diagnostics: remove once the phone audio bug is found
+        console.log(`[phone] ensureMic DENIED`);
         this._micDenied = true;
       } finally {
         this.micPromise = null;

@@ -779,10 +779,19 @@ export class ClientGameRunner {
   ) {
     this.lastMessageTime = Date.now();
     if (this.clientID !== undefined) {
+      // TEMP diagnostics: remove once the phone audio bug is found
+      console.log(
+        `[phone] constructing PhoneController with clientID=${JSON.stringify(this.clientID)}`,
+      );
       this._phoneController = new PhoneController(
         this.clientID,
         this.transport,
         this.userSettings,
+      );
+    } else {
+      // TEMP diagnostics: remove once the phone audio bug is found
+      console.log(
+        `[phone] NOT constructing PhoneController — clientID is undefined`,
       );
     }
   }
@@ -1014,6 +1023,10 @@ export class ClientGameRunner {
         this.eventBus.emit(new NewLobbyEvent(message.gameID));
       }
       if (message.type === "phone") {
+        // TEMP diagnostics: remove once the phone audio bug is found
+        console.log(
+          `[phone] ClientGameRunner received phone message kind=${message.payload.kind} hasController=${this._phoneController !== null}`,
+        );
         this._phoneController?.receive(message.payload);
       }
       if (message.type === "turn") {

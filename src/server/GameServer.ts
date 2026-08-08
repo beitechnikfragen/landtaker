@@ -1057,6 +1057,10 @@ export class GameServer {
             break;
           }
           case "phone": {
+            // TEMP diagnostics: remove once the phone audio bug is found
+            console.log(
+              `[phone] inbound phone message clientID=${client.clientID} kind=${clientMsg.payload.kind}`,
+            );
             this.deliverPhone(
               this.phoneExchange.handle(client.clientID, clientMsg.payload),
             );
@@ -1556,7 +1560,24 @@ export class GameServer {
   private deliverPhone(out: PhoneOutbox[]): void {
     for (const item of out) {
       const target = this.allClients.get(item.to);
-      if (!target || target.ws.readyState !== WebSocket.OPEN) continue;
+      // TEMP diagnostics: remove once the phone audio bug is found
+      console.log(
+        `[phone] deliverPhone to=${item.to} kind=${item.payload.kind}`,
+      );
+      if (!target) {
+        // TEMP diagnostics: remove once the phone audio bug is found
+        console.log(
+          `[phone] deliverPhone SKIPPED to=${item.to} kind=${item.payload.kind} reason=missing-from-allClients`,
+        );
+        continue;
+      }
+      if (target.ws.readyState !== WebSocket.OPEN) {
+        // TEMP diagnostics: remove once the phone audio bug is found
+        console.log(
+          `[phone] deliverPhone SKIPPED to=${item.to} kind=${item.payload.kind} reason=socket-not-open readyState=${target.ws.readyState}`,
+        );
+        continue;
+      }
       try {
         target.ws.send(
           JSON.stringify({ type: "phone", payload: item.payload }),

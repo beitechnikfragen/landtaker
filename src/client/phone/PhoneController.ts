@@ -69,6 +69,18 @@ export class PhoneController {
   }
 
   receive(payload: ServerPhonePayload): void {
+    // TEMP diagnostics: remove once the phone audio bug is found
+    if (payload.kind === "callState") {
+      console.log(
+        `[phone] PhoneController.receive kind=${payload.kind} peers.length=${payload.peers.length} peers=${JSON.stringify(payload.peers)}`,
+      );
+    } else if (payload.kind === "ringing" || payload.kind === "missed") {
+      console.log(
+        `[phone] PhoneController.receive kind=${payload.kind} from=${payload.from}`,
+      );
+    } else {
+      console.log(`[phone] PhoneController.receive kind=${payload.kind}`);
+    }
     if (payload.kind === "signal") {
       void this.rtc.handleSignal(payload.from, payload.data);
       return;
@@ -85,18 +97,24 @@ export class PhoneController {
   }
 
   dial(target: ClientID): void {
+    // TEMP diagnostics: remove once the phone audio bug is found
+    console.log(`[phone] PhoneController.dial target=${target}`);
     this._connectionFailed = false;
     this.sounds.playDialClick();
     this.send({ kind: "dial", target });
   }
 
   answer(): void {
+    // TEMP diagnostics: remove once the phone audio bug is found
+    console.log(`[phone] PhoneController.answer`);
     this._connectionFailed = false;
     this.sounds.playPickUp();
     this.send({ kind: "answer" });
   }
 
   hangup(): void {
+    // TEMP diagnostics: remove once the phone audio bug is found
+    console.log(`[phone] PhoneController.hangup`);
     this.sounds.playHangUp();
     this.send({ kind: "hangup" });
   }
@@ -158,6 +176,8 @@ export class PhoneController {
   }
 
   private send(payload: ClientPhonePayload): void {
+    // TEMP diagnostics: remove once the phone audio bug is found
+    console.log(`[phone] PhoneController.send OUT kind=${payload.kind}`);
     this.transport.sendPhone(payload);
   }
 }
