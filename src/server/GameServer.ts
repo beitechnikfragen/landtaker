@@ -753,6 +753,26 @@ export class GameServer {
       clientIP: ipAnonymize(client.ip),
     });
 
+    // Stamp the admin nameplate flag from the connection's verified JWT role.
+    // Unlike the verified badge — a client claim the server merely validates —
+    // this is never accepted from the client at all, so a forged `admin: true`
+    // in the join payload is overwritten here either way.
+    //
+    // Mutated in place rather than reassigned: `cosmetics` is a readonly
+    // reference on Client (the object itself is not), which is the same reason
+    // the verified-badge strip above uses `delete`. The websocket join path
+    // always supplies an object (Privilege.isAllowed returns one even when
+    // every cosmetic is refused), so an admin never silently loses the
+    // nameplate; the undefined branch only covers directly-constructed
+    // clients in tests.
+    if (client.cosmetics !== undefined) {
+      if (isAdminRole(client.role)) {
+        client.cosmetics.admin = true;
+      } else {
+        delete client.cosmetics.admin;
+      }
+    }
+
     // Skipped in dev: local testing (multi-tab, the matchmaking e2e) is
     // inherently same-IP.
     if (

@@ -473,6 +473,7 @@ export class WebGLFrameBuilder {
         flag: flagUrl,
         crown: crownUrl,
         verified: p.cosmetics.verified === true,
+        admin: p.cosmetics.admin === true,
         color: p.territoryColor().toHex(),
       });
     }

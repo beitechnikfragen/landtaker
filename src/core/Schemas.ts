@@ -753,6 +753,13 @@ export const PlayerCosmeticsSchema = z.object({
   effects: z.record(z.string(), PlayerEffectSchema).optional(),
   // Plays under the verified account username — renders the blue check.
   verified: z.boolean().optional(),
+  // Holds an admin/root role — renders the animated nameplate.
+  //
+  // Unlike `verified`, this is never a client claim: the game server writes it
+  // from the connection's JWT role at join (GameServer.joinClient) and
+  // overwrites whatever the client sent. It reaches the renderer through
+  // GameStartInfo, so every client sees the same value.
+  admin: z.boolean().optional(),
 });
 
 export const PlayerSchema = z.object({
