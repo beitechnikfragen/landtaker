@@ -11,7 +11,7 @@ import {
   StatsTableKind,
 } from "../../client/StatsConstants";
 import { Cosmetics } from "../CosmeticSchemas";
-import { PlayerPattern } from "../Schemas";
+import { PhoneMode, PlayerPattern } from "../Schemas";
 
 export function getDefaultKeybinds(isMac: boolean): Record<string, string> {
   return {
@@ -566,5 +566,31 @@ export class UserSettings {
 
   setSoundEffectsVolume(volume: number): void {
     this.setFloat("settings.soundEffectsVolume", volume);
+  }
+
+  phoneMode(): PhoneMode {
+    const raw = this.getString("settings.phoneMode", "normal");
+    if (raw === "normal" || raw === "silent" || raw === "dnd") return raw;
+    return "normal";
+  }
+
+  setPhoneMode(mode: PhoneMode): void {
+    this.setString("settings.phoneMode", mode);
+  }
+
+  phoneAlliesOnly(): boolean {
+    return this.getBool("settings.phoneAlliesOnly", false);
+  }
+
+  setPhoneAlliesOnly(value: boolean): void {
+    this.setBool("settings.phoneAlliesOnly", value);
+  }
+
+  phoneVolume(): number {
+    return this.getFloat("settings.phoneVolume", 1);
+  }
+
+  setPhoneVolume(value: number): void {
+    this.setFloat("settings.phoneVolume", value);
   }
 }
