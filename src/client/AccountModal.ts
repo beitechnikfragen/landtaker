@@ -21,8 +21,6 @@ import {
   sendMagicLink,
 } from "./Auth";
 import "./components/baseComponents/stats/DiscordUserHeader";
-import "./components/baseComponents/stats/PlayerGameHistoryView";
-import type { PlayerGameHistoryCache } from "./components/baseComponents/stats/PlayerGameHistoryView";
 import "./components/baseComponents/stats/PlayerStatsTable";
 import "./components/baseComponents/stats/PlayerStatsTree";
 import "./components/baseComponents/stats/SteamUserHeader";
@@ -30,7 +28,6 @@ import { BaseModal } from "./components/BaseModal";
 import "./components/CopyButton";
 import "./components/CurrencyDisplay";
 import "./components/Difficulties";
-import "./components/FriendsList";
 import "./components/RewardsPanel";
 import type { RewardsChangedDetail } from "./components/RewardsPanel";
 import "./components/SubscriptionPanel";
@@ -75,10 +72,6 @@ export class AccountModal extends BaseModal {
 
   private userMeResponse: UserMeResponse | null = null;
   private statsTree: PlayerStatsTree | null = null;
-  // Preserves the Games tab's accumulated list + cursor across tab switches.
-  private gameHistoryCache: PlayerGameHistoryCache | null = null;
-  private gamesScrollTop = 0;
-  private restoreGamesScrollAfterOpen = false;
   private cosmetics: Cosmetics | null = null;
 
   constructor() {
@@ -169,13 +162,18 @@ export class AccountModal extends BaseModal {
     if (this.isLoadingUser || !this.isLinkedAccount()) {
       return {};
     }
+    // Friends live in the social dock (friends-panel), which is on every page
+    // and holds chat and presence the modal never had. Games live on the Match
+    // History page, which pages through the full archive. Settings held only a
+    // marketing-consent toggle driven by `player.marketingConsent` — a field
+    // our backend does not serve, so the tab rendered empty every time.
+    //
+    // Account linking (email / Google) is NOT affected: it lives in the
+    // Account tab, which stays.
     return {
       tabs: [
         { key: "account", label: translateText("account_modal.tab_account") },
         { key: "stats", label: translateText("account_modal.tab_stats") },
-        { key: "games", label: translateText("account_modal.tab_games") },
-        { key: "friends", label: translateText("account_modal.tab_friends") },
-        { key: "settings", label: translateText("account_modal.tab_settings") },
       ],
     };
   }
@@ -204,12 +202,6 @@ export class AccountModal extends BaseModal {
     switch (tab) {
       case "stats":
         return this.renderStatsTab();
-      case "games":
-        return this.renderGamesTab();
-      case "friends":
-        return this.renderFriendsTab();
-      case "settings":
-        return this.renderSettingsTab();
       default:
         return this.renderAccountTab();
     }
@@ -218,6 +210,13 @@ export class AccountModal extends BaseModal {
   // Persistent marketing-consent control (client-driven consent). Mirrors the
   // post-login toast: a player can turn email updates on/off any time here, or
   // — when there's no verified email on the account — is told to link one.
+  /**
+   * Marketing-consent control. NOT reachable right now: the tab that hosted
+   * it was removed because `player.marketingConsent` is not part of our
+   * /users/@me response, so it always rendered empty. Kept intact — consent
+   * has to be revocable the moment we start sending marketing mail; wire this
+   * back into a tab then rather than rebuilding it.
+   */
   private renderSettingsTab(): TemplateResult {
     const consent = this.userMeResponse?.player?.marketingConsent;
     // The API didn't return consent state (older backend). The tab is always
@@ -334,26 +333,6 @@ export class AccountModal extends BaseModal {
     }
     this.consentBusy = false;
     this.requestUpdate();
-  }
-
-  private renderFriendsTab(): TemplateResult {
-    const myPublicId = this.userMeResponse?.player?.publicId ?? "";
-    return html`<friends-list
-      .myPublicId=${myPublicId}
-      @view-profile=${(e: CustomEvent<{ publicId: string }>) =>
-        this.openPlayerProfile(e.detail.publicId)}
-    ></friends-list>`;
-  }
-
-  private openPlayerProfile(publicId: string): void {
-    const profileModal = document.querySelector<
-      HTMLElement & { openFromAccount(publicId: string): void }
-    >("player-profile-modal");
-    profileModal?.openFromAccount(publicId);
-  }
-
-  public returnToFriends(): void {
-    this.open({ tab: "friends" });
   }
 
   private renderAccountTab(): TemplateResult {
@@ -486,31 +465,6 @@ export class AccountModal extends BaseModal {
       <player-stats-tree-view
         .statsTree=${this.statsTree}
       ></player-stats-tree-view>
-    `;
-  }
-
-  private renderGamesTab(): TemplateResult {
-    const publicId = this.userMeResponse?.player?.publicId ?? "";
-    if (!publicId) {
-      return this.renderEmptyState(
-        "🎮",
-        translateText("account_modal.no_games"),
-      );
-    }
-    return html`
-      <player-game-history-view
-        .publicId=${publicId}
-        .cachedState=${this.gameHistoryCache?.publicId === publicId
-          ? this.gameHistoryCache
-          : null}
-        @history-updated=${(e: CustomEvent<PlayerGameHistoryCache>) => {
-          this.gameHistoryCache = e.detail;
-        }}
-        @view-stats=${(e: CustomEvent<{ gameId: string }>) =>
-          this.openGameStats(e.detail.gameId)}
-        @view-game=${(e: CustomEvent<{ gameId: string }>) =>
-          void this.viewGame(e.detail.gameId)}
-      ></player-game-history-view>
     `;
   }
 
@@ -668,54 +622,13 @@ export class AccountModal extends BaseModal {
     `;
   }
 
-  private async viewGame(gameId: string): Promise<void> {
-    this.close();
-    const encodedGameId = encodeURIComponent(gameId);
-    const newUrl = `/${ClientEnv.workerPath(gameId)}/game/${encodedGameId}`;
-
-    history.pushState({ join: gameId }, "", newUrl);
-    window.dispatchEvent(
-      new CustomEvent("join-changed", { detail: { gameId: encodedGameId } }),
-    );
-  }
-
-  private openGameStats(gameId: string): void {
-    this.gamesScrollTop = this.modalEl?.getScrollTop() ?? 0;
-    const statsModal = document.querySelector<
-      HTMLElement & { openFromAccount(gameId: string): void }
-    >("game-stats-modal");
-    statsModal?.openFromAccount(gameId);
-  }
-
-  public returnToGames(): void {
-    this.restoreGamesScrollAfterOpen = true;
-    this.open({ tab: "games" });
-  }
-
-  private async restoreGamesScroll(): Promise<void> {
-    await this.updateComplete;
-    await this.modalEl?.updateComplete;
-    const historyView = this.querySelector<
-      HTMLElement & { updateComplete?: Promise<boolean> }
-    >("player-game-history-view");
-    await historyView?.updateComplete;
-    this.modalEl?.setScrollTop(this.gamesScrollTop);
-  }
-
   private finishLoadingUser(): void {
     this.isLoadingUser = false;
     this.requestUpdate();
-    if (this.restoreGamesScrollAfterOpen) {
-      this.restoreGamesScrollAfterOpen = false;
-      void this.restoreGamesScroll();
-    }
   }
 
   private resetPlayerData(): void {
     this.statsTree = null;
-    this.gameHistoryCache = null;
-    this.gamesScrollTop = 0;
-    this.restoreGamesScrollAfterOpen = false;
   }
 
   private renderLogoutButton(): TemplateResult {
