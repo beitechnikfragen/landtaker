@@ -202,7 +202,7 @@ export class DesktopNavBar extends LitElement {
           ></span>
           <svg
             id="nav-account-person-icon"
-            class="hidden w-5 h-5"
+            class="hidden w-[26px] h-[26px] text-lt-100"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             fill="none"
@@ -241,6 +241,17 @@ export class DesktopNavBar extends LitElement {
             data-i18n="main.sign_in"
           >
           </span>
+          <!--
+            Signed in: the name beside the avatar, but only where it fits.
+            The nav row is capped by the 1300px shell and does NOT grow with
+            the viewport, so this is gated on the row's own free space (see
+            .nav-username-slot) rather than a viewport media query — at any
+            width, eight tabs plus the status cells leave no room for it.
+          -->
+          <span
+            id="nav-account-username"
+            class="hidden nav-username-slot lt-label !text-[13px] !text-lt-100 max-w-[120px] truncate"
+          ></span>
         </button>
       </nav>
     `;

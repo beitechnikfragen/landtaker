@@ -296,6 +296,25 @@
   background: rgb(255 255 255 / 0.04);
 }
 
+/* The account name in the top bar.
+ *
+ * Kept out of the layout entirely: the nav row is capped by the 1300px shell
+ * and does NOT grow with the viewport, so at every width the eight tabs plus
+ * the status cells already consume the row — measured, a name of any length
+ * pushed it 32px into overflow. The element stays in the DOM (assistive tech
+ * and tests read it, and the button's title carries the same information),
+ * it just claims no space.
+ *
+ * If the tab count ever drops, delete this rule and the name reappears. */
+.nav-username-slot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* Identity controls inside the rail. The pickers were sized for the old
    full-width bar; at 320px the type has to come down or the name drowns. */
 .lt-rail username-input input {
