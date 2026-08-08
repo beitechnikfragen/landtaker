@@ -28,6 +28,7 @@ import { CosmeticsModal } from "./CosmeticsModal";
 import { updateCrazyGamesNavButton } from "./CrazyGamesAccountButton";
 import { crazyGamesSDK } from "./CrazyGamesSDK";
 import "./FeaturedStream";
+import { FeedbackModal } from "./FeedbackModal";
 import "./FlagInput";
 import { FlagInput } from "./FlagInput";
 import "./FlagInputModal";
@@ -226,6 +227,10 @@ class Client {
       pageId: "page-profile",
     });
     modalRouter.register("help", { tag: "help-modal", pageId: "page-help" });
+    modalRouter.register("feedback", {
+      tag: "feedback-modal",
+      pageId: "page-feedback",
+    });
     modalRouter.register("history", {
       tag: "game-history-page",
       pageId: "page-history",
@@ -365,6 +370,10 @@ class Client {
     const hlpModal = document.querySelector("help-modal") as HelpModal;
     if (!hlpModal || !(hlpModal instanceof HelpModal)) {
       console.warn("Help modal element not found");
+    }
+    const fdbkModal = document.querySelector("feedback-modal") as FeedbackModal;
+    if (!fdbkModal || !(fdbkModal instanceof FeedbackModal)) {
+      console.warn("Feedback modal element not found");
     }
     const helpButton = document.getElementById("help-button");
     if (helpButton) {

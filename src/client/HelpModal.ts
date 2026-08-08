@@ -6,6 +6,7 @@ import { UserSettings } from "../core/game/UserSettings";
 import { BaseModal } from "./components/BaseModal";
 import "./components/Difficulties";
 import { modalHeader } from "./components/ui/ModalHeader";
+import { FeedbackModal } from "./FeedbackModal";
 import { Platform } from "./Platform";
 import { TroubleshootingModal } from "./TroubleshootingModal";
 
@@ -165,6 +166,54 @@ export class HelpModal extends BaseModal {
                 <span
                   class="relative z-10 text-2xl"
                   data-i18n="main.go_to_troubleshooting"
+                ></span>
+              </button>
+            </div>
+          </section>
+
+          <!-- Feedback Section -->
+          <div class="flex items-center gap-3 mb-3">
+            <div class="text-lt-accent">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                ></path>
+              </svg>
+            </div>
+            <h3
+              class="text-xl font-bold uppercase tracking-widest text-lt-100"
+            >
+              ${translateText("feedback_modal.title")}
+            </h3>
+            <div
+              class="flex-1 h-px bg-gradient-to-r from-blue-500/50 to-transparent"
+            ></div>
+          </div>
+          <section>
+            <div class="w-full flex flex-col items-center">
+              <p class="mb-6 text-lt-400 text-sm">
+                ${translateText("help_modal.feedback_desc")}
+              </p>
+              <button
+                id="feedback-button"
+                class="hover:bg-white/5 px-6 py-2 text-xs font-bold transition-all duration-200 uppercase tracking-widest bg-lt-accent/20 text-lt-accent border border-malibu-blue/30 shadow-[var(--shadow-malibu-blue)]"
+                data-page="page-feedback"
+                @click="${this.openFeedback}"
+                data-i18n="main.go_to_feedback"
+              >
+                <span
+                  class="relative z-10 text-2xl"
+                  data-i18n="main.go_to_feedback"
                 ></span>
               </button>
             </div>
@@ -1244,6 +1293,17 @@ export class HelpModal extends BaseModal {
       return;
     }
     troubleshootingModal.open();
+  }
+
+  openFeedback() {
+    const feedbackModal = document.querySelector(
+      "feedback-modal",
+    ) as FeedbackModal;
+    if (!feedbackModal || !(feedbackModal instanceof FeedbackModal)) {
+      console.warn("Feedback modal element not found");
+      return;
+    }
+    feedbackModal.open();
   }
 
   protected onOpen(): void {
