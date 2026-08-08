@@ -89,19 +89,19 @@ export class DesktopNavBar extends LitElement {
              because the SVG renders its lettering at a fraction of the mark's
              height — this stays razor-sharp at any size. -->
         <div
-          class="flex items-center gap-3.5 pl-4 pr-7 mr-2 border-r border-lt-700"
+          class="flex items-center gap-2.5 pl-3 pr-4 mr-1 border-r border-lt-700 shrink min-w-0"
         >
           <!-- The mark carries the brand, so it gets almost the full bar
                height; wordmark and version stack beside it. -->
           <img
-            class="block h-[72px] w-[72px] shrink-0"
+            class="block h-[clamp(48px,4.5vw,72px)] w-[clamp(48px,4.5vw,72px)] shrink-0"
             src=${assetUrl("images/logo/mark.svg")}
             alt=""
             aria-hidden="true"
           />
           <div class="flex flex-col items-center gap-1">
             <span
-              class="lt-display text-[26px] leading-none !tracking-[0.24em] text-lt-100"
+              class="lt-display text-[clamp(17px,1.55vw,26px)] leading-none !tracking-[0.18em] text-lt-100 whitespace-nowrap"
               >LANDTAKER</span
             >
             <div
