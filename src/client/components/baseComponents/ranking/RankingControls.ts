@@ -21,6 +21,8 @@ const warMetrics: readonly Metric[] = [
   { type: RankType.Atoms, label: "game_info_modal.atoms" },
   { type: RankType.Hydros, label: "game_info_modal.hydros" },
   { type: RankType.MIRV, label: "game_info_modal.mirv" },
+  { type: RankType.AttacksSent, label: "game_info_modal.attacks_sent" },
+  { type: RankType.Betrayals, label: "game_info_modal.betrayals" },
 ];
 
 const economyMetrics: readonly Metric[] = [
@@ -29,6 +31,8 @@ const economyMetrics: readonly Metric[] = [
   { type: RankType.StolenGold, label: "game_info_modal.pirate" },
   { type: RankType.TrainTrade, label: "game_info_modal.train_trade" },
   { type: RankType.NavalTrade, label: "game_info_modal.naval_trade" },
+  { type: RankType.FinalTiles, label: "game_info_modal.final_tiles" },
+  { type: RankType.BuildingsBuilt, label: "game_info_modal.buildings_built" },
 ];
 
 const includesMetric = (metrics: readonly Metric[], type: RankType) =>
@@ -98,24 +102,17 @@ export class RankingControls extends LitElement {
   }
 
   private renderMetricSelector(metrics: readonly Metric[], ariaLabel: string) {
-    const hasSixMetrics = metrics.length === 6;
     return html`
       <div
         role="group"
         aria-label=${ariaLabel}
-        class="mt-2 grid grid-cols-6 gap-1 border border-lt-700 bg-white/[0.03] p-1 ${hasSixMetrics
-          ? "sm:grid-cols-6"
-          : "sm:grid-cols-5"}"
+        class="mt-2 grid grid-cols-6 gap-1 border border-lt-700 bg-white/[0.03] p-1 sm:grid-cols-5"
       >
         ${metrics.map((metric, index) =>
           this.renderMetricButton(
             metric.type,
             metric.label,
-            hasSixMetrics
-              ? "col-span-2"
-              : index < 2
-                ? "col-span-3"
-                : "col-span-2",
+            index < 2 ? "col-span-3" : "col-span-2",
           ),
         )}
       </div>
