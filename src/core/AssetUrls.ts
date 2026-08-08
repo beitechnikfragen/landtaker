@@ -93,7 +93,18 @@ export function getCdnBase(): string {
   ) {
     return window.BOOTSTRAP_CONFIG.cdnBase;
   }
-  return globalThis.__CDN_BASE__ ?? "";
+  const configured = globalThis.__CDN_BASE__ ?? "";
+  if (configured) return configured;
+
+  // No CDN configured: serve assets from our own origin. This MUST be an
+  // absolute URL, not a root-relative path — the game worker is created from
+  // a blob: URL (see WorkerClient), and a blob worker has no base to resolve
+  // "/_assets/..." against, so fetch() there fails with "Failed to parse
+  // URL". Deployments without CDN_BASE would otherwise never start a game.
+  if (typeof location !== "undefined" && location.origin !== "null") {
+    return location.origin;
+  }
+  return "";
 }
 
 export function assetUrl(path: string): string {
