@@ -173,4 +173,61 @@ describe("PhoneExchange conferences", () => {
     const aState = to(out, A).find((p) => p.kind === "callState") as any;
     expect(aState.peers).toEqual([C]);
   });
+
+  it("refuses to pull in someone blocked by a participant who is still ringing (not yet connected)", () => {
+    connectAB();
+    // D blocks C.
+    ex.handle(D, { kind: "block", target: C });
+    // A dials D — D is now in call.ringing, not call.participants.
+    ex.handle(A, { kind: "dial", target: D });
+    // A tries to pull in C — D, still ringing, has blocked C.
+    const out = ex.handle(A, { kind: "dial", target: C });
+    expect(kinds(out, C)).toEqual([]);
+    expect(kinds(out, A)).toEqual(["busy"]);
+  });
+
+  it("refuses to pull in a new target who blocked a participant who is still ringing (not yet connected)", () => {
+    connectAB();
+    // C blocks D.
+    ex.handle(C, { kind: "block", target: D });
+    // A dials C — C is now in call.ringing, not call.participants.
+    ex.handle(A, { kind: "dial", target: C });
+    // A tries to pull in D — the still-ringing C has blocked D.
+    const out = ex.handle(A, { kind: "dial", target: D });
+    expect(kinds(out, D)).toEqual([]);
+    expect(kinds(out, A)).toEqual(["busy"]);
+  });
+
+  it("removes a disconnected participant from a 3-way conference and keeps the other two connected", () => {
+    connectAB();
+    ex.handle(A, { kind: "dial", target: C });
+    ex.handle(C, { kind: "answer" });
+    // A, B, C are all connected. Remove A.
+    const out = ex.removePlayer(A);
+    const bState = to(out, B).find((p) => p.kind === "callState") as any;
+    const cState = to(out, C).find((p) => p.kind === "callState") as any;
+    expect(bState.peers).toEqual([C]);
+    expect(cState.peers).toEqual([B]);
+    expect(kinds(out, B)).not.toContain("callEnded");
+    expect(kinds(out, C)).not.toContain("callEnded");
+  });
+
+  it("does not eject anyone when a block is added after both parties are already connected", () => {
+    connectAB();
+    // A and B are connected. B blocks A after the fact.
+    const out = ex.handle(B, { kind: "block", target: A });
+    expect(out).toEqual([]);
+    // Neither side got kicked — no callEnded, no busy.
+    expect(kinds(out, A)).toEqual([]);
+    expect(kinds(out, B)).toEqual([]);
+    // The block only gates future dials: A pulling in a new target still
+    // works fine (the block doesn't retroactively unravel the existing call).
+    const signal = ex.handle(A, {
+      kind: "signal",
+      to: B,
+      data: "still-connected",
+    });
+    const sig = to(signal, B).find((p) => p.kind === "signal") as any;
+    expect(sig.from).toBe(A);
+  });
 });

@@ -105,9 +105,14 @@ export class PhoneExchange {
     const existing = this.callOf.get(from);
     const call = existing ? this.calls.get(existing)! : this.createCall(from);
 
-    // Blocks gelten gegenüber JEDEM Teilnehmer, sonst wäre der Block über den
+    // Blocks gelten gegenüber JEDEM Teilnehmer — auch gegenüber noch
+    // klingelnden (nicht angenommenen) Rufen, sonst wäre der Block über den
     // Umweg Konferenz umgehbar.
-    for (const peer of call.participants) {
+    const others = new Set<ClientID>([
+      ...call.participants,
+      ...call.ringing.keys(),
+    ]);
+    for (const peer of others) {
       if (peer === from) continue;
       if (targetPrefs.blocked.has(peer)) return busy;
       if (this.prefsOf(peer).blocked.has(target)) return busy;
