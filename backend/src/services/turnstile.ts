@@ -31,6 +31,14 @@ const SITEVERIFY_TIMEOUT_MS = 3000;
 
 export type TurnstileVerdict = "passed" | "failed" | "unavailable";
 
+/**
+ * The join path shares a 5s budget with a 2s ban lookup that runs after it.
+ * Ban enforcement is the check that actually refuses anyone here; Turnstile
+ * on this path is advisory (see the fail-open note in joinVerify.ts) and must
+ * not be allowed to eat the budget the ban lookup needs to complete.
+ */
+export const JOIN_SITEVERIFY_TIMEOUT_MS = 1500;
+
 export function isTurnstileConfigured(): boolean {
   return (config.TURNSTILE_SECRET_KEY ?? "").length > 0;
 }
@@ -43,6 +51,7 @@ export function isTurnstileConfigured(): boolean {
 export async function verifyTurnstileToken(
   token: string | null,
   remoteIp: string | null,
+  timeoutMs: number = SITEVERIFY_TIMEOUT_MS,
 ): Promise<TurnstileVerdict> {
   const secret = config.TURNSTILE_SECRET_KEY;
   if (secret === undefined || secret.length === 0) {
@@ -68,7 +77,7 @@ export async function verifyTurnstileToken(
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body,
-      signal: AbortSignal.timeout(SITEVERIFY_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     });
 
     // A 5xx from Cloudflare is Cloudflare's problem. Treating it as a failed

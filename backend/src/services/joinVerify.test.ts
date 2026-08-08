@@ -11,6 +11,7 @@ import {
   normalizeClanTag,
   verifyTurnstile,
 } from "./joinVerify.ts";
+import { JOIN_SITEVERIFY_TIMEOUT_MS } from "./turnstile.ts";
 
 /**
  * The game parses our response with a private `JoinVerifyVerdictSchema` that
@@ -172,6 +173,15 @@ describe("timeout budget", () => {
     // A ban lookup is two indexed reads; anything under a second would start
     // failing open on ordinary load spikes, which is worse than useless.
     expect(BAN_LOOKUP_TIMEOUT_MS).toBeGreaterThanOrEqual(1000);
+  });
+
+  it("keeps headroom once Turnstile is in the path too", () => {
+    // Turnstile runs BEFORE the ban lookup, sequentially, so the budgets add.
+    // The ban check is the only thing here that can actually refuse a player,
+    // so an advisory check that never rejects must not crowd it out.
+    expect(
+      JOIN_SITEVERIFY_TIMEOUT_MS + BAN_LOOKUP_TIMEOUT_MS,
+    ).toBeLessThanOrEqual(GAME_CLIENT_TIMEOUT_MS - 1000);
   });
 });
 

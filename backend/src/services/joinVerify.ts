@@ -1,7 +1,11 @@
 import { and, eq, gt, isNull, or } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { bans, users } from "../db/schema.ts";
-import { type TurnstileVerdict, verifyTurnstileToken } from "./turnstile.ts";
+import {
+  JOIN_SITEVERIFY_TIMEOUT_MS,
+  type TurnstileVerdict,
+  verifyTurnstileToken,
+} from "./turnstile.ts";
 
 /**
  * `POST /join_verify` — the screening call the game server makes for EVERY
@@ -101,7 +105,7 @@ export async function verifyTurnstile(
   ip: string | null,
 ): Promise<TurnstileVerdict | "skipped"> {
   if (token === null) return "skipped";
-  return await verifyTurnstileToken(token, ip);
+  return await verifyTurnstileToken(token, ip, JOIN_SITEVERIFY_TIMEOUT_MS);
 }
 
 /**
