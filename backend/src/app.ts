@@ -2,8 +2,10 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import Fastify, { type FastifyError, type FastifyInstance } from "fastify";
 import { config, isProduction } from "./config.ts";
+import { registerAdminRoutes } from "./routes/admin.ts";
 import { registerAuthRoutes } from "./routes/auth.ts";
 import { registerCustomTribeRoutes } from "./routes/customTribes.ts";
+import { registerFeedbackRoutes } from "./routes/feedback.ts";
 import { registerFriendRoutes } from "./routes/friends.ts";
 import { registerGameRoutes } from "./routes/games.ts";
 import { registerJoinVerifyRoutes } from "./routes/joinVerify.ts";
@@ -12,6 +14,7 @@ import { registerMatchmakingRoutes } from "./routes/matchmaking.ts";
 import { registerPartyRoutes } from "./routes/parties.ts";
 import { registerPartyEventRoutes } from "./routes/partyEvents.ts";
 import { registerPlayerGamesRoutes } from "./routes/playerGames.ts";
+import { registerShopRoutes } from "./routes/shop.ts";
 import { registerStubRoutes } from "./routes/stubs.ts";
 import { registerUserRoutes } from "./routes/users.ts";
 import { registerWellKnownRoutes } from "./routes/wellKnown.ts";
@@ -35,6 +38,12 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(cors, {
     origin: config.CORS_ORIGIN.split(",").map((o) => o.trim()),
     credentials: true,
+    // Spelled out because the default list is GET/HEAD/POST only. The admin
+    // panel edits users with PATCH and saves shop config with PUT, and a
+    // preflight that omits them fails as an opaque "NetworkError" in the
+    // browser — the request never reaches Fastify, so nothing is logged
+    // server-side either.
+    methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   });
 
   // The client keeps its refresh token in an httpOnly cookie and calls
@@ -80,6 +89,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registerJoinVerifyRoutes(app);
   await registerMatchmakingRoutes(app);
   await registerCustomTribeRoutes(app);
+  await registerFeedbackRoutes(app);
+  await registerShopRoutes(app);
+  await registerAdminRoutes(app);
   // Placeholder endpoints for features not built yet (clans, cosmetics,
   // streams, news, Stripe) — see routes/stubs.ts.
   await registerStubRoutes(app);

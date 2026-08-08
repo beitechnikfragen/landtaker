@@ -21,6 +21,7 @@ import { UIState } from "../UIState";
 import { GameView } from "../view";
 import { FrameProfiler } from "./FrameProfiler";
 import { ActionableEvents } from "./layers/ActionableEvents";
+import { AdminCheatMenu } from "./layers/AdminCheatMenu";
 import { AlertFrame } from "./layers/AlertFrame";
 import { AttacksDisplay } from "./layers/AttacksDisplay";
 import { BuildMenu } from "./layers/BuildMenu";
@@ -226,6 +227,19 @@ export function createRenderer(
 
   playerPanel.setRole(playerRole);
 
+  const adminCheatMenu = document.querySelector(
+    "admin-cheat-menu",
+  ) as AdminCheatMenu;
+  if (!(adminCheatMenu instanceof AdminCheatMenu)) {
+    console.error("admin cheat menu not found");
+  }
+  adminCheatMenu.game = game;
+  adminCheatMenu.eventBus = eventBus;
+  adminCheatMenu.transformHandler = transformHandler;
+  // Renders nothing for a non-admin role. The server refuses the cheats
+  // regardless of what this decides — hiding the menu is convenience only.
+  adminCheatMenu.setRole(playerRole);
+
   const chatModal = document.querySelector("chat-modal") as ChatModal;
   if (!(chatModal instanceof ChatModal)) {
     console.error("chat modal not found");
@@ -361,6 +375,7 @@ export function createRenderer(
     inGamePromo,
     alertFrame,
     performanceOverlay,
+    adminCheatMenu,
   ];
 
   return new GameRenderer(

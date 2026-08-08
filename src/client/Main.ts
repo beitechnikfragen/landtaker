@@ -16,6 +16,7 @@ import { GameType } from "../core/game/Game";
 import { UserSettings } from "../core/game/UserSettings";
 import "./AccountModal";
 import { adGatekeeper } from "./AdGatekeeper";
+import "./AdminModal";
 import { loadAdmiral, onAdmiralMeasured } from "./Admiral";
 import { getUserMe, invalidateUserMe } from "./Api";
 import { reauthAfterCrazyGamesChange, userAuth } from "./Auth";
@@ -28,6 +29,7 @@ import { CosmeticsModal } from "./CosmeticsModal";
 import { updateCrazyGamesNavButton } from "./CrazyGamesAccountButton";
 import { crazyGamesSDK } from "./CrazyGamesSDK";
 import "./FeaturedStream";
+import { FeedbackModal } from "./FeedbackModal";
 import "./FlagInput";
 import { FlagInput } from "./FlagInput";
 import "./FlagInputModal";
@@ -71,6 +73,7 @@ import {
   SendToggleGameStartTimer,
   SendUpdateGameConfigIntentEvent,
 } from "./Transport";
+import { getTurnstileToken } from "./Turnstile";
 import { UserSettingModal } from "./UserSettingModal";
 import "./UsernameInput";
 import { genAnonUsername, UsernameInput } from "./UsernameInput";
@@ -99,7 +102,6 @@ import "./styles/modal/chat.css";
 
 declare global {
   interface Window {
-    turnstile: any;
     adsEnabled: boolean;
     gtag?: (...args: any[]) => void;
     PageOS: {
@@ -207,7 +209,7 @@ class Client {
   private turnstileTokenPromise: Promise<{
     token: string;
     createdAt: number;
-  }> | null = null;
+  } | null> | null = null;
 
   async initialize(): Promise<void> {
     crazyGamesSDK.maybeInit();
@@ -241,6 +243,10 @@ class Client {
       pageId: "page-profile",
     });
     modalRouter.register("help", { tag: "help-modal", pageId: "page-help" });
+    modalRouter.register("feedback", {
+      tag: "feedback-modal",
+      pageId: "page-feedback",
+    });
     modalRouter.register("history", {
       tag: "game-history-page",
       pageId: "page-history",
@@ -266,6 +272,13 @@ class Client {
       tag: "troubleshooting-modal",
       pageId: "page-troubleshooting",
     });
+    // Registered for every player, not only admins: the modal itself answers
+    // "not authorized" for non-admins, and gating the route would make an
+    // admin's #modal=admin link fail silently before the check ever runs.
+    modalRouter.register("admin", {
+      tag: "admin-modal",
+      pageId: "page-admin",
+    });
     modalRouter.register("cosmetics", { tag: "cosmetics-modal" });
     modalRouter.register("flag-input", { tag: "flag-input-modal" });
 
@@ -274,7 +287,12 @@ class Client {
     // skip it — otherwise getTurnstileToken() throws "Failed to load Turnstile
     // script" after its load wait.
     this.turnstileTokenPromise =
-      ClientEnv.instanceId() === "desktop" ? null : getTurnstileToken();
+      ClientEnv.instanceId() === "desktop"
+        ? null
+        : getTurnstileToken().catch((err) => {
+            console.error("Turnstile prefetch failed", err);
+            return null;
+          });
 
     // Wait for components to render before setting version
     await customElements.whenDefined("mobile-nav-bar");
@@ -375,6 +393,10 @@ class Client {
     const hlpModal = document.querySelector("help-modal") as HelpModal;
     if (!hlpModal || !(hlpModal instanceof HelpModal)) {
       console.warn("Help modal element not found");
+    }
+    const fdbkModal = document.querySelector("feedback-modal") as FeedbackModal;
+    if (!fdbkModal || !(fdbkModal instanceof FeedbackModal)) {
+      console.warn("Feedback modal element not found");
     }
     const helpButton = document.getElementById("help-button");
     if (helpButton) {
@@ -1228,7 +1250,13 @@ class Client {
     // Always request a new token on crazygames.
     if (this.turnstileTokenPromise === null || crazyGamesSDK.isOnCrazyGames()) {
       console.log("No prefetched turnstile token, getting new token");
-      return (await getTurnstileToken())?.token ?? null;
+      try {
+        return (await getTurnstileToken()).token;
+      } catch (err) {
+        console.error("Turnstile error", err);
+        alert(`${(err as Error).message}. Please refresh and try again.`);
+        return null;
+      }
     }
 
     const token = await this.turnstileTokenPromise;
@@ -1246,7 +1274,13 @@ class Client {
       return token.token;
     } else {
       console.log("Turnstile token expired, getting new token");
-      return (await getTurnstileToken())?.token ?? null;
+      try {
+        return (await getTurnstileToken()).token;
+      } catch (err) {
+        console.error("Turnstile error", err);
+        alert(`${(err as Error).message}. Please refresh and try again.`);
+        return null;
+      }
     }
   }
 }
@@ -1286,43 +1320,4 @@ if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", bootstrap);
 } else {
   bootstrap();
-}
-
-async function getTurnstileToken(): Promise<{
-  token: string;
-  createdAt: number;
-}> {
-  // Wait for Turnstile script to load (handles slow connections)
-  let attempts = 0;
-  while (typeof window.turnstile === "undefined" && attempts < 100) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    attempts++;
-  }
-
-  if (typeof window.turnstile === "undefined") {
-    throw new Error("Failed to load Turnstile script");
-  }
-
-  const widgetId = window.turnstile.render("#turnstile-container", {
-    sitekey: ClientEnv.turnstileSiteKey(),
-    size: "normal",
-    appearance: "interaction-only",
-    theme: "light",
-  });
-
-  return new Promise((resolve, reject) => {
-    window.turnstile.execute(widgetId, {
-      callback: (token: string) => {
-        window.turnstile.remove(widgetId);
-        console.log(`Turnstile token received: ${token}`);
-        resolve({ token, createdAt: Date.now() });
-      },
-      "error-callback": (errorCode: string) => {
-        window.turnstile.remove(widgetId);
-        console.error(`Turnstile error: ${errorCode}`);
-        alert(`Turnstile error: ${errorCode}. Please refresh and try again.`);
-        reject(new Error(`Turnstile failed: ${errorCode}`));
-      },
-    });
-  });
 }

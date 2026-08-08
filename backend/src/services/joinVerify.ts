@@ -1,6 +1,11 @@
 import { and, eq, gt, isNull, or } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { bans, users } from "../db/schema.ts";
+import {
+  JOIN_SITEVERIFY_TIMEOUT_MS,
+  type TurnstileVerdict,
+  verifyTurnstileToken,
+} from "./turnstile.ts";
 
 /**
  * `POST /join_verify` — the screening call the game server makes for EVERY
@@ -17,15 +22,11 @@ import { bans, users } from "../db/schema.ts";
  * WHAT WE ACTUALLY CHECK, AND WHAT WE DELIBERATELY DO NOT
  * ─────────────────────────────────────────────────────────────────────────
  *
- * 1. Turnstile / captcha — NOT VERIFIED. We have TURNSTILE_SITE_KEY in dev
- *    (Cloudflare's always-passes test key 1x00000000000000000000AA) but no
- *    secret key is configured anywhere in this repo, and siteverify requires
- *    one. There is no honest way to validate the token, so we do not pretend
- *    to: a presented token is accepted unexamined and the join is allowed.
- *    Rejecting tokens we cannot check would lock out every legitimate player;
- *    claiming to have checked them would be a lie that hides the gap. When a
- *    TURNSTILE_SECRET_KEY exists, the check belongs exactly here, in
- *    `verifyTurnstile` below.
+ * 1. Turnstile / captcha — VERIFIED when a TURNSTILE_SECRET_KEY is configured,
+ *    via services/turnstile.ts. The verdict is logged but never refuses a
+ *    join: see the fail-open note at the call site. With no secret configured
+ *    (the default in development) the verdict is "unavailable" and nothing
+ *    changes from the behaviour that was here before.
  *
  * 2. Ban enforcement — DONE. This is the one real check we can make today,
  *    and the reason this endpoint is worth more than a 404. See
@@ -88,24 +89,23 @@ export function normalizeClanTag(clanTag: string | null): string | null {
 }
 
 /**
- * Turnstile verification, deliberately unimplemented.
+ * Turnstile verification for a join.
  *
- * Returns `null` for "no verdict" rather than `true` for "passed", so that a
- * future implementation cannot be mistaken for the current no-op by a reader,
- * and so the caller has to decide explicitly what an absent verdict means.
+ * Delegates to services/turnstile.ts, which performs the real siteverify call
+ * when a TURNSTILE_SECRET_KEY is configured. This replaces the deliberate
+ * no-op that lived here while no secret existed.
  *
- * SECURITY: a null token means the game server is re-verifying an
- * already-admitted reconnect whose single-use token is spent, and it expects
- * us to skip siteverify entirely (see planJoinVerify in the game). Once a
- * secret key exists, that null case must STILL skip — only a non-null token
- * may be redeemed, and only once.
+ * "skipped" is distinct from "unavailable": a null token means the game server
+ * is re-verifying an already-admitted reconnect whose single-use token is
+ * spent, and it expects us to skip siteverify entirely. Passing that null to
+ * Cloudflare would reject a player who is legitimately already in the match.
  */
-export function verifyTurnstile(_token: string | null): null {
-  // No TURNSTILE_SECRET_KEY is configured for this backend, and siteverify is
-  // impossible without one. Returning "no verdict" is the honest answer; the
-  // caller allows the join and logs nothing alarming, because an unverifiable
-  // token is our gap, not the player's fault.
-  return null;
+export async function verifyTurnstile(
+  token: string | null,
+  ip: string | null,
+): Promise<TurnstileVerdict | "skipped"> {
+  if (token === null) return "skipped";
+  return await verifyTurnstileToken(token, ip, JOIN_SITEVERIFY_TIMEOUT_MS);
 }
 
 /**
@@ -268,9 +268,16 @@ async function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
 export async function verifyJoin(input: JoinVerifyInput): Promise<JoinVerdict> {
   const clanTag = normalizeClanTag(input.clanTag);
 
-  // No verdict is available (see verifyTurnstile) — the token is not a reason
-  // to refuse anyone today.
-  verifyTurnstile(input.token);
+  // FAIL OPEN, deliberately and unchanged. A rejected token is logged but does
+  // NOT refuse the join: this endpoint sits in the join path of every player,
+  // and Cloudflare having a bad day must not become a game-wide outage. The
+  // ban check below is the one that actually decides anything.
+  const turnstileVerdict = await verifyTurnstile(input.token, input.ip);
+  if (turnstileVerdict === "failed") {
+    console.warn(
+      `join_verify: turnstile rejected a token for "${input.username}" — allowing anyway (fail-open)`,
+    );
+  }
 
   // Bounded so a hung database becomes a fast approval rather than a socket
   // held open for the game's full 5s budget. The throw is caught by the route,

@@ -27,17 +27,18 @@ fails with "invalid token".
      Coolify's traefik handles TLS for both.
 3. **Environment variables** (Coolify UI, applies to the whole stack):
 
-   | Variable             | Value                                                                                       |
-   | -------------------- | ------------------------------------------------------------------------------------------- |
-   | `DOMAIN`             | `yourdomain.tld` (no scheme, no `www`)                                                      |
-   | `POSTGRES_PASSWORD`  | long random string                                                                          |
-   | `API_KEY`            | long random string — shared game↔backend secret                                             |
-   | `ADMIN_BOT_API_KEY`  | long random string                                                                          |
-   | `JWT_PRIVATE_KEY`    | output of `cd backend && npm run keys:generate` (the JSON)                                  |
-   | `NUM_WORKERS`        | `2` to start; one game worker process each                                                  |
-   | `TURNSTILE_SITE_KEY` | leave default (test key, always passes) until you register a real Cloudflare Turnstile site |
-   | `BACKEND_NODE_ENV`   | see **Sign-in** below                                                                       |
-   | `GIT_COMMIT`         | optional; Coolify can inject the commit SHA                                                 |
+   | Variable               | Value                                                                                                                                                                                                                |
+   | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `DOMAIN`               | `yourdomain.tld` (no scheme, no `www`)                                                                                                                                                                               |
+   | `POSTGRES_PASSWORD`    | long random string                                                                                                                                                                                                   |
+   | `API_KEY`              | long random string — shared game↔backend secret                                                                                                                                                                      |
+   | `ADMIN_BOT_API_KEY`    | long random string                                                                                                                                                                                                   |
+   | `JWT_PRIVATE_KEY`      | output of `cd backend && npm run keys:generate` (the JSON)                                                                                                                                                           |
+   | `NUM_WORKERS`          | `2` to start; one game worker process each                                                                                                                                                                           |
+   | `TURNSTILE_SITE_KEY`   | leave default (test key, always passes) until you register a real Cloudflare Turnstile site                                                                                                                          |
+   | `TURNSTILE_SECRET_KEY` | the private half of the Turnstile pair, set on the **backend** (not the game server). Leave unset to skip verification entirely — guests can still submit feedback, and join verification behaves exactly as before. |
+   | `BACKEND_NODE_ENV`     | see **Sign-in** below                                                                                                                                                                                                |
+   | `GIT_COMMIT`           | optional; Coolify can inject the commit SHA                                                                                                                                                                          |
 
 4. **Deploy.** First boot order is handled by compose: postgres → healthcheck →
    backend (runs migrations, then binds) → game.

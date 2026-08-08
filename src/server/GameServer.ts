@@ -40,6 +40,7 @@ import { Client } from "./Client";
 import { ClientMsgRateLimiter } from "./ClientMsgRateLimiter";
 import { fetchCustomTribes } from "./CustomTribes";
 import { fetchPartyMembers } from "./JoinVerify";
+import { PhoneExchange, type PhoneOutbox } from "./phone/PhoneExchange";
 import { ServerEnv } from "./ServerEnv";
 import {
   noopMatchTelemetryEmitter,
@@ -110,6 +111,7 @@ export class GameServer {
   private intents: StampedIntent[] = [];
   public activeClients: Client[] = [];
   private allClients: Map<ClientID, Client> = new Map();
+  private phoneExchange = new PhoneExchange(() => Date.now());
   // Map persistentID to clientID for reconnection lookup
   private persistentIdToClientId: Map<string, ClientID> = new Map();
   // persistentIDs that have passed authorization (incl. Turnstile) for this
@@ -626,6 +628,24 @@ export class GameServer {
         return outcome;
       }
 
+      case "admin_cheat": {
+        // THE enforcement point. The simulation runs on every client and has
+        // no concept of an admin, so once this intent is in a turn every
+        // client applies it unconditionally. Refusing it here is the only
+        // thing standing between an ordinary player and god mode — there is
+        // no second check downstream.
+        if (!actor.isAdmin) {
+          return finish({ status: 403, error: "admin role required" });
+        }
+        if (!this.hasStarted()) {
+          return finish({ status: 409, error: "game not started" });
+        }
+        const paused = this.isPaused;
+        const outcome = finish({ status: 200 }, paused ? "paused" : undefined);
+        if (!paused) this.addIntent(stamped);
+        return outcome;
+      }
+
       default: {
         // Gameplay intents: websocket players only, into the turn queue.
         if (actor.isAdminBot) {
@@ -733,6 +753,26 @@ export class GameServer {
       clientIP: ipAnonymize(client.ip),
     });
 
+    // Stamp the admin nameplate flag from the connection's verified JWT role.
+    // Unlike the verified badge — a client claim the server merely validates —
+    // this is never accepted from the client at all, so a forged `admin: true`
+    // in the join payload is overwritten here either way.
+    //
+    // Mutated in place rather than reassigned: `cosmetics` is a readonly
+    // reference on Client (the object itself is not), which is the same reason
+    // the verified-badge strip above uses `delete`. The websocket join path
+    // always supplies an object (Privilege.isAllowed returns one even when
+    // every cosmetic is refused), so an admin never silently loses the
+    // nameplate; the undefined branch only covers directly-constructed
+    // clients in tests.
+    if (client.cosmetics !== undefined) {
+      if (isAdminRole(client.role)) {
+        client.cosmetics.admin = true;
+      } else {
+        delete client.cosmetics.admin;
+      }
+    }
+
     // Skipped in dev: local testing (multi-tab, the matchmaking e2e) is
     // inherently same-IP.
     if (
@@ -778,6 +818,11 @@ export class GameServer {
     client.lastPing = Date.now();
     this.markClientDisconnected(client.clientID, false);
     this.allClients.set(client.clientID, client);
+    this.phoneExchange.addPlayer({
+      clientID: client.clientID,
+      username: client.username,
+      isAllyOf: (other) => this.sameTeam(client.clientID, other),
+    });
     this.emitTelemetry("player_joined", {
       identity: this.identityFor(client),
       joinedAt: Date.now(),
@@ -862,6 +907,11 @@ export class GameServer {
     this.markClientDisconnected(client.clientID, false);
 
     client.ws = ws;
+    this.phoneExchange.addPlayer({
+      clientID: client.clientID,
+      username: client.username,
+      isAllyOf: (other) => this.sameTeam(client.clientID, other),
+    });
     this.addListeners(client);
     this.startLobbyInfoBroadcast();
 
@@ -1006,6 +1056,12 @@ export class GameServer {
             this.handleLiveStats(client, clientMsg);
             break;
           }
+          case "phone": {
+            this.deliverPhone(
+              this.phoneExchange.handle(client.clientID, clientMsg.payload),
+            );
+            break;
+          }
           default: {
             this.log.warn(`Unknown message type: ${(clientMsg as any).type}`, {
               clientID: client.clientID,
@@ -1051,6 +1107,9 @@ export class GameServer {
     this.activeClients = this.activeClients.filter(
       (c) => c.clientID !== client.clientID,
     );
+    // Out-of-band: pulls the client out of any call/ring so peers aren't left
+    // hanging on a dead socket. A later rejoinClient() re-adds them.
+    this.deliverPhone(this.phoneExchange.removePlayer(client.clientID));
 
     // hasStarted() includes prestart: during the lobby -> game transition
     // clients reconnect, and a host socket closing then must not tear the
@@ -1346,6 +1405,24 @@ export class GameServer {
     return idx === -1 ? undefined : idx;
   }
 
+  // Whether two clients are allied for phone purposes. Real alliance state
+  // (assignTeams, TeamAssignment.ts) is computed deterministically inside the
+  // client-side simulation and never reaches the server — the server only
+  // learns team membership for matchmade ranked games, via
+  // matchmakingTeamIndex. For every other mode (FFA, hosted Team lobbies,
+  // custom games) the server has no team signal at all, so this returns
+  // false: the allies-only filter then degrades to "nobody may call me",
+  // which is the safe (fail-closed) direction rather than accidentally
+  // opening a channel between non-allies.
+  private sameTeam(a: ClientID, b: ClientID): boolean {
+    const clientA = this.allClients.get(a);
+    const clientB = this.allClients.get(b);
+    if (!clientA || !clientB) return false;
+    const teamA = this.matchmakingTeamIndex(clientA);
+    const teamB = this.matchmakingTeamIndex(clientB);
+    return teamA !== undefined && teamA === teamB;
+  }
+
   private addIntent(intent: StampedIntent) {
     this.intents.push(intent);
   }
@@ -1468,6 +1545,29 @@ export class GameServer {
         c.ws.send(msg);
       }
     });
+
+    // Out-of-band: drives 12s ring timeouts. Never touches turns/intents.
+    this.deliverPhone(this.phoneExchange.tick());
+  }
+
+  // Delivers a batch of phone messages produced by PhoneExchange. Out-of-band
+  // relay only — never becomes an Intent, never enters a Turn. A closed or
+  // dead socket must not stop delivery to the remaining recipients.
+  private deliverPhone(out: PhoneOutbox[]): void {
+    for (const item of out) {
+      const target = this.allClients.get(item.to);
+      if (!target || target.ws.readyState !== WebSocket.OPEN) continue;
+      try {
+        target.ws.send(
+          JSON.stringify({ type: "phone", payload: item.payload }),
+        );
+      } catch (error) {
+        this.log.warn(`error sending phone message for game ${this.id}`, {
+          clientID: item.to,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
   }
 
   async end() {

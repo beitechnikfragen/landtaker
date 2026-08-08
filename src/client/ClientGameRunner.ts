@@ -69,6 +69,8 @@ import { createCanvas } from "./Utils";
 import { WebGLFrameBuilder } from "./WebGLFrameBuilder";
 import { MapLayerController } from "./controllers/MapLayerController";
 import { createRenderer, GameRenderer } from "./hud/GameRenderer";
+import { PhoneWidget } from "./hud/layers/PhoneWidget";
+import { PhoneController } from "./phone/PhoneController";
 import {
   applyGraphicsOverrides,
   createRenderSettings,
@@ -749,6 +751,17 @@ export class ClientGameRunner {
   private lastTickReceiveTime: number = 0;
   private currentTickDelay: number | undefined = undefined;
 
+  // Only exists when clientID is known (i.e. not a pure spectator connection
+  // that never got assigned one) — there is no phone identity without it.
+  // Readonly and exposed so the PhoneWidget (looked up from the DOM once the
+  // runner exists, mirroring how GameRenderer wires its own layers) can be
+  // handed the same instance that receives server messages below.
+  private readonly _phoneController: PhoneController | null = null;
+
+  public get phoneController(): PhoneController | null {
+    return this._phoneController;
+  }
+
   constructor(
     private lobby: LobbyConfig,
     private clientID: ClientID | undefined,
@@ -765,6 +778,13 @@ export class ClientGameRunner {
     private disposeRenderer: (() => void) | null = null,
   ) {
     this.lastMessageTime = Date.now();
+    if (this.clientID !== undefined) {
+      this._phoneController = new PhoneController(
+        this.clientID,
+        this.transport,
+        this.userSettings,
+      );
+    }
   }
 
   /**
@@ -852,6 +872,21 @@ export class ClientGameRunner {
     );
 
     this.renderer.initialize();
+
+    // Wired here rather than in GameRenderer.createRenderer(): that factory
+    // runs before this runner (and thus the PhoneController) exists, so the
+    // controller cannot reach it. The widget element itself is static markup
+    // from page load, looked up the same way GameRenderer looks up its own
+    // layers.
+    if (this._phoneController !== null) {
+      const phoneWidget = document.querySelector("phone-widget") as PhoneWidget;
+      if (!phoneWidget || !(phoneWidget instanceof PhoneWidget)) {
+        console.error("PhoneWidget element not found in the DOM");
+      } else {
+        phoneWidget.init(this._phoneController, this.gameView);
+      }
+    }
+
     this.input.initialize();
     this.worker.start((gu: GameUpdateViewData | ErrorUpdate) => {
       if (this.lobby.gameStartInfo === undefined) {
@@ -978,6 +1013,9 @@ export class ClientGameRunner {
         // everyone else.
         this.eventBus.emit(new NewLobbyEvent(message.gameID));
       }
+      if (message.type === "phone") {
+        this._phoneController?.receive(message.payload);
+      }
       if (message.type === "turn") {
         if (
           !this.gameView.inSpawnPhase() &&
@@ -1025,6 +1063,7 @@ export class ClientGameRunner {
 
   public stop() {
     this.soundManager.dispose();
+    this._phoneController?.dispose();
     this.graphicsListenerAbort?.abort();
     this.disposeRenderer?.();
     if (!this.isActive) return;

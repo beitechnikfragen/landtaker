@@ -197,6 +197,10 @@
         id="turnstile-container"
         class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-99999"
       ></div>
+      <div
+        id="feedback-turnstile-container"
+        class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-99999"
+      ></div>
 
       <homepage-promos></homepage-promos>
       <banned-modal></banned-modal>
@@ -243,6 +247,11 @@
             inline
             class="hidden w-full h-full page-content relative z-50"
           ></store-modal>
+          <admin-modal
+            id="page-admin"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></admin-modal>
           <user-setting
             id="page-settings"
             inline
@@ -289,6 +298,11 @@
             inline
             class="hidden w-full h-full page-content relative z-50"
           ></help-modal>
+          <feedback-modal
+            id="page-feedback"
+            inline
+            class="hidden w-full h-full page-content relative z-50"
+          ></feedback-modal>
           <language-modal
             id="page-language"
             inline
@@ -378,6 +392,10 @@
 
     <!-- Game modals and overlays -->
     <emoji-table></emoji-table>
+    <phone-widget></phone-widget>
+    <!-- Renders nothing unless the account holds an admin role. The server
+         refuses the cheats regardless, so this is not a security boundary. -->
+    <admin-cheat-menu></admin-cheat-menu>
     <build-menu></build-menu>
     <win-modal></win-modal>
     <new-lobby-prompt></new-lobby-prompt>

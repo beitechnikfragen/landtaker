@@ -11,11 +11,13 @@ import {
 } from "../core/game/Game";
 import { TileRef } from "../core/game/GameMap";
 import {
+  AdminCheatAction,
   AllPlayersStats,
   ClientHashMessage,
   ClientIntentMessage,
   ClientJoinMessage,
   ClientMessage,
+  ClientPhonePayload,
   ClientPingMessage,
   ClientRejoinMessage,
   ClientSendLiveStatsMessage,
@@ -191,6 +193,24 @@ export class SendToggleGameStartTimer implements GameEvent {
   constructor() {}
 }
 
+/**
+ * Fires one admin cheat. The server refuses it unless the connection holds an
+ * admin role — nothing on this side is a security boundary, the admin menu
+ * that emits this is merely hidden from players who cannot use it.
+ */
+export class SendAdminCheatIntentEvent implements GameEvent {
+  constructor(
+    public readonly action: AdminCheatAction,
+    public readonly params: {
+      amount?: number;
+      targetID?: string;
+      tile?: number;
+      unitType?: UnitType;
+      enabled?: boolean;
+    } = {},
+  ) {}
+}
+
 export class Transport {
   private socket: WebSocket | null = null;
 
@@ -284,6 +304,10 @@ export class Transport {
 
     this.eventBus.on(SendToggleGameStartTimer, (e) =>
       this.onSendToggleGameStartTimer(e),
+    );
+
+    this.eventBus.on(SendAdminCheatIntentEvent, (e) =>
+      this.onSendAdminCheatIntent(e),
     );
   }
 
@@ -438,6 +462,13 @@ export class Transport {
       lastTurn: lastTurn,
       token: await getPlayToken(),
     } satisfies ClientRejoinMessage);
+  }
+
+  sendPhone(payload: ClientPhonePayload) {
+    this.sendMsg({
+      type: "phone",
+      payload,
+    });
   }
 
   leaveGame() {
@@ -679,6 +710,14 @@ export class Transport {
 
   private onSendToggleGameStartTimer(event: SendToggleGameStartTimer) {
     this.sendIntent({ type: "toggle_game_start_timer" });
+  }
+
+  private onSendAdminCheatIntent(event: SendAdminCheatIntentEvent) {
+    this.sendIntent({
+      type: "admin_cheat",
+      action: event.action,
+      ...event.params,
+    });
   }
 
   private sendIntent(intent: Intent) {
