@@ -1,6 +1,6 @@
-import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { SignJWT } from "jose";
 import { uuidToBase64url } from "@game/Base64.ts";
+import { SignJWT } from "jose";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { config } from "../config.ts";
 import { getSigningKeys, JWT_ALGORITHM } from "./keys.ts";
 
@@ -75,4 +75,23 @@ export function generateRefreshToken(): {
  */
 export function hashRefreshToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
+}
+
+/**
+ * Single-use email sign-in token. Same construction as a refresh token — 256
+ * bits of entropy, stored only as a hash — but short-lived, because the
+ * plaintext sits in an inbox where it may be forwarded, backed up, or scanned
+ * by a mail provider.
+ */
+export function generateLoginToken(ttlMinutes: number): {
+  token: string;
+  tokenHash: string;
+  expiresAt: Date;
+} {
+  const token = randomBytes(32).toString("base64url");
+  return {
+    token,
+    tokenHash: hashRefreshToken(token),
+    expiresAt: new Date(Date.now() + ttlMinutes * 60 * 1000),
+  };
 }

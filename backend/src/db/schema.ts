@@ -149,6 +149,35 @@ export const refreshTokens = pgTable(
   (table) => [index("refresh_tokens_user_idx").on(table.userId)],
 );
 
+/**
+ * Single-use sign-in tokens delivered by email (magic links).
+ *
+ * Hashed like refresh tokens: the plaintext only ever exists in the email, so
+ * a database leak cannot be replayed into a session. `consumedAt` enforces
+ * one-time use — a link forwarded, logged by a mail scanner, or left in an
+ * inbox must not sign anyone in twice.
+ *
+ * `email` is stored alongside the user because the address may be new to the
+ * account: signing in this way is also how an email gets attached.
+ */
+export const loginTokens = pgTable(
+  "login_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    email: text("email").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  },
+  (table) => [index("login_tokens_user_idx").on(table.userId)],
+);
+
 // ---------------------------------------------------------------------------
 // Social
 // ---------------------------------------------------------------------------
