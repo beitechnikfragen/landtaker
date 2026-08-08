@@ -153,4 +153,6 @@ npm run dev:prod
 
 ## 🤝 Contributing
 
-Contributions and translations are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow, the approved-issue process, project governance, and translation info.
+Landtaker is **not accepting external contributions** at the moment. Bugs and
+ideas are very welcome through the in-game feedback button (bottom-left) or on
+[Discord](https://discord.gg/FztuCAcVGD). See [CONTRIBUTING.md](CONTRIBUTING.md).
