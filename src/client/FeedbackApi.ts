@@ -93,7 +93,7 @@ export async function submitFeedback(input: {
   if (response.status === 429) {
     // Prefer the body's value, fall back to the header, then to a sane
     // default — the user needs *some* number to act on.
-    let retryAfterSeconds = 0;
+    let retryAfterSeconds: number;
     try {
       const body = (await response.json()) as { retryAfterSeconds?: number };
       retryAfterSeconds = body.retryAfterSeconds ?? 0;
