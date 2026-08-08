@@ -54,6 +54,7 @@ import { modalRouter } from "./ModalRouter";
 import { updateAccountNavButton } from "./NavAccountButton";
 import { initNavigation } from "./Navigation";
 import "./NewsModal";
+import { broadcastPartyJoin } from "./PartyApi";
 import "./PlayerProfileModal";
 import { RewardsModal } from "./RewardsModal";
 import "./SinglePlayerModal";
@@ -168,6 +169,12 @@ export interface JoinLobbyEvent {
   gameRecord?: GameRecord;
   source?: "public" | "private" | "host" | "matchmaking" | "singleplayer";
   publicLobbyInfo?: GameInfo | PublicGameInfo;
+  /**
+   * True when this join is a party member following their leader. Such joins
+   * must NOT be broadcast again — otherwise every follower would tell the
+   * party to join the lobby they were just told about.
+   */
+  followed?: boolean;
 }
 
 class Client {
@@ -189,6 +196,14 @@ class Client {
   private rewardsModal: RewardsModal;
   private steamLinkModal: SteamLinkModal;
   private mostRecentJoinEvent: number;
+  /**
+   * The game id the party was last told about, or that we were told to join.
+   * Joining dispatches `join-lobby` several times for one lobby (the modals
+   * re-dispatch once the lobby is confirmed), so this keeps the party
+   * broadcast to one per game — and keeps a follower from broadcasting back
+   * the game it was just sent into.
+   */
+  private lastBroadcastGameId: string | null = null;
 
   private turnstileTokenPromise: Promise<{
     token: string;
@@ -933,6 +948,26 @@ class Client {
     this.mostRecentJoinEvent = event.timeStamp;
     if (this.usernameInput && !this.usernameInput.canPlay()) {
       return;
+    }
+
+    // Pull the party along. Fire-and-forget on purpose: the backend accepts
+    // this from the leader only and everyone else gets a 403, so awaiting it
+    // would delay every join to learn something we do not act on.
+    //
+    // Broadcast at most once per game. Joining fires `join-lobby` more than
+    // once for the same lobby — the modals re-dispatch it as `private` once
+    // the lobby is confirmed — and a follower re-broadcasting the game it was
+    // just sent into would bounce the party around the party forever.
+    if (lobby.followed === true) {
+      // Claim the id so the modal's follow-up dispatch for this same lobby
+      // cannot broadcast it back to the party.
+      this.lastBroadcastGameId = lobby.gameID;
+    } else if (
+      lobby.source !== "singleplayer" &&
+      this.lastBroadcastGameId !== lobby.gameID
+    ) {
+      this.lastBroadcastGameId = lobby.gameID;
+      void broadcastPartyJoin(lobby.gameID, lobby.source ?? "public");
     }
 
     console.log(`joining lobby ${lobby.gameID}`);

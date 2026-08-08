@@ -12,6 +12,7 @@ import { registerLeaderboardRoutes } from "./routes/leaderboard.ts";
 import { registerMatchmakingRoutes } from "./routes/matchmaking.ts";
 import { registerPartyRoutes } from "./routes/parties.ts";
 import { registerPartyEventRoutes } from "./routes/partyEvents.ts";
+import { registerPlayerGamesRoutes } from "./routes/playerGames.ts";
 import { registerShopRoutes } from "./routes/shop.ts";
 import { registerStubRoutes } from "./routes/stubs.ts";
 import { registerUserRoutes } from "./routes/users.ts";
@@ -75,6 +76,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registerPartyRoutes(app);
   await registerPartyEventRoutes(app);
   await registerGameRoutes(app);
+  await registerPlayerGamesRoutes(app);
   await registerLeaderboardRoutes(app);
   await registerFriendRoutes(app);
   await registerJoinVerifyRoutes(app);
