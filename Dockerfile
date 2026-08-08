@@ -96,4 +96,10 @@ EOF
 # Same CR-stripping as above: the heredoc inherits the Dockerfile's own line
 # endings, so a CRLF checkout would poison start.sh too.
 RUN sed -i 's/\r$//' /usr/local/bin/start.sh && chmod +x /usr/local/bin/start.sh
+
+# nginx fronts everything inside the container. Declared explicitly because
+# reverse proxies (Coolify/Traefik) derive the routing target from the
+# exposed port — without this the domain points at nothing.
+EXPOSE 80
+
 ENTRYPOINT ["/usr/local/bin/start.sh"]

@@ -21,6 +21,9 @@ services:
       args:
         GIT_COMMIT: ${GIT_COMMIT:-unknown}
     restart: unless-stopped
+    # Coolify/Traefik route to the exposed container port; nginx listens on 80.
+    expose:
+      - "80"
     environment:
       GAME_ENV: prod
       DOMAIN: ${DOMAIN}
