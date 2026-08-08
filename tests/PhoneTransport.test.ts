@@ -296,4 +296,81 @@ describe("PhoneTransport", () => {
     await higher.syncPeers([A]);
     expect(sentFromHigher.some((m: any) => m.type === "offer")).toBe(false);
   });
+
+  // Regression test for the production bug: the answering side (higher
+  // client id) creates its RTCPeerConnection eagerly inside syncPeers(),
+  // *before* any offer has arrived — it never calls makeOffer() itself, it
+  // only waits. The inbound offer must still be answered on that
+  // syncPeers()-created peer, not just on one created fresh by
+  // handleSignal(). This exact path (peer pre-exists, then offer arrives)
+  // was previously untested; every other test only covers the offering side.
+  it("answers an inbound offer on a peer that syncPeers already created", async () => {
+    const sent: unknown[] = [];
+    // B is the higher id: syncPeers([A]) will create a peer for A but must
+    // NOT send an offer (A < B), mirroring the caller side in production
+    // that offers nothing and just waits.
+    const transport = new PhoneTransport(B, (_to, data) =>
+      sent.push(JSON.parse(data)),
+    );
+
+    await transport.syncPeers([A]);
+    expect(allPeerConnections.length).toBe(1);
+    expect(sent.some((m: any) => m.type === "offer")).toBe(false);
+
+    const preExistingPc = allPeerConnections[0];
+
+    // Now the real offer arrives from A on the very peer syncPeers() built.
+    await transport.handleSignal(
+      A,
+      JSON.stringify({ type: "offer", sdp: "remote-offer-sdp" }),
+    );
+
+    // No second RTCPeerConnection should have been constructed for A.
+    expect(allPeerConnections.length).toBe(1);
+    expect(allPeerConnections[0]).toBe(preExistingPc);
+
+    const answers = sent.filter((m: any) => m.type === "answer") as {
+      type: string;
+      sdp: string;
+    }[];
+    expect(answers.length).toBe(1);
+    expect(typeof answers[0].sdp).toBe("string");
+    expect(preExistingPc.signalingState).toBe("stable");
+  });
+
+  // Production logs showed the offer immediately followed by a burst of ICE
+  // candidates, all dispatched via PhoneController's fire-and-forget `void
+  // this.rtc.handleSignal(...)` with no queueing. Concurrent handleSignal()
+  // calls for the same peer must not stop the answer from going out.
+  it("answers correctly even when candidates race in concurrently with the offer", async () => {
+    const sent: unknown[] = [];
+    const transport = new PhoneTransport(B, (_to, data) =>
+      sent.push(JSON.parse(data)),
+    );
+
+    await transport.syncPeers([A]);
+
+    // Fire off the offer and a handful of candidates without awaiting each
+    // individually, exactly as PhoneController.receive() does for a burst of
+    // inbound WS messages.
+    const offerPromise = transport.handleSignal(
+      A,
+      JSON.stringify({ type: "offer", sdp: "remote-offer-sdp" }),
+    );
+    const candidatePromises = Array.from({ length: 6 }, (_, i) =>
+      transport.handleSignal(
+        A,
+        JSON.stringify({
+          type: "candidate",
+          candidate: { candidate: `cand-${i}` },
+        }),
+      ),
+    );
+
+    await Promise.all([offerPromise, ...candidatePromises]);
+
+    expect(allPeerConnections.length).toBe(1);
+    const answers = sent.filter((m: any) => m.type === "answer");
+    expect(answers.length).toBe(1);
+  });
 });

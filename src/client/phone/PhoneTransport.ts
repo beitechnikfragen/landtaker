@@ -21,6 +21,16 @@ export class PhoneTransport {
   // handleSignal can race) await this instead of each starting their own
   // permission prompt / stream.
   private micPromise: Promise<void> | null = null;
+  // Per-peer signaling queue. PhoneController dispatches every inbound
+  // "signal" message via a fire-and-forget `void handleSignal(...)` — there
+  // is no server-side or transport-level ordering guarantee that one
+  // message's async work (setRemoteDescription -> createAnswer ->
+  // setLocalDescription for an offer) finishes before the next message for
+  // the same peer starts running. In production this let ICE candidates for
+  // a peer interleave with that peer's own still-in-flight offer handling.
+  // Chaining onto this promise per peer forces strict in-order processing
+  // without blocking unrelated peers.
+  private signalQueues = new Map<ClientID, Promise<void>>();
 
   constructor(
     private readonly myId: ClientID,
@@ -50,6 +60,7 @@ export class PhoneTransport {
       peer.audio.detach();
       peer.pc.close();
       this.peers.delete(id);
+      this.signalQueues.delete(id);
     }
     if (peers.length === 0) {
       // TEMP diagnostics: remove once the phone audio bug is found
@@ -78,6 +89,23 @@ export class PhoneTransport {
   }
 
   async handleSignal(from: ClientID, data: string): Promise<void> {
+    // PhoneController fires one handleSignal() call per inbound WS message
+    // with no await between them, so an offer and the candidates that
+    // immediately follow it can otherwise race on the same RTCPeerConnection.
+    // Chain onto the per-peer queue so they always run one at a time, in
+    // arrival order, regardless of how fast the next message shows up.
+    const prev = this.signalQueues.get(from) ?? Promise.resolve();
+    const next = prev
+      .catch(() => {
+        // A prior message's rejection must not poison the queue for later
+        // messages on the same peer.
+      })
+      .then(() => this.processSignal(from, data));
+    this.signalQueues.set(from, next);
+    return next;
+  }
+
+  private async processSignal(from: ClientID, data: string): Promise<void> {
     let msg: { type: string; sdp?: string; candidate?: RTCIceCandidateInit };
     try {
       msg = JSON.parse(data);
@@ -95,6 +123,10 @@ export class PhoneTransport {
     // second negotiation to add the track.
     await this.ensureMic();
     const peer = this.peers.get(from) ?? this.createPeer(from);
+    // TEMP diagnostics: remove once the phone audio bug is found
+    console.log(
+      `[phone] handleSignal BEFORE type=${msg.type} from=${from} signalingState=${peer.pc.signalingState} connectionState=${peer.pc.connectionState}`,
+    );
     try {
       if (msg.type === "offer") {
         await peer.pc.setRemoteDescription({
@@ -103,6 +135,10 @@ export class PhoneTransport {
         });
         const answer = await peer.pc.createAnswer();
         await peer.pc.setLocalDescription(answer);
+        // TEMP diagnostics: remove once the phone audio bug is found
+        console.log(
+          `[phone] sending ANSWER to=${from} sdpLength=${answer.sdp?.length ?? 0}`,
+        );
         this.send(from, JSON.stringify({ type: "answer", sdp: answer.sdp }));
       } else if (msg.type === "answer") {
         await peer.pc.setRemoteDescription({
@@ -115,6 +151,10 @@ export class PhoneTransport {
     } catch (err) {
       console.error("PhoneTransport: signaling failed", err);
     }
+    // TEMP diagnostics: remove once the phone audio bug is found
+    console.log(
+      `[phone] handleSignal AFTER type=${msg.type} from=${from} signalingState=${peer.pc.signalingState} connectionState=${peer.pc.connectionState}`,
+    );
   }
 
   setMuted(muted: boolean): void {
@@ -133,6 +173,7 @@ export class PhoneTransport {
       peer.pc.close();
     }
     this.peers.clear();
+    this.signalQueues.clear();
     this.stopMic();
   }
 
@@ -157,6 +198,10 @@ export class PhoneTransport {
       );
     };
     pc.ontrack = (e) => {
+      // TEMP diagnostics: remove once the phone audio bug is found
+      console.log(
+        `[phone] ontrack fired for id=${id} streamCount=${e.streams.length}`,
+      );
       if (e.streams[0]) audio.attach(e.streams[0]);
     };
     // "disconnected" is often a transient blip (brief ICE hiccup) that
@@ -165,6 +210,10 @@ export class PhoneTransport {
     // players behind strict NATs get an honest "no connection" instead of
     // endless ringing).
     pc.onconnectionstatechange = () => {
+      // TEMP diagnostics: remove once the phone audio bug is found
+      console.log(
+        `[phone] connectionState changed for id=${id} -> ${pc.connectionState}`,
+      );
       if (pc.connectionState === "failed") {
         this.onConnectionFailed?.(id);
       }

@@ -26,7 +26,17 @@ export class PhoneController {
     this.sounds = new PhoneSounds(userSettings.phoneVolume());
     this.rtc = new PhoneTransport(
       myId,
-      (to, data) => this.send({ kind: "signal", to, data }),
+      (to, data) => {
+        // TEMP diagnostics: remove once the phone audio bug is found
+        let innerType = "unknown";
+        try {
+          innerType = JSON.parse(data).type;
+        } catch {
+          // ignore parse failure, keep "unknown"
+        }
+        console.log(`[phone] outbound signal to=${to} innerType=${innerType}`);
+        this.send({ kind: "signal", to, data });
+      },
       () => {
         this._connectionFailed = true;
       },

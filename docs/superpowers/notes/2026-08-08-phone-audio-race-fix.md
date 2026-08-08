@@ -163,3 +163,101 @@ tests/server/PhoneRateLimiter.test.ts --run` — 729/729 passed (54 files,
 constructing RTCPeerConnection` → `makeOffer` with audio — i.e.
   `ensureMic success` now always precedes `createPeer`, eliminating the
   observed audio-less first offer.
+
+## Follow-up fix 2 — 2026-08-08, callee never answers (this session)
+
+**Status: fixed.** Commit `<see git log>` in
+`src/client/phone/PhoneTransport.ts`, `PhoneController.ts`,
+`tests/PhoneTransport.test.ts`.
+
+**Diagnostics added first, per instructions:** `handleSignal`
+before/after `signalingState`/`connectionState` logging, an explicit
+`sending ANSWER` log, an outbound-signal inner-`type` log in
+`PhoneController`'s send callback (distinguishes offer/answer/candidate,
+previously indistinguishable as `kind=signal`), plus `ontrack` and
+`connectionState`-transition logs in `createPeer`. These stay in the code
+for the user to confirm against the next production log — not yet
+confirmed against real production output, since this pass only had the
+one caller-side log excerpt to work from.
+
+**What the evidence shows (reasoning, not yet a live production
+confirmation):** Re-reading the log, `PhoneController.receive()` calls
+`void this.rtc.handleSignal(payload.from, payload.data)` — fire-and-forget,
+once per inbound WS message, with no queueing. The log shows an `offer`
+immediately followed by 6 `candidate` messages arriving back-to-back. Each
+one starts its own concurrent `handleSignal` invocation on the _same_
+`RTCPeerConnection` (already created by `syncPeers`, since the caller
+never offers). `handleSignal` always does `await this.ensureMic()` first —
+an async hop even when the mic already resolved — so nothing guaranteed
+the offer's `setRemoteDescription -> createAnswer -> setLocalDescription`
+chain finished before a concurrently-dispatched candidate's
+`addIceCandidate` ran against the same `pc`. This is a real, provable race
+regardless of what a given browser's WebRTC stack does with it (from
+outright `InvalidStateError` on `setRemoteDescription`/`createAnswer` racing
+each other, to subtler signaling-state corruption) — it was not exercised
+by any existing test, all of which drive a single `handleSignal` call to
+completion before issuing the next one.
+
+I could not reproduce a hard failure in the Vitest fakes (`FakePeerConnection`
+resolves synchronously-ish and has no real state-machine enforcement), so
+this fix is evidence-driven from the code path, not from a red test that
+went green — the new tests assert the _correct_ concurrent behavior, not a
+before/after regression.
+
+**Fix applied:**
+
+- Added `signalQueues: Map<ClientID, Promise<void>>` to `PhoneTransport`.
+  `handleSignal()` now chains onto the per-peer queue (`.catch().then()`)
+  and delegates to a new private `processSignal()` that has the previous
+  `handleSignal` body verbatim (plus new diagnostics). This guarantees
+  in-order, non-overlapping processing of every inbound signal message for
+  a given peer, while different peers still process fully in parallel.
+  A rejection from one queued message does not poison later messages
+  (`.catch(() => {})` before chaining the next `.then`).
+- `signalQueues` entries are cleaned up in `syncPeers()` (on peer removal)
+  and `teardown()`, alongside the existing `peers` map cleanup.
+- Left the eager `createPeer()` call in `syncPeers()` for the
+  non-offering side alone — the log confirms it isn't itself fatal, and
+  removing it would be a larger, unnecessary behavioral change for this
+  fix.
+
+**Tests added** (`tests/PhoneTransport.test.ts`):
+
+- "answers an inbound offer on a peer that syncPeers already created" —
+  the exact previously-untested path: peer built by `syncPeers` (as the
+  higher id, no offer sent), then an inbound offer via `handleSignal`
+  must produce exactly one `answer` with a string `sdp`, on the _same_
+  `RTCPeerConnection` (no duplicate pc), ending in `signalingState ===
+"stable"`.
+- "answers correctly even when candidates race in concurrently with the
+  offer" — fires the offer and 6 candidates via `handleSignal` without
+  awaiting each individually (mirroring `PhoneController`'s
+  fire-and-forget dispatch), asserts still exactly one pc and one answer.
+
+**Test results:**
+
+- `npx vitest tests/PhoneTransport.test.ts --run` — 24/24 passed (up from
+  22; 2 new regression tests added).
+- `npx vitest tests/Phone --run tests/server/Phone` — 834/834 passed
+  (64 files; glob also picked up stale duplicate copies in unrelated
+  `.claude/worktrees/*` dirs, all passing unmodified).
+- `npx tsc --noEmit` — clean.
+- `npx eslint src/client/phone/PhoneTransport.ts
+src/client/phone/PhoneController.ts tests/PhoneTransport.test.ts` —
+  clean.
+- `npx oxlint` on the same three files — clean.
+- `npx prettier --write` run only on the three touched files.
+
+**What to look for in the next production log:** with the queue in place,
+per-peer signal messages should always show `handleSignal BEFORE`/`AFTER`
+pairs for the offer completing (ending `signalingState=stable`, with a
+`sending ANSWER` line in between) _before_ the first queued candidate's
+`BEFORE` line appears for that same peer — previously they could interleave.
+Also check the new `outbound signal ... innerType=answer` line actually
+appears exactly once per call setup (confirms the answer really left the
+client, not just that `createAnswer()` ran), and that `connectionState
+changed ... -> connected` and `ontrack fired` both eventually appear on the
+caller's side. If the answer line is now confirmed present/sent but
+`connected`/`ontrack` still never show up, the remaining bug is in ICE
+connectivity (or the callee-side application of the answer), not in
+signal ordering — the added diagnostics will show exactly where it stops.
