@@ -22,6 +22,40 @@ export function updateAccountNavButton(userMeResponse: UserMeResponse | false) {
   const signInTextEl = document.getElementById(
     "nav-account-signin-text",
   ) as HTMLSpanElement | null;
+  const usernameEl = document.getElementById(
+    "nav-account-username",
+  ) as HTMLSpanElement | null;
+
+  // The account name, shown in every signed-in state. Resolved once here
+  // rather than per branch: the branches differ in which icon they show, not
+  // in whether the player has a name.
+  const accountName =
+    userMeResponse !== false
+      ? (userMeResponse.player?.username ??
+        userMeResponse.user.discord?.username ??
+        userMeResponse.user.steam?.personaName ??
+        null)
+      : null;
+
+  const showUsername = () => {
+    if (accountName) {
+      // The nav row has no width left for the name (see .nav-username-slot),
+      // so it lives in the element for assistive tech and in the tooltip for
+      // everyone else — the cell is otherwise an unlabelled avatar.
+      if (usernameEl) {
+        usernameEl.textContent = accountName;
+        usernameEl.classList.remove("hidden");
+      }
+      button?.setAttribute("title", accountName);
+    } else {
+      usernameEl?.classList.add("hidden");
+    }
+  };
+  const hideUsername = () => {
+    usernameEl?.classList.add("hidden");
+    // Restore the generic label so a signed-out button never claims a name.
+    button?.setAttribute("title", translateText("main.account"));
+  };
 
   // Auth state is resolved, so the button no longer shows the loading spinner.
   document
@@ -40,6 +74,7 @@ export function updateAccountNavButton(userMeResponse: UserMeResponse | false) {
     personIconEl?.classList.remove("hidden");
     emailBadgeEl?.classList.add("hidden");
     signInTextEl?.classList.add("hidden");
+    showUsername();
     button?.classList.add("border", "border-lt-600");
   };
 
@@ -66,6 +101,7 @@ export function updateAccountNavButton(userMeResponse: UserMeResponse | false) {
     personIconEl?.classList.add("hidden");
     emailBadgeEl?.classList.add("hidden");
     signInTextEl?.classList.add("hidden");
+    showUsername();
     button?.classList.remove("border", "border-lt-600");
   };
 
@@ -74,6 +110,7 @@ export function updateAccountNavButton(userMeResponse: UserMeResponse | false) {
     personIconEl?.classList.remove("hidden");
     emailBadgeEl?.classList.add("hidden");
     signInTextEl?.classList.remove("hidden");
+    hideUsername();
     // Restore border when showing signin state
     button?.classList.add("border", "border-lt-600");
   };
@@ -83,6 +120,7 @@ export function updateAccountNavButton(userMeResponse: UserMeResponse | false) {
     personIconEl?.classList.remove("hidden");
     emailBadgeEl?.classList.remove("hidden");
     signInTextEl?.classList.add("hidden");
+    showUsername();
     button?.classList.add("border", "border-lt-600");
   };
 

@@ -136,6 +136,28 @@ export async function sendPartyChat(body: string): Promise<boolean> {
 }
 
 /**
+ * Tells the rest of the party that the leader entered a lobby, so their
+ * clients follow. Leader-only server-side; a member calling this gets a 403,
+ * which is why the caller must not surface failures — this is a side effect
+ * of joining, never a reason to block the join itself.
+ */
+export async function broadcastPartyJoin(
+  gameId: string,
+  source: "public" | "private" | "host" | "matchmaking",
+): Promise<boolean> {
+  try {
+    const res = await partyFetch("/parties/@me/join-broadcast", {
+      method: "POST",
+      body: JSON.stringify({ gameId, source }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn("broadcastPartyJoin: request failed", err);
+    return false;
+  }
+}
+
+/**
  * Invites a friend into the caller's party. The recipient gets the invite
  * over their event stream; accepting is a normal join-by-code on their side.
  */

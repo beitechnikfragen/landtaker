@@ -1364,6 +1364,27 @@
     "tps": "TPS:",
     "tps_avg_60s": "Avg:"
   },
+  "phone": {
+    "allies_only": "Allies only",
+    "block": "Block",
+    "busy": "Busy",
+    "call": "Call",
+    "calling": "Calling…",
+    "dnd": "Do not disturb",
+    "hang_up": "Hang up",
+    "in_call": "In call",
+    "incoming_call": "Incoming call",
+    "mic_blocked": "Microphone blocked — you can listen but not speak",
+    "missed_calls": "Missed calls",
+    "mute": "Mute",
+    "no_connection": "No connection",
+    "normal": "Normal",
+    "silent": "Silent",
+    "title": "Telephone",
+    "unblock": "Unblock",
+    "unmute": "Unmute",
+    "volume": "Ring volume"
+  },
   "player_panel": {
     "active": "Active",
     "alliance_time_remaining": "Alliance Expires In",
