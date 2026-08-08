@@ -1,0 +1,9 @@
+# Anything Linux executes must stay LF, no matter which OS checked it out.
+# A Windows checkout that turns "#!/bin/sh" into "#!/bin/sh\r" makes Docker
+# fail with the maximally confusing "exec: no such file or directory".
+*.sh text eol=lf
+Dockerfile text eol=lf
+*/Dockerfile text eol=lf
+*.conf text eol=lf
+supervisord.conf text eol=lf
+docker-compose*.yml text eol=lf

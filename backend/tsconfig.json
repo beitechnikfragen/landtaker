@@ -41,7 +41,7 @@
       "resources/*": ["../resources/*"]
     }
   },
-  "include": ["src/**/*.ts", "drizzle.config.ts"],
+  "include": ["src/**/*.ts", "scripts/**/*.ts", "drizzle.config.ts"],
   // The game's sources are imported for their types but NOT type-checked here:
   // this project runs stricter settings (noUncheckedIndexedAccess,
   // verbatimModuleSyntax) than the game does, so checking them would report

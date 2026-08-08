@@ -12,6 +12,7 @@ import {
 } from "../Utils";
 import "./CosmeticBackground";
 import "./RankBadge";
+import { RANK_TIERS, rankBadgeUrl, rankFromElo } from "./RankBadge";
 
 /**
  * The top of the play page: the mark and live server state on the left, the
@@ -152,6 +153,16 @@ export class HomeHero extends LitElement {
     const record = board?.oneVone;
     const matches = player?.recentMatches ?? [];
 
+    const wins = record?.wins ?? 0;
+    const losses = record?.losses ?? 0;
+    const played = wins + losses;
+    const winRate = played > 0 ? ((wins / played) * 100).toFixed(1) : null;
+    const rank = hasElo ? rankFromElo(elo1v1) : null;
+    const nextRank =
+      hasElo && rank !== null && rank.toNext !== null
+        ? rankFromElo(elo1v1 + rank.toNext)
+        : null;
+
     return html`
       <div class="p-4 border-t border-lt-700">
         ${hasElo
@@ -160,16 +171,55 @@ export class HomeHero extends LitElement {
                 .size=${52}
                 .showLabel=${true}
                 .showProgress=${true}
-                class="block mb-4"
+                class="block"
               ></rank-badge>
+              ${nextRank !== null && rank !== null
+                ? html`
+                    <!-- Where the grind leads: the next division's badge, and
+                         the rating still missing. -->
+                    <div
+                      class="mt-3 mb-1 flex items-center gap-2.5 border border-lt-700 bg-lt-800/60 px-2.5 py-2"
+                    >
+                      <img
+                        src=${rankBadgeUrl(nextRank, true)}
+                        alt=""
+                        aria-hidden="true"
+                        class="w-[30px] h-[30px] shrink-0"
+                      />
+                      <div class="min-w-0 flex-1">
+                        <div class="lt-label !text-[10px]">
+                          ${translateText("rank.next_rank")}
+                        </div>
+                        <div
+                          class="lt-display text-[15px] leading-tight text-lt-100"
+                        >
+                          ${nextRank.label}
+                        </div>
+                      </div>
+                      <span class="lt-num text-[14px] font-bold text-lt-accent"
+                        >+${rank.toNext}</span
+                      >
+                    </div>
+                  `
+                : nothing}
               <div class="lt-kv">
-                <span>${translateText("player_stats_tree.stats_wins")}</span>
-                <b class="text-lt-ok">${record?.wins ?? 0}</b>
+                <span>${translateText("rank.rating")}</span>
+                <b class="text-lt-accent">${elo1v1}</b>
               </div>
               <div class="lt-kv">
-                <span>${translateText("player_stats_tree.stats_losses")}</span>
-                <b class="text-lt-bad">${record?.losses ?? 0}</b>
-              </div>`
+                <span>${translateText("rank.matches")}</span>
+                <b>${played}</b>
+              </div>
+              <div class="lt-kv">
+                <span>${translateText("player_stats_tree.stats_wins")}</span>
+                <b class="text-lt-ok">${wins}</b>
+              </div>
+              ${winRate !== null
+                ? html`<div class="lt-kv">
+                    <span>${translateText("rank.win_rate")}</span>
+                    <b>${winRate}%</b>
+                  </div>`
+                : nothing}`
           : html`<div class="lt-label !text-[12px] !text-lt-500">
               ${translateText("matchmaking_modal.no_elo")}
             </div>`}
@@ -185,14 +235,23 @@ export class HomeHero extends LitElement {
                   <div
                     class="lt-row flex items-center gap-3 px-4 py-2 text-[13px]"
                   >
-                    <!-- Placement carries the result: first place is the
-                           only one worth colouring. -->
+                    <!-- Placement carries the result; when the archive only
+                           knows win/loss, fall back to W/L. First place (or a
+                           win) is the only thing worth colouring. -->
                     <i
                       class="lt-num not-italic min-w-[26px] h-[20px] grid place-items-center border text-[12px] ${match.placement ===
-                      1
+                        1 ||
+                      ((match.placement === null ||
+                        match.placement === undefined) &&
+                        match.won === true)
                         ? "bg-lt-accent text-lt-accent-ink border-lt-accent"
                         : "text-lt-400 border-lt-600"}"
-                      >${match.placement ?? "—"}</i
+                      >${match.placement ??
+                      (match.won === true
+                        ? "W"
+                        : match.won === false
+                          ? "L"
+                          : "—")}</i
                     >
                     <span class="flex-1 min-w-0 truncate text-lt-100"
                       >${match.map ?? "—"}</span
@@ -206,6 +265,37 @@ export class HomeHero extends LitElement {
             </div>
           `
         : nothing}
+      <!-- The full ladder, current tier lit — so the badge above has context. -->
+      <div class="lt-rail-h border-t border-lt-700">
+        ${translateText("rank.tiers")}
+      </div>
+      <div class="grid grid-cols-4 gap-px bg-lt-700 border-t border-lt-700">
+        ${RANK_TIERS.map((tier) => {
+          const isCurrent = rank !== null && rank.tier.key === tier.key;
+          return html`
+            <div
+              class="flex flex-col items-center gap-1.5 px-1 py-2.5 ${isCurrent
+                ? "bg-lt-800 [box-shadow:inset_0_-2px_0_var(--color-lt-accent)]"
+                : "bg-lt-850"}"
+            >
+              <img
+                src=${rankBadgeUrl({ tier, division: 3 }, true)}
+                alt=""
+                aria-hidden="true"
+                class="w-[34px] h-[34px] ${isCurrent
+                  ? ""
+                  : "opacity-60 saturate-50"}"
+              />
+              <span
+                class="lt-label !text-[9px] ${isCurrent
+                  ? "!text-lt-100"
+                  : "!text-lt-500"}"
+                >${tier.name}</span
+              >
+            </div>
+          `;
+        })}
+      </div>
     `;
   }
 
@@ -258,6 +348,7 @@ export class HomeHero extends LitElement {
     if (usernameInput?.canPlay && !usernameInput.canPlay()) return;
     const lobby = this.deployLobby();
     if (!lobby) return;
+
     this.dispatchEvent(
       new CustomEvent("join-lobby", {
         detail: {
@@ -280,7 +371,11 @@ export class HomeHero extends LitElement {
 
     return html`
       <div class="lt-rise">
-        <div class="lt-group w-fit">
+        <!-- Five actions in the inset shell: tighter padding than the base
+             button, and no wrapping — one line per label like the mock. -->
+        <div
+          class="lt-group w-fit [&>.lt-btn]:!px-5 [&>.lt-btn]:whitespace-nowrap"
+        >
           <button
             class="lt-btn lt-btn-primary"
             ?disabled=${deployTarget === null}
@@ -288,6 +383,15 @@ export class HomeHero extends LitElement {
           >
             ${translateText("home.deploy")}
             <small class="lt-btn-sub">${deploySub ?? "—"}</small>
+          </button>
+          <button
+            class="lt-btn"
+            @click=${() => window.showPage?.("page-ranked")}
+          >
+            ${translateText("mode_selector.ranked_title")}
+            <small class="lt-btn-sub"
+              >${translateText("home.ranked_sub")}</small
+            >
           </button>
           <button class="lt-btn" @click=${this.open("single-player-modal")}>
             ${translateText("home.single_player")}
@@ -309,11 +413,17 @@ export class HomeHero extends LitElement {
     `;
   }
 
-  /** "Next deployment in 0:42 · 46 of 64 slots filled" — all live data. */
+  /**
+   * "Next deployment in 0:42 · 46 of 64 slots filled" — all live data.
+   *
+   * The line keeps a FIXED height and always renders: between lobby cycles
+   * the countdown briefly has nothing to say, and letting the row vanish
+   * made everything below it jump up and down once a minute. The countdown
+   * number is tabular and min-width'd for the same reason.
+   */
   private renderDeployLine() {
     const seconds = this.nextStartSeconds();
     const slots = this.nextLobbySlots();
-    if (seconds === null && slots === null) return nothing;
 
     const mmss =
       seconds === null
@@ -322,23 +432,23 @@ export class HomeHero extends LitElement {
 
     return html`
       <div
-        class="lt-label !text-[13px] !text-lt-500 mt-3 flex items-center gap-2"
+        class="lt-label !text-[13px] !text-lt-500 mt-3 h-[20px] flex items-center gap-2 overflow-hidden"
       >
-        ${mmss !== null
-          ? html`<span
-                >${translateText("home.next_deployment", { time: "" })}</span
-              ><b class="lt-num text-lt-accent text-[14px]">${mmss}</b>`
-          : nothing}
-        ${mmss !== null && slots !== null
-          ? html`<span class="text-lt-600">·</span>`
-          : nothing}
+        <span>${translateText("home.next_deployment", { time: "" })}</span>
+        <b
+          class="lt-num text-lt-accent text-[14px] min-w-[38px] ${mmss === null
+            ? "opacity-50"
+            : ""}"
+          >${mmss ?? "…"}</b
+        >
         ${slots !== null
-          ? html`<span
-              >${translateText("home.slots_filled", {
-                filled: String(slots.filled),
-                max: String(slots.max),
-              })}</span
-            >`
+          ? html`<span class="text-lt-600">·</span>
+              <span
+                >${translateText("home.slots_filled", {
+                  filled: String(slots.filled),
+                  max: String(slots.max),
+                })}</span
+              >`
           : nothing}
       </div>
     `;

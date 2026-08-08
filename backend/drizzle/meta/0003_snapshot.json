@@ -1,6 +1,6 @@
 {
-  "id": "40ed5643-da53-4ba1-9476-334f16025a94",
-  "prevId": "9ace3ff0-0457-4414-b2a6-33df4b0fd8a9",
+  "id": "1c2c7b38-b689-4aed-b103-f7386eae568a",
+  "prevId": "40ed5643-da53-4ba1-9476-334f16025a94",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1098,6 +1098,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "credits": {
+          "name": "credits",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "can_create_public_lobbies": {
           "name": "can_create_public_lobbies",

@@ -21,6 +21,18 @@ vi.mock("../../src/client/Auth", () => ({
   getAuthHeader: vi.fn(async () => "Bearer test-token"),
 }));
 
+// renderLoginOptions() gates the dev-sign-in button on the environment, and
+// the real ClientEnv throws without a BOOTSTRAP_CONFIG the page never injects
+// under test. Pinned to GameEnv.Prod (the enum is numeric — Dev is 0, so a
+// stubbed string would read as Dev) to keep the button out of the rendered
+// output; these tests cover the production sign-in surface.
+vi.mock("src/client/ClientEnv", () => ({
+  ClientEnv: {
+    env: vi.fn(() => 2),
+    workerPath: vi.fn(() => "w0"),
+  },
+}));
+
 vi.mock("../../src/client/Utils", () => ({
   translateText: vi.fn((key: string) => key),
   showToast: vi.fn(),

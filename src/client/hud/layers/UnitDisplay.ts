@@ -120,8 +120,8 @@ export class UnitDisplay extends LitElement implements Controller {
     }
 
     return html`
-      <div class="border-t border-lt-700 p-0.5 w-full">
-        <div class="grid grid-rows-1 grid-flow-col gap-0.5 w-fit mx-auto">
+      <div class="border-t border-lt-700 w-full">
+        <div class="flex gap-px bg-lt-700 w-full">
           ${this.renderUnitItem(
             cityIcon,
             this._cities,
@@ -216,7 +216,7 @@ export class UnitDisplay extends LitElement implements Controller {
 
     return html`
       <div
-        class="flex flex-col items-center relative"
+        class="relative flex-1 min-w-0"
         @mouseenter=${() => {
           this._hoveredUnit = unitType;
           this.requestUpdate();
@@ -255,12 +255,14 @@ export class UnitDisplay extends LitElement implements Controller {
               </div>
             `
           : null}
-        <div
-          class="${this.canBuild(unitType)
-            ? ""
-            : "opacity-40"} border border-lt-600 px-0.5 pb-0.5 flex items-center gap-0.5 cursor-pointer
-             ${selected ? "hover:bg-lt-750" : "hover:bg-lt-850"}
-             text-white ${selected ? "bg-lt-750 !border-lt-accent" : ""}"
+        <!-- Mock slot: hotkey top-left, owned-count top-right, icon, NAME,
+             price. The price turning red is the affordance for "can't". -->
+        <button
+          class="relative w-full bg-[rgb(20_24_28/0.96)] flex flex-col items-center gap-1 px-1 pt-2.5 pb-1.5 cursor-pointer transition-colors text-white
+             ${selected
+            ? "bg-[#20262d] [box-shadow:inset_0_-2px_0_var(--color-lt-accent)]"
+            : "hover:bg-lt-750"}
+             ${this.canBuild(unitType) ? "" : "opacity-40"}"
           @click=${() => {
             if (selected) {
               this.uiState.ghostStructure = null;
@@ -290,16 +292,27 @@ export class UnitDisplay extends LitElement implements Controller {
           @mouseleave=${() =>
             this.eventBus?.emit(new ToggleStructureEvent(null))}
         >
-          ${html`<div class="ml-0.5 text-[10px] relative -top-1 text-lt-400">
-            ${displayHotkey}
-          </div>`}
-          <div class="flex items-center gap-0.5 pt-0.5">
-            <img src=${icon} alt=${structureKey} class="align-middle size-5" />
-            ${number !== null
-              ? html`<span class="text-xs">${renderNumber(number)}</span>`
-              : null}
-          </div>
-        </div>
+          <span
+            class="absolute top-0.5 left-1 lt-num text-[9px] text-lt-500 leading-[13px]"
+            >${displayHotkey}</span
+          >
+          ${number !== null && number > 0
+            ? html`<span
+                class="absolute top-0.5 right-1 lt-num text-[10px] text-lt-100 bg-black/60 border border-lt-600 px-0.5 leading-[13px]"
+                >${renderNumber(number)}</span
+              >`
+            : null}
+          <img src=${icon} alt=${structureKey} class="size-5" />
+          <span class="lt-label !text-[10px] leading-none truncate max-w-full"
+            >${translateText("unit_type." + structureKey)}</span
+          >
+          <span
+            class="lt-num text-[11px] leading-none ${this.canBuild(unitType)
+              ? "text-lt-gold"
+              : "text-lt-bad"}"
+            >${renderNumber(this.cost(unitType))}</span
+          >
+        </button>
       </div>
     `;
   }

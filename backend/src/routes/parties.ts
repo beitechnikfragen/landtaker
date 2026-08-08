@@ -3,6 +3,7 @@ import { fixedTeamSize, partyFitsLobby } from "@game/game/TeamAssignment.ts";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { requireApiKey, requireAuth } from "../plugins/auth.ts";
+import { findFriend, publishToUser } from "../services/friendChat.ts";
 import {
   createParty,
   getPartyForUser,
@@ -26,6 +27,14 @@ const JoinBodySchema = z.object({
 
 const KickBodySchema = z.object({
   userId: z.uuid(),
+});
+
+const ChatBodySchema = z.object({
+  body: z.string().trim().min(1).max(500),
+});
+
+const InviteBodySchema = z.object({
+  publicId: z.string().trim().min(1).max(128),
 });
 
 /**
@@ -61,6 +70,75 @@ export async function registerPartyRoutes(app: FastifyInstance): Promise<void> {
   /** The caller's current party, or null. */
   app.get("/parties/@me", { preHandler: requireAuth }, async (request, reply) =>
     reply.send({ party: await getPartyForUser(request.userId!) }),
+  );
+
+  /**
+   * POST /parties/@me/chat — one message to every current member, delivered
+   * over the per-user friend-event streams (members need not be friends).
+   * Deliberately ephemeral: no table, no history endpoint. A party is a
+   * pre-game huddle, not a record.
+   */
+  app.post(
+    "/parties/@me/chat",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const parsed = ChatBodySchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: "invalid_body" });
+      }
+      const party = await getPartyForUser(request.userId!);
+      if (!party) return sendError(reply, "not_a_member");
+
+      const sender = party.members.find((m) => m.userId === request.userId);
+      if (!sender) return sendError(reply, "not_a_member");
+
+      const event = {
+        type: "party_message" as const,
+        from: sender.publicId,
+        username: sender.username,
+        body: parsed.data.body,
+        createdAt: new Date().toISOString(),
+      };
+      await Promise.all(
+        party.members.map((member) => publishToUser(member.userId, event)),
+      );
+      return reply.send({ ok: true });
+    },
+  );
+
+  /**
+   * POST /parties/@me/invite — invites a FRIEND into the caller's party by
+   * pushing the invite code over their event stream. Friends-only on purpose:
+   * strangers are what the shareable code is for, and gating on friendship
+   * keeps this from becoming a spam channel. Accepting is an ordinary
+   * join-by-code, so no invite state lives on the server.
+   */
+  app.post(
+    "/parties/@me/invite",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const parsed = InviteBodySchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: "invalid_body" });
+      }
+      const party = await getPartyForUser(request.userId!);
+      if (!party) return sendError(reply, "not_a_member");
+
+      const sender = party.members.find((m) => m.userId === request.userId);
+      if (!sender) return sendError(reply, "not_a_member");
+
+      const target = await findFriend(request.userId!, parsed.data.publicId);
+      if (!target) return sendError(reply, "not_found");
+
+      await publishToUser(target.id, {
+        type: "party_invite",
+        from: sender.publicId,
+        username: sender.username,
+        inviteCode: party.inviteCode,
+        createdAt: new Date().toISOString(),
+      });
+      return reply.send({ ok: true });
+    },
   );
 
   /**

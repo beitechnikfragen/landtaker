@@ -3,6 +3,7 @@ import { customElement, state } from "lit/decorators.js";
 import { ClientEnv } from "src/client/ClientEnv";
 import { PlayerStatsTree, UserMeResponse } from "../core/ApiSchemas";
 import { assetUrl } from "../core/AssetUrls";
+import { GameEnv } from "../core/configuration/Config";
 import { Cosmetics } from "../core/CosmeticSchemas";
 import { hasLinkedIdentity, isSteamPrimaryUser } from "./AccountIdentity";
 import {
@@ -37,6 +38,7 @@ import { modalHeader } from "./components/ui/ModalHeader";
 import "./components/UsernamePanel";
 import { fetchCosmetics } from "./Cosmetics";
 import { crazyGamesSDK, type CrazyGamesUser } from "./CrazyGamesSDK";
+import { devSignIn } from "./PartyApi";
 import { playerProfileUrl } from "./PlayerProfileModal";
 import { translateText } from "./Utils";
 
@@ -831,6 +833,22 @@ export class AccountModal extends BaseModal {
 
             <!-- Email Recovery -->
             <div class="space-y-3">${this.renderEmailField()}</div>
+
+            ${ClientEnv.env() === GameEnv.Dev
+              ? html`
+                  <!-- Dev-only: the same dev-login the party modal uses. The
+                       backend route exists only with NODE_ENV=development, so
+                       this cannot do anything in production even if rendered.
+                       It sets the refresh cookie; the reload is required
+                       because the client resolves its session once at startup. -->
+                  <button
+                    @click=${this.handleDevSignIn}
+                    class="w-full mt-2 py-2 border border-dashed border-lt-600 text-lt-500 hover:text-lt-accent hover:border-lt-accent transition-colors text-[11px] font-bold uppercase tracking-widest"
+                  >
+                    ${translateText("account_modal.dev_sign_in")}
+                  </button>
+                `
+              : nothing}
           </div>
 
           <div class="mt-8 text-center border-t border-lt-700 pt-6">
@@ -977,6 +995,23 @@ export class AccountModal extends BaseModal {
     this.close();
     // Refresh the page after logout to update the UI state
     window.location.reload();
+  }
+
+  /**
+   * DEVELOPMENT ONLY — same flow the party modal offers. Signs in as the
+   * current anonymous name so the whole app (rail, rank, history) picks the
+   * session up after the reload.
+   */
+  private async handleDevSignIn() {
+    const usernameInput = document.querySelector("username-input") as {
+      getUsername?: () => string;
+    } | null;
+    const raw = usernameInput?.getUsername?.() ?? "";
+    // Not ??: an empty or too-short anon name must fall back too — the
+    // backend rejects usernames under three characters.
+    const name = raw.trim().length >= 3 ? raw : "DevPlayer";
+    const ok = await devSignIn(name);
+    if (ok) window.location.reload();
   }
 
   private async loadPlayerProfile(publicId: string): Promise<void> {

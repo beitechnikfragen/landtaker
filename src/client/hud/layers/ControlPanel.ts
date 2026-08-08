@@ -395,49 +395,35 @@ export class ControlPanel extends LitElement implements Controller {
   private renderDesktopTroopBar() {
     const { greenPercent, orangePercent } = this.calculateTroopBar();
     return html`
-      <div
-        class="w-full h-6 border border-lt-600 bg-lt-900/60 overflow-hidden relative"
-      >
+      <div class="w-full h-[34px] bg-[#0b0e11] overflow-hidden relative">
         <div class="relative h-full">
           <div
-            class="absolute inset-y-0 left-0 w-full origin-left bg-lt-troop transition-transform duration-200 ease-out"
-            style="transform: scaleX(${greenPercent / 100});"
+            class="absolute inset-y-0 left-0 w-full origin-left transition-transform duration-200 ease-out"
+            style="transform: scaleX(${greenPercent /
+            100}); background: linear-gradient(90deg, #2b628f, var(--color-lt-troop));"
           ></div>
           <div
-            class="absolute inset-y-0 left-0 w-full origin-left bg-lt-troop/70 transition-transform duration-200 ease-out"
+            class="absolute inset-y-0 left-0 w-full origin-left bg-lt-troop/50 transition-transform duration-200 ease-out"
             style="transform: translateX(${greenPercent}%) scaleX(${orangePercent /
             100});"
           ></div>
         </div>
         <div
-          class="absolute inset-0 flex items-center text-lg font-bold leading-none pointer-events-none"
+          class="absolute inset-0 flex items-center justify-center gap-2 text-base font-bold tabular-nums leading-none pointer-events-none text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]"
           translate="no"
         >
-          <span class="flex-1 flex justify-end h-full items-center pr-0.5">
-            <span class="text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
-              >${renderTroops(this._troops)}</span
-            >
-          </span>
+          <img
+            src=${soldierIcon}
+            alt=""
+            aria-hidden="true"
+            width="15"
+            height="15"
+            class="shrink-0 brightness-0 invert drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
+          />
           <span
-            class="h-full flex items-center px-0.5 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
-            >/</span
+            >${renderTroops(this._troops)} /
+            ${renderTroops(this._maxTroops)}</span
           >
-          <span
-            class="flex-1 flex justify-start h-full items-center pl-0.5 gap-0.5"
-          >
-            <span
-              class="text-white tabular-nums w-[3.5rem] drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
-              >${renderTroops(this._maxTroops)}</span
-            >
-            <img
-              src=${soldierIcon}
-              alt=""
-              aria-hidden="true"
-              width="22"
-              height="22"
-              class="shrink-0 brightness-0 invert drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] ml-1.5"
-            />
-          </span>
         </div>
       </div>
     `;
@@ -459,41 +445,36 @@ export class ControlPanel extends LitElement implements Controller {
   }
 
   private renderDesktop() {
+    const ratioPercent = Math.round(this.attackRatio * 100);
     return html`
       ${this.renderNotification()}
-      <!-- Row 1: troop rate | troop bar | gold -->
-      <div class="flex gap-1.5 items-center mb-1">
-        <!-- Troop rate -->
+      <!-- Row 1: troop rate | troop bar | gold — one slab, cells split by
+           1px seams like every other lt-group. -->
+      <div class="flex items-stretch gap-px bg-lt-700 border-b border-lt-700">
         <div
-          class="flex items-center gap-1 shrink-0 border font-bold text-sm py-0.5 px-1 w-[5.5rem] ${this
+          class="flex items-center gap-1.5 shrink-0 bg-[rgb(20_24_28/0.96)] px-3 font-bold text-sm tabular-nums ${this
             ._troopRateIsIncreasing
-            ? "border-lt-ok"
-            : "border-lt-accent"}"
+            ? "text-lt-ok"
+            : "text-lt-accent"}"
           translate="no"
         >
-          <img
-            src=${soldierIcon}
-            alt=""
+          <svg
+            viewBox="0 0 24 24"
+            class="w-3.5 h-3.5 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
             aria-hidden="true"
-            width="13"
-            height="13"
-            class="shrink-0"
-            style="filter: ${this._troopRateIsIncreasing
-              ? "brightness(0) saturate(100%) invert(74%) sepia(44%) saturate(500%) hue-rotate(83deg) brightness(103%)"
-              : "brightness(0) saturate(100%) invert(65%) sepia(60%) saturate(600%) hue-rotate(330deg) brightness(105%)"}"
-          />
-          <span
-            class="text-sm font-bold tabular-nums ${this._troopRateIsIncreasing
-              ? "text-lt-ok"
-              : "text-lt-accent"}"
-            >+${renderTroops(this.troopRate)}/s</span
           >
+            <path d="M12 19V5M5 12l7-7 7 7" />
+          </svg>
+          <span>+${renderTroops(this.troopRate)}/s</span>
         </div>
-        <!-- Troop bar -->
-        <div class="flex-1">${this.renderDesktopTroopBar()}</div>
-        <!-- Gold -->
+        <div class="flex-1 min-w-0">${this.renderDesktopTroopBar()}</div>
         <div
-          class="flex items-center gap-1 shrink-0 border border-lt-gold/60 font-bold text-lt-gold text-sm py-0.5 px-1 min-w-[4.5rem] relative"
+          class="flex items-center gap-1.5 shrink-0 bg-[rgb(20_24_28/0.96)] px-3 font-bold text-lt-gold text-base tabular-nums relative"
           translate="no"
         >
           ${this._goldGain !== null
@@ -505,39 +486,32 @@ export class ControlPanel extends LitElement implements Controller {
                 >`,
               )
             : ""}
-          <img src=${goldCoinIcon} width="13" height="13" class="shrink-0" />
-          <span class="tabular-nums">${renderNumber(this._gold)}</span>
+          <img src=${goldCoinIcon} width="15" height="15" class="shrink-0" />
+          <span>${renderNumber(this._gold)}</span>
         </div>
       </div>
-      <!-- Row 2: attack ratio | slider -->
-      <div class="flex items-center gap-1.5" translate="no">
-        <div
-          class="flex items-center gap-1 shrink-0 border border-lt-600 px-1 py-0.5 text-sm font-bold text-white cursor-pointer w-[8rem]"
+      <!-- Row 2: attack ratio — label | flat slider | value -->
+      <div class="flex items-center gap-3 px-3 py-1.5" translate="no">
+        <span class="lt-label !text-[11px] shrink-0"
+          >${translateText("control_panel.attack_ratio")}</span
         >
-          <img
-            src=${swordIcon}
-            alt=""
-            aria-hidden="true"
-            width="12"
-            height="12"
-            style="filter: brightness(0) invert(1);"
-          />
-          <span
-            >${(this.attackRatio * 100).toFixed(0)}%
-            (${renderTroops(
-              (this.game?.myPlayer()?.troops() ?? 0) * this.attackRatio,
-            )})</span
-          >
-        </div>
         <input
           type="range"
           min="1"
           max="100"
-          .value=${String(Math.round(this.attackRatio * 100))}
+          .value=${String(ratioPercent)}
           @input=${(e: Event) => this.handleRatioSliderInput(e)}
           @pointerup=${(e: Event) => this.handleRatioSliderPointerUp(e)}
-          class="flex-1 h-1.5 accent-lt-accent cursor-pointer"
+          class="lt-ratio-slider flex-1"
+          style="background-image: linear-gradient(90deg, #7a4415, var(--color-lt-accent) ${ratioPercent}%, transparent ${ratioPercent}%);"
         />
+        <span
+          class="shrink-0 min-w-[98px] text-right text-[15px] font-bold tabular-nums text-lt-100"
+          ><b class="text-lt-accent font-bold">${ratioPercent}%</b> ·
+          ${renderTroops(
+            (this.game?.myPlayer()?.troops() ?? 0) * this.attackRatio,
+          )}</span
+        >
       </div>
     `;
   }
@@ -593,7 +567,10 @@ export class ControlPanel extends LitElement implements Controller {
             .value=${String(Math.round(this.attackRatio * 100))}
             @input=${(e: Event) => this.handleRatioSliderInput(e)}
             @pointerup=${(e: Event) => this.handleRatioSliderPointerUp(e)}
-            class="w-full h-1.5 accent-lt-accent cursor-pointer"
+            class="lt-ratio-slider w-full"
+            style="background-image: linear-gradient(90deg, #7a4415, var(--color-lt-accent) ${Math.round(
+              this.attackRatio * 100,
+            )}%, transparent ${Math.round(this.attackRatio * 100)}%);"
           />
         </div>
       </div>
@@ -615,6 +592,33 @@ export class ControlPanel extends LitElement implements Controller {
         }
         .gold-gain-pop {
           animation: gold-gain-pop 0.25s ease-out;
+        }
+        /* Flat plate slider: dark trough, orange fill (painted via inline
+           background-image so it tracks the value), thin white knob. */
+        .lt-ratio-slider {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 22px;
+          background-color: #0b0e11;
+          border: 1px solid var(--color-lt-600);
+          cursor: ew-resize;
+          background-repeat: no-repeat;
+        }
+        .lt-ratio-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 4px;
+          height: 26px;
+          background: #e8ecef;
+          border: 0;
+          border-radius: 0;
+        }
+        .lt-ratio-slider::-moz-range-thumb {
+          width: 4px;
+          height: 26px;
+          background: #e8ecef;
+          border: 0;
+          border-radius: 0;
         }
       </style>
       <div
