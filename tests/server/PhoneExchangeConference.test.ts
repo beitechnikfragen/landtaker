@@ -212,6 +212,51 @@ describe("PhoneExchange conferences", () => {
     expect(kinds(out, C)).not.toContain("callEnded");
   });
 
+  it("does not let a merely-ringing target's dial pull an uninvolved caller into a call (consent defect repro)", () => {
+    // A dials B -> B is ringing, A is dialing. B has NOT answered.
+    ex.handle(A, { kind: "dial", target: B });
+    // B, only ringing (not a participant), dials C.
+    const bDialOut = ex.handle(B, { kind: "dial", target: C });
+    // B's dial must be rejected as busy — B cannot start a second call while
+    // still an unanswered ring target of A's call.
+    expect(kinds(bDialOut, B)).toEqual(["busy"]);
+    expect(kinds(bDialOut, C)).toEqual([]);
+    // C answering (nothing to answer, C was never rung) should not connect
+    // A to C.
+    const answerOut = ex.handle(C, { kind: "answer" });
+    expect(answerOut).toEqual([]);
+    // A must still only be ringing B, never connected to C.
+    const aState = to(answerOut, A).find((p) => p.kind === "callState");
+    expect(aState).toBeUndefined();
+  });
+
+  it("rejects a second dial from a caller whose own outgoing call is still ringing, without disturbing the original ring", () => {
+    // A dials B -> A is dialing, B is ringing.
+    ex.handle(A, { kind: "dial", target: B });
+    // A tries to dial C while B has not yet answered.
+    const out = ex.handle(A, { kind: "dial", target: C });
+    expect(kinds(out, A)).toEqual(["busy"]);
+    expect(kinds(out, C)).toEqual([]);
+    // B's original ring is unaffected — B can still answer and connect to A.
+    const answered = ex.handle(B, { kind: "answer" });
+    const aState = to(answered, A).find((p) => p.kind === "callState") as any;
+    const bState = to(answered, B).find((p) => p.kind === "callState") as any;
+    expect(aState.peers).toEqual([B]);
+    expect(bState.peers).toEqual([A]);
+  });
+
+  it("still allows a genuine connected participant to pull in a third party (legitimate conference path)", () => {
+    connectAB();
+    const dialOut = ex.handle(A, { kind: "dial", target: C });
+    expect(kinds(dialOut, C)).toContain("ringing");
+    const out = ex.handle(C, { kind: "answer" });
+    const peersOf = (who: string) =>
+      (to(out, who).find((p) => p.kind === "callState") as any).peers.sort();
+    expect(peersOf(A)).toEqual([B, C].sort());
+    expect(peersOf(B)).toEqual([A, C].sort());
+    expect(peersOf(C)).toEqual([A, B].sort());
+  });
+
   it("does not eject anyone when a block is added after both parties are already connected", () => {
     connectAB();
     // A and B are connected. B blocks A after the fact.

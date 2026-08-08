@@ -108,7 +108,28 @@ export class PhoneExchange {
       return busy;
     }
 
-    const existing = this.callOf.get(from);
+    // `callOf` holds both connected participants and ringing targets. Only
+    // an actual, already-connected participant of an existing call may pull
+    // in a third party. Being a bare entry in `callOf` is not enough:
+    //   - a player who is only ringing as someone else's dial target has
+    //     not consented to anything beyond that one pending call, and
+    //   - a player whose OWN outgoing dial is still unanswered is, from
+    //     `from`'s own call's point of view, the sole participant sitting
+    //     alone with a pending ring — not yet connected to anyone.
+    // Both must be rejected: `call.participants` must contain `from` AND
+    // at least one other member for the call to count as "connected" and
+    // therefore joinable. (callOf is single-valued, so letting either case
+    // through would try to place `from` in two calls at once and corrupt
+    // state.) Such a dial is rejected as busy, same as any other rejection.
+    const existingId = this.callOf.get(from);
+    const existingCall = existingId ? this.calls.get(existingId) : undefined;
+    const existing =
+      existingCall &&
+      existingCall.participants.has(from) &&
+      existingCall.participants.size >= 2
+        ? existingId
+        : undefined;
+    if (existingId && !existing) return busy;
     const call = existing ? this.calls.get(existing)! : this.createCall(from);
 
     // Blocks gelten gegenüber JEDEM Teilnehmer — auch gegenüber noch

@@ -8,6 +8,7 @@ import {
 const A = "aaaa1111";
 const B = "bbbb2222";
 const C = "cccc3333";
+const D = "dddd4444";
 
 let clock = 0;
 const now = () => clock;
@@ -42,6 +43,7 @@ describe("PhoneExchange", () => {
     ex.addPlayer(player(A, "Alice"));
     ex.addPlayer(player(B, "Bob"));
     ex.addPlayer(player(C, "Carol"));
+    ex.addPlayer(player(D, "Dave"));
   });
 
   it("rings the target and tells the caller it is dialing", () => {
@@ -187,12 +189,14 @@ describe("PhoneExchange", () => {
     // With the callOf entries gone, both former participants must be
     // dialable again as targets — a stale entry would make
     // `this.callOf.has(target)` wrongly return true forever and every
-    // future dial() at them would come back "busy".
+    // future dial() at them would come back "busy". Use separate,
+    // uninvolved dialers (C, D) for each probe so that neither probe's own
+    // consent state (dialing/ringing) interferes with the other.
     const out = ex.handle(C, { kind: "dial", target: A });
     expect(kinds(out, A)).toContain("ringing");
     expect(kinds(out, C)).toContain("dialing");
 
-    const out2 = ex.handle(A, { kind: "dial", target: B });
+    const out2 = ex.handle(D, { kind: "dial", target: B });
     expect(kinds(out2, B)).toContain("ringing");
   });
 
