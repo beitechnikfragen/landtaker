@@ -1,6 +1,7 @@
 import { html, TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { userAuth } from "./Auth";
+import { ClientEnv } from "./ClientEnv";
 import { BaseModal } from "./components/BaseModal";
 import { modalHeader } from "./components/ui/ModalHeader";
 import {
@@ -85,6 +86,21 @@ export class FeedbackModal extends BaseModal {
     // costs them a failure mode and buys us nothing.
     let turnstileToken: string | null = null;
     if (!this.isLoggedIn) {
+      // Desktop (Steam) never loads the Turnstile script — Main.ts skips the
+      // prefetch there for the same reason — so getTurnstileToken() would
+      // poll for ~10s before throwing. A signed-out desktop user can't pass
+      // the guest challenge at all; they must log in to submit, so fail fast
+      // instead of making them watch a stuck "Sending..." button.
+      if (
+        typeof window.turnstile === "undefined" &&
+        ClientEnv.instanceId() === "desktop"
+      ) {
+        this.status = {
+          kind: "error",
+          message: translateText("feedback_modal.error_captcha"),
+        };
+        return;
+      }
       try {
         turnstileToken = (await getTurnstileToken(TURNSTILE_CONTAINER)).token;
       } catch {

@@ -6,6 +6,7 @@ import {
   FEEDBACK_TYPES,
   MAX_MESSAGE_LENGTH,
   MIN_MESSAGE_LENGTH,
+  truncateIp,
 } from "../services/feedback.ts";
 import { checkRateLimit, type RateLimitTier } from "../services/rateLimit.ts";
 import {
@@ -99,8 +100,11 @@ export async function registerFeedbackRoutes(
 
       // Account when we have one: it survives an IP change and cannot be shared
       // by an entire school behind one NAT address. IP is the only handle on a
-      // guest, and it is the truncated prefix — the same value we store.
-      const limitKey = userId ?? ip ?? "unknown";
+      // guest, and the key is the truncated prefix, not the raw address — a
+      // raw IPv6 address would let one client cycle through its /64 (and RFC
+      // 4941 privacy addresses rotate it automatically) and evade the limit
+      // entirely.
+      const limitKey = userId ?? truncateIp(ip) ?? ip ?? "unknown";
       const limit = await checkRateLimit(
         "feedback",
         limitKey,

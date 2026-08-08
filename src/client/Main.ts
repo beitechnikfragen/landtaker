@@ -1211,9 +1211,7 @@ class Client {
         return (await getTurnstileToken()).token;
       } catch (err) {
         console.error("Turnstile error", err);
-        alert(
-          `Turnstile error: ${(err as Error).message}. Please refresh and try again.`,
-        );
+        alert(`${(err as Error).message}. Please refresh and try again.`);
         return null;
       }
     }
@@ -1237,9 +1235,7 @@ class Client {
         return (await getTurnstileToken()).token;
       } catch (err) {
         console.error("Turnstile error", err);
-        alert(
-          `Turnstile error: ${(err as Error).message}. Please refresh and try again.`,
-        );
+        alert(`${(err as Error).message}. Please refresh and try again.`);
         return null;
       }
     }
