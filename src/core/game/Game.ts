@@ -1,7 +1,7 @@
 import { Config } from "../configuration/Config";
 import { AbstractGraph } from "../pathfinding/algorithms/AbstractGraph";
 import { PathFinder } from "../pathfinding/types";
-import { AllPlayersStats, ClientID } from "../Schemas";
+import { AllPlayersStats, ClientID, TextChatChannel } from "../Schemas";
 import { formatPlayerDisplayName } from "../Util";
 import { GameMap, TileRef } from "./GameMap";
 import {
@@ -671,6 +671,11 @@ export interface Player {
   sendEmoji(recipient: Player | typeof AllPlayers, emoji: string): void;
   canSendQuickChat(recipient: Player): boolean;
   recordQuickChat(recipient: Player): void;
+  /** Rate limit for free-text chat. Unlike quick chat this is a single
+   * per-sender cooldown, not per-recipient — otherwise a spammer could cycle
+   * recipients to bypass it. */
+  canSendTextChat(): boolean;
+  recordTextChat(): void;
 
   // Donation
   canDonateGold(recipient: Player): boolean;
@@ -838,6 +843,14 @@ export interface Game extends GameMap {
     playerID: PlayerID | null,
     isFrom: boolean,
     recipient: string,
+  ): void;
+
+  /** Delivers one free-text chat message to a single recipient. */
+  displayTextChat(
+    text: string,
+    channel: TextChatChannel,
+    sender: Player,
+    recipient: Player,
   ): void;
 
   // Nations

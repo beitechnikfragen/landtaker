@@ -42,6 +42,7 @@ import { ChatModal } from "./ChatModal";
 import { EmojiTable } from "./EmojiTable";
 import "./PlayerModerationModal";
 import "./SendResourceModal";
+import { TextChatPanel } from "./TextChatPanel";
 const allianceIcon = assetUrl("images/AllianceIconWhite.svg");
 const chatIcon = assetUrl("images/ChatIconWhite.svg");
 const donateGoldIcon = assetUrl("images/DonateGoldIconWhite.svg");
@@ -325,6 +326,20 @@ export class PlayerPanel extends LitElement implements Controller {
     }
 
     this.ctModal.open(sender, other);
+    this.hide();
+  }
+
+  /** Aims the in-game chat composer at this player. */
+  private handleWhisper(e: Event, other: PlayerView) {
+    e.stopPropagation();
+
+    const panel = document.querySelector("text-chat-panel") as TextChatPanel;
+    if (!(panel instanceof TextChatPanel)) {
+      console.warn("TextChatPanel element not found in DOM");
+      return;
+    }
+
+    panel.startWhisper(other);
     this.hide();
   }
 
@@ -749,6 +764,14 @@ export class PlayerPanel extends LitElement implements Controller {
             iconAlt: "Chat",
             title: translateText("player_panel.chat"),
             label: translateText("player_panel.chat"),
+          })}
+          ${actionButton({
+            onClick: (e: MouseEvent) => this.handleWhisper(e, other),
+            icon: chatIcon,
+            iconAlt: "Whisper",
+            title: translateText("player_panel.whisper"),
+            label: translateText("player_panel.whisper"),
+            type: "normal",
           })}
           ${canSendEmoji
             ? actionButton({

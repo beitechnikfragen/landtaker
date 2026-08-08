@@ -1542,7 +1542,8 @@
     "target": "Target",
     "trading": "Trading",
     "traitor": "Traitor",
-    "troops": "Troops"
+    "troops": "Troops",
+    "whisper": "Whisper"
   },
   "player_profile": {
     "loading": "Loading profile...",
@@ -1878,6 +1879,17 @@
     },
     "select_skin": "Skin",
     "selected": "selected"
+  },
+  "text_chat": {
+    "channel_all": "All",
+    "channel_team": "Team",
+    "channel_whisper": "To",
+    "empty": "No messages yet.",
+    "hide": "Hide",
+    "placeholder": "Enter to send, Tab to switch channel, Esc to cancel",
+    "prompt": "Press Enter to chat",
+    "title": "Chat",
+    "to": "to"
   },
   "token_login_modal": {
     "logging_in": "Logging in...",

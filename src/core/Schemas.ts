@@ -44,6 +44,7 @@ export type Intent =
   | BuildUnitIntent
   | EmbargoIntent
   | QuickChatIntent
+  | TextChatIntent
   | MoveWarshipIntent
   | MarkDisconnectedIntent
   | EmbargoAllIntent
@@ -75,6 +76,7 @@ export type UpgradeStructureIntent = z.infer<
 >;
 export type MoveWarshipIntent = z.infer<typeof MoveWarshipIntentSchema>;
 export type QuickChatIntent = z.infer<typeof QuickChatIntentSchema>;
+export type TextChatIntent = z.infer<typeof TextChatIntentSchema>;
 export type MarkDisconnectedIntent = z.infer<
   typeof MarkDisconnectedIntentSchema
 >;
@@ -559,6 +561,49 @@ export const QuickChatIntentSchema = z.object({
   target: ID.optional(),
 });
 
+/** Longest message a player may send. Free text enters the deterministic core,
+ * so this is a hard schema-level cap rather than a UI convenience — an
+ * oversized message is rejected at the wire, never truncated. */
+export const TEXT_CHAT_MAX_LENGTH = 200;
+
+export const TextChatChannelSchema = z.enum(["all", "team", "player"]);
+export type TextChatChannel = z.infer<typeof TextChatChannelSchema>;
+
+/**
+ * C0/C1 control characters plus the Unicode bidirectional overrides.
+ *
+ * Controls are rejected because a newline or carriage return would let a
+ * message forge extra lines in the chat log. The bidi overrides (U+202A-202E,
+ * U+2066-2069) are rejected because they reorder how following text renders
+ * without changing the string itself — an unclosed override leaks out of the
+ * message and scrambles the rest of the UI.
+ */
+const CONTROL_OR_BIDI =
+  // eslint-disable-next-line no-control-regex -- rejecting control chars is the point
+  /[\u0000-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/;
+
+/**
+ * Free-text chat. Unlike quick_chat — which carries a key into a fixed phrase
+ * table — this carries player-authored text, so it is validated tightly:
+ * control characters are refused outright (they would let a message forge line
+ * breaks or smuggle direction overrides past the renderer), and the length is
+ * capped before the string ever reaches an Execution.
+ */
+export const TextChatIntentSchema = z.object({
+  type: z.literal("text_chat"),
+  channel: TextChatChannelSchema,
+  // Only meaningful for channel "player"; ignored otherwise.
+  recipient: ID.optional(),
+  text: z
+    .string()
+    .trim()
+    .min(1)
+    .max(TEXT_CHAT_MAX_LENGTH)
+    .refine((s) => !CONTROL_OR_BIDI.test(s), {
+      message: "Control characters are not allowed",
+    }),
+});
+
 export const MarkDisconnectedIntentSchema = z.object({
   type: z.literal("mark_disconnected"),
   clientID: ID,
@@ -670,6 +715,7 @@ export const IntentSchema = z.discriminatedUnion("type", [
   EmbargoAllIntentSchema,
   MoveWarshipIntentSchema,
   QuickChatIntentSchema,
+  TextChatIntentSchema,
   AllianceExtensionIntentSchema,
   DeleteUnitIntentSchema,
   KickPlayerIntentSchema,

@@ -1,4 +1,4 @@
-import { AllPlayersStats, ClientID, Winner } from "../Schemas";
+import { AllPlayersStats, ClientID, TextChatChannel, Winner } from "../Schemas";
 import {
   EmojiMessage,
   GameUpdates,
@@ -84,6 +84,7 @@ export enum GameUpdateType {
   Player,
   DisplayEvent,
   DisplayChatEvent,
+  DisplayTextChatEvent,
   AllianceRequest,
   AllianceRequestReply,
   BrokeAlliance,
@@ -114,6 +115,7 @@ export type GameUpdate =
   | AllianceExpiredUpdate
   | DisplayMessageUpdate
   | DisplayChatMessageUpdate
+  | DisplayTextChatUpdate
   | TargetPlayerUpdate
   | EmojiUpdate
   | WinUpdate
@@ -327,6 +329,26 @@ export type DisplayChatMessageUpdate = {
   playerID: number | null;
   isFrom: boolean;
   recipient: string;
+};
+
+/**
+ * A free-text chat message delivered to one recipient.
+ *
+ * The execution emits one of these per recipient rather than one broadcast
+ * update, so a client never receives text that was not addressed to it —
+ * whispers and team chat must not be readable by pulling them out of the
+ * update stream.
+ */
+export type DisplayTextChatUpdate = {
+  type: GameUpdateType.DisplayTextChatEvent;
+  text: string;
+  channel: TextChatChannel;
+  /** smallID of the sender. */
+  senderID: number;
+  /** Display name of the sender, resolved at send time. */
+  senderName: string;
+  /** The player this update is for. Clients drop anything not addressed to them. */
+  recipientID: number;
 };
 
 export interface WinUpdate {

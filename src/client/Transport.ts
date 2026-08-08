@@ -27,6 +27,7 @@ import {
   LiveStats,
   ServerMessage,
   ServerMessageSchema,
+  TextChatChannel,
   Winner,
 } from "../core/Schemas";
 import { replacer } from "../core/Util";
@@ -126,6 +127,15 @@ export class SendQuickChatEvent implements GameEvent {
     public readonly recipient: PlayerView,
     public readonly quickChatKey: string,
     public readonly target?: PlayerID,
+  ) {}
+}
+
+export class SendTextChatEvent implements GameEvent {
+  constructor(
+    public readonly channel: TextChatChannel,
+    public readonly text: string,
+    /** Only used for the "player" channel. */
+    public readonly recipient?: PlayerID,
   ) {}
 }
 
@@ -267,6 +277,7 @@ export class Transport {
       this.onSendDonateTroopIntent(e),
     );
     this.eventBus.on(SendQuickChatEvent, (e) => this.onSendQuickChatIntent(e));
+    this.eventBus.on(SendTextChatEvent, (e) => this.onSendTextChatIntent(e));
     this.eventBus.on(SendEmbargoIntentEvent, (e) =>
       this.onSendEmbargoIntent(e),
     );
@@ -590,6 +601,15 @@ export class Transport {
       recipient: event.recipient.id(),
       quickChatKey: event.quickChatKey,
       target: event.target,
+    });
+  }
+
+  private onSendTextChatIntent(event: SendTextChatEvent) {
+    this.sendIntent({
+      type: "text_chat",
+      channel: event.channel,
+      text: event.text,
+      recipient: event.recipient,
     });
   }
 

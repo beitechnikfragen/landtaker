@@ -4,7 +4,7 @@ import { Config } from "../configuration/Config";
 import { SharedWaterCache } from "../execution/nation/SharedWaterCache";
 import { AbstractGraph } from "../pathfinding/algorithms/AbstractGraph";
 import { PathFinder } from "../pathfinding/types";
-import { AllPlayersStats, ClientID, Winner } from "../Schemas";
+import { AllPlayersStats, ClientID, TextChatChannel, Winner } from "../Schemas";
 import { ATTACK_INDEX_SENT } from "../StatsSchemas";
 import { simpleHash } from "../Util";
 import { AllianceImpl } from "./AllianceImpl";
@@ -1022,6 +1022,22 @@ export class GameImpl implements Game {
       playerID: id,
       isFrom,
       recipient: recipient,
+    });
+  }
+
+  displayTextChat(
+    text: string,
+    channel: TextChatChannel,
+    sender: Player,
+    recipient: Player,
+  ): void {
+    this.addUpdate({
+      type: GameUpdateType.DisplayTextChatEvent,
+      text,
+      channel,
+      senderID: sender.smallID(),
+      senderName: sender.displayName(),
+      recipientID: recipient.smallID(),
     });
   }
 

@@ -25,6 +25,7 @@ import { QuickChatExecution } from "./QuickChatExecution";
 import { RetreatExecution } from "./RetreatExecution";
 import { SpawnExecution } from "./SpawnExecution";
 import { TargetPlayerExecution } from "./TargetPlayerExecution";
+import { TextChatExecution } from "./TextChatExecution";
 import { TransportShipExecution } from "./TransportShipExecution";
 import { TribeSpawner } from "./TribeSpawner";
 import { UpgradeStructureExecution } from "./UpgradeStructureExecution";
@@ -126,6 +127,13 @@ export class Executor {
           intent.recipient,
           intent.quickChatKey,
           intent.target,
+        );
+      case "text_chat":
+        return new TextChatExecution(
+          player,
+          intent.channel,
+          intent.text,
+          intent.recipient,
         );
       case "mark_disconnected":
         return new MarkDisconnectedExecution(player, intent.isDisconnected);
