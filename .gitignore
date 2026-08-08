@@ -26,3 +26,7 @@ tests/perf/output/
 # Locally built Go binary (gen-maps uses `go run .`)
 map-generator/map-generator
 map-generator/map-generator.exe
+
+# Python bytecode from the brand asset generators
+__pycache__/
+*.pyc
