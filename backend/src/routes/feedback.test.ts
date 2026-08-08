@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import type { InjectPayload } from "light-my-request";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
@@ -66,7 +67,7 @@ afterEach(async () => {
   await app.close();
 });
 
-async function post(payload: unknown) {
+async function post(payload: InjectPayload) {
   return app.inject({ method: "POST", url: "/feedback", payload });
 }
 
