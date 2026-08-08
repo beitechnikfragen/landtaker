@@ -244,7 +244,11 @@
 .lt-nav-item {
   display: flex;
   align-items: center;
-  padding: 0 18px;
+  /* 14px, not 18: with the match-history tab the row runs eight tabs plus
+     brand and cells inside the 1300px shell. Never wrap — a two-line tab
+     reads as a layout bug. */
+  padding: 0 14px;
+  white-space: nowrap;
   font-family: var(--font-lt-util);
   font-size: 15px;
   font-weight: 600;
