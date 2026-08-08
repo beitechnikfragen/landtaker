@@ -16,6 +16,7 @@ vi.mock("../../src/core/Schemas", async () => {
   };
 });
 
+import { ADMIN_CHEAT_ACTIONS } from "../../src/core/Schemas";
 import { GameType } from "../../src/core/game/Game";
 import { Client } from "../../src/server/Client";
 import { GameServer } from "../../src/server/GameServer";
@@ -178,17 +179,9 @@ describe("GameServer — admin_cheat authorization", () => {
 
     // A gate that only covered the action someone happened to test would be
     // worse than none — it would read as protection.
-    for (const action of [
-      "give_gold",
-      "give_troops",
-      "set_troops",
-      "spawn_unit",
-      "capture_tile",
-      "god_mode",
-      "kill_player",
-      "force_alliance",
-      "break_alliance",
-    ]) {
+    // Driven off the real list rather than a copy: a cheat added to the enum
+    // without a gate would otherwise pass this test by simply not being here.
+    for (const action of ADMIN_CHEAT_ACTIONS) {
       const outcome = outcomeFor(game, client, false, cheatIntent(action));
       expect(outcome.status).toBe(403);
     }

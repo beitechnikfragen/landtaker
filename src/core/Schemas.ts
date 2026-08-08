@@ -600,15 +600,28 @@ export const ToggleGameStartTimerIntentSchema = z.object({
  * which name a target the executing player is acting upon.
  */
 export const ADMIN_CHEAT_ACTIONS = [
+  // Resources
   "give_gold",
   "give_troops",
   "set_troops",
+  "max_troops",
+  // Building and territory
   "spawn_unit",
   "capture_tile",
+  "capture_radius",
+  "upgrade_structures",
+  "clear_units",
+  // Self state
   "god_mode",
+  "clear_traitor",
+  "clear_doomsday",
+  // Acting on another player
   "kill_player",
   "force_alliance",
   "break_alliance",
+  "set_relation",
+  "steal_gold",
+  "mark_traitor",
 ] as const;
 
 export const AdminCheatIntentSchema = z.object({

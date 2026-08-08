@@ -5,6 +5,7 @@ import {
   Player,
   PlayerInfo,
   PlayerType,
+  Relation,
   UnitType,
 } from "../src/core/game/Game";
 import { GameID } from "../src/core/Schemas";
@@ -440,5 +441,263 @@ describe("AdminCheatExecution — lifecycle", () => {
     // Passive income does not run during spawn either, so an exact comparison
     // is safe here — and anything at all would mean the cheat fired.
     expect(admin.gold()).toBe(before);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Expanded cheat set
+// ---------------------------------------------------------------------------
+
+describe("AdminCheatExecution — expanded resources", () => {
+  it("max_troops fills to the configured ceiling", async () => {
+    const { game, admin } = await twoPlayerGame();
+    admin.setTroops(1);
+
+    runCheat(game, new AdminCheatExecution(admin, "max_troops", {}), 3);
+
+    // The exact ceiling depends on territory, so assert against the config
+    // rather than a hardcoded number — that is the value being claimed.
+    expect(admin.troops()).toBeGreaterThanOrEqual(
+      game.config().maxTroops(admin) * 0.9,
+    );
+  });
+});
+
+describe("AdminCheatExecution — expanded territory", () => {
+  it("capture_radius takes unowned land around the tile", async () => {
+    const { game, admin } = await twoPlayerGame();
+
+    // Seed from land the admin does NOT own. Seeding inside their own
+    // territory captures nothing on this map — the spawn pocket is a ~25 tile
+    // island they already hold outright — which would make the assertion
+    // vacuous rather than wrong.
+    let seed: number | null = null;
+    for (let y = 0; y < 40 && seed === null; y++) {
+      for (let x = 0; x < 40; x++) {
+        const tile = game.ref(x, y);
+        if (game.isLand(tile) && game.owner(tile) !== admin) {
+          seed = tile;
+          break;
+        }
+      }
+    }
+    expect(seed).not.toBeNull();
+    const before = admin.numTilesOwned();
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "capture_radius", {
+        tile: seed!,
+        amount: 3,
+      }),
+    );
+
+    expect(admin.numTilesOwned()).toBeGreaterThan(before);
+    expect(game.owner(seed!)).toBe(admin);
+  });
+
+  it("capture_radius on fully-owned land is a no-op, not an error", async () => {
+    const { game, admin } = await twoPlayerGame();
+    const before = admin.numTilesOwned();
+    const seed = Array.from(admin.tiles())[0];
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "capture_radius", {
+        tile: seed,
+        amount: 3,
+      }),
+    );
+
+    expect(admin.numTilesOwned()).toBe(before);
+  });
+
+  it("capture_radius never takes water", async () => {
+    const { game, admin } = await twoPlayerGame();
+
+    const seed = Array.from(admin.tiles())[0];
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "capture_radius", {
+        tile: seed,
+        amount: 8,
+      }),
+    );
+
+    // Conquering water corrupts the border sets, so every owned tile must
+    // still be land afterwards.
+    for (const tile of admin.tiles()) {
+      expect(game.isLand(tile)).toBe(true);
+    }
+  });
+
+  it("capture_radius drops an invalid tile without throwing", async () => {
+    const { game, admin } = await twoPlayerGame();
+    expect(() =>
+      runCheat(
+        game,
+        new AdminCheatExecution(admin, "capture_radius", {
+          tile: 99_999_999,
+          amount: 3,
+        }),
+      ),
+    ).not.toThrow();
+  });
+
+  it("clear_units deletes the caller's units", async () => {
+    const { game, admin } = await twoPlayerGame();
+    admin.addGold(10_000_000n);
+    const spawnTile = Array.from(admin.tiles())[0];
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "spawn_unit", {
+        unitType: UnitType.City,
+        tile: spawnTile,
+      }),
+      6,
+    );
+    expect(admin.unitCount(UnitType.City)).toBeGreaterThan(0);
+
+    runCheat(game, new AdminCheatExecution(admin, "clear_units", {}), 4);
+
+    expect(admin.unitCount(UnitType.City)).toBe(0);
+  });
+
+  it("upgrade_structures does not throw with nothing to upgrade", async () => {
+    const { game, admin } = await twoPlayerGame();
+    expect(() =>
+      runCheat(game, new AdminCheatExecution(admin, "upgrade_structures", {})),
+    ).not.toThrow();
+  });
+});
+
+describe("AdminCheatExecution — expanded self state", () => {
+  it("clear_traitor removes the traitor mark", async () => {
+    const { game, admin } = await twoPlayerGame();
+    admin.markTraitor();
+    expect(admin.isTraitor()).toBe(true);
+
+    runCheat(game, new AdminCheatExecution(admin, "clear_traitor", {}));
+
+    expect(admin.isTraitor()).toBe(false);
+  });
+
+  it("clear_doomsday leaves the clock cleared", async () => {
+    const { game, admin } = await twoPlayerGame();
+    admin.enterDoomsdayClock();
+
+    runCheat(game, new AdminCheatExecution(admin, "clear_doomsday", {}));
+
+    expect(admin.inDoomsdayClock()).toBe(false);
+  });
+});
+
+describe("AdminCheatExecution — expanded player actions", () => {
+  it("steal_gold moves the whole balance", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+    victim.addGold(50_000n);
+    const victimBefore = victim.gold();
+    const adminBefore = admin.gold();
+    expect(victimBefore).toBeGreaterThan(0n);
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "steal_gold", { targetID: victim.id() }),
+      2,
+    );
+
+    expect(admin.gold()).toBeGreaterThan(adminBefore);
+    // Income resumes the tick after, so assert it dropped rather than hit 0.
+    expect(victim.gold()).toBeLessThan(victimBefore);
+  });
+
+  it("steal_gold refuses to target yourself", async () => {
+    const { game, admin } = await twoPlayerGame();
+    const before = admin.gold();
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "steal_gold", { targetID: admin.id() }),
+      2,
+    );
+
+    // Stealing from yourself would zero the balance via removeGold.
+    expect(admin.gold()).toBeGreaterThanOrEqual(before);
+  });
+
+  it("mark_traitor marks the target, not the caller", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "mark_traitor", { targetID: victim.id() }),
+    );
+
+    expect(victim.isTraitor()).toBe(true);
+    expect(admin.isTraitor()).toBe(false);
+  });
+
+  it("set_relation drives the score to the top of the range", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "set_relation", {
+        targetID: victim.id(),
+        amount: 100,
+      }),
+    );
+
+    // Only the derived enum is readable — the raw -100..100 score has no
+    // getter. Friendly is what the top of the range maps to.
+    expect(victim.relation(admin)).toBe(Relation.Friendly);
+  });
+
+  it("set_relation drives the score to the bottom of the range", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+    // Start friendly so the move is unambiguous rather than a no-op.
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "set_relation", {
+        targetID: victim.id(),
+        amount: 100,
+      }),
+    );
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "set_relation", {
+        targetID: victim.id(),
+        amount: -100,
+      }),
+    );
+
+    expect(victim.relation(admin)).toBe(Relation.Hostile);
+  });
+
+  it("set_relation clamps an out-of-range value instead of overflowing", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "set_relation", {
+        targetID: victim.id(),
+        amount: 9999,
+      }),
+    );
+
+    expect(victim.relation(admin)).toBe(Relation.Friendly);
+  });
+
+  it("set_relation drops a missing amount", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+    expect(() =>
+      runCheat(
+        game,
+        new AdminCheatExecution(admin, "set_relation", {
+          targetID: victim.id(),
+        }),
+      ),
+    ).not.toThrow();
   });
 });
