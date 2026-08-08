@@ -254,7 +254,7 @@ export class FriendsList extends LitElement {
       return html`
         <div class="flex items-center justify-center p-12">
           <div
-            class="w-10 h-10 border-4 border-lt-accent/30 border-t-blue-500 rounded-full animate-spin"
+            class="w-10 h-10 border-4 border-lt-accent/30 border-t-lt-accent rounded-full animate-spin"
           ></div>
         </div>
       `;

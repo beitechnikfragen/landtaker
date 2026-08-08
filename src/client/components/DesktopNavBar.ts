@@ -145,7 +145,7 @@ export class DesktopNavBar extends LitElement {
              because the SVG renders its lettering at a fraction of the mark's
              height — this stays razor-sharp at any size. -->
         <div
-          class="flex items-center gap-2.5 pl-3 pr-4 mr-1 border-r border-lt-700 shrink min-w-0"
+          class="flex items-center gap-2.5 pl-3 pr-4 mr-1 border-r border-lt-700 shrink min-w-0 overflow-hidden"
         >
           <!-- The mark carries the brand, so it gets almost the full bar
                height; wordmark and version stack beside it. -->

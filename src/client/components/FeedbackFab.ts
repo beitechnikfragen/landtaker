@@ -105,13 +105,12 @@ export class FeedbackFab extends LitElement {
         data-i18n-aria-label="feedback_modal.title"
         data-i18n-title="feedback_modal.title"
         @click=${this.open}
-        class="fixed bottom-4 right-4 z-[30000] flex items-center justify-center
+        class="fixed bottom-4 left-4 z-[30000] flex items-center justify-center
                w-11 h-11 rounded-full
-               bg-lt-800/60 hover:bg-lt-800 border border-lt-600/60 hover:border-lt-accent
-               text-lt-300 hover:text-lt-accent
-               opacity-50 hover:opacity-100 focus-visible:opacity-100
+               bg-lt-800/85 hover:bg-lt-750 border border-lt-600 hover:border-lt-accent
+               text-lt-100 hover:text-lt-accent
                backdrop-blur-sm shadow-lg
-               transition-all duration-200
+               transition-colors duration-200
                pointer-events-auto"
       >
         <svg

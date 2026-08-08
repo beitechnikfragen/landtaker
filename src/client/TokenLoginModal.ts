@@ -50,7 +50,7 @@ export class TokenLoginModal extends BaseModal {
           class="w-12 h-12 rounded-full border border-lt-accent/40 bg-lt-accent/10 flex items-center justify-center"
         >
           <div
-            class="w-6 h-6 border-2 border-lt-accent/30 border-t-blue-400 rounded-full animate-spin"
+            class="w-6 h-6 border-2 border-lt-accent/30 border-t-lt-accent rounded-full animate-spin"
           ></div>
         </div>
         <div class="flex flex-col gap-2">

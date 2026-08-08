@@ -410,7 +410,7 @@ export class LeaderboardPlayerList extends LitElement {
       return html`
         <div class="flex items-center justify-center py-4 text-lt-500">
           <div
-            class="w-4 h-4 border-2 border-lt-accent/30 border-t-blue-500 rounded-full animate-spin mr-2"
+            class="w-4 h-4 border-2 border-lt-accent/30 border-t-lt-accent rounded-full animate-spin mr-2"
           ></div>
           <span class="text-[10px] font-bold uppercase tracking-widest">
             ${translateText("leaderboard_modal.loading")}
@@ -441,7 +441,7 @@ export class LeaderboardPlayerList extends LitElement {
         class="flex flex-col items-center justify-center p-12 text-white h-full"
       >
         <div
-          class="w-12 h-12 border-4 border-lt-accent/30 border-t-blue-500 rounded-full animate-spin mb-6"
+          class="w-12 h-12 border-4 border-lt-accent/30 border-t-lt-accent rounded-full animate-spin mb-6"
         ></div>
         <p class="text-blue-200/80 text-sm font-bold tracking-widest uppercase">
           ${translateText("leaderboard_modal.loading")}
