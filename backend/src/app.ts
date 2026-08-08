@@ -4,6 +4,7 @@ import Fastify, { type FastifyError, type FastifyInstance } from "fastify";
 import { config, isProduction } from "./config.ts";
 import { registerAuthRoutes } from "./routes/auth.ts";
 import { registerCustomTribeRoutes } from "./routes/customTribes.ts";
+import { registerFeedbackRoutes } from "./routes/feedback.ts";
 import { registerFriendRoutes } from "./routes/friends.ts";
 import { registerGameRoutes } from "./routes/games.ts";
 import { registerJoinVerifyRoutes } from "./routes/joinVerify.ts";
@@ -78,6 +79,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registerJoinVerifyRoutes(app);
   await registerMatchmakingRoutes(app);
   await registerCustomTribeRoutes(app);
+  await registerFeedbackRoutes(app);
   // Placeholder endpoints for features not built yet (clans, cosmetics,
   // streams, news, Stripe) — see routes/stubs.ts.
   await registerStubRoutes(app);

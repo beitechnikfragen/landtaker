@@ -1,8 +1,8 @@
-import { jwtVerify } from "jose";
-import type { FastifyReply, FastifyRequest } from "fastify";
 import { base64urlToUuid } from "@game/Base64.ts";
-import { config } from "../config.ts";
+import type { FastifyReply, FastifyRequest } from "fastify";
+import { jwtVerify } from "jose";
 import { getSigningKeys, JWT_ALGORITHM } from "../auth/keys.ts";
+import { config } from "../config.ts";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -72,5 +72,44 @@ export async function requireApiKey(
   const provided = request.headers["x-api-key"];
   if (typeof provided !== "string" || provided !== config.API_KEY) {
     await reply.code(401).send({ error: "Unauthorized" });
+  }
+}
+
+/**
+ * Populates `request.userId` when a valid bearer token is present, and does
+ * nothing at all when it is absent or bad.
+ *
+ * Separate from requireAuth because that one always 401s without a token,
+ * which is right for a private route and wrong for one guests may use. Routes
+ * using this MUST treat `request.userId === undefined` as a supported case,
+ * not an error.
+ *
+ * An INVALID token is deliberately treated as no token rather than a 401: the
+ * common cause is an access token that expired while a modal sat open, and
+ * refusing a bug report over a stale credential — one the reporter cannot even
+ * see — would lose the report for no benefit. The submission is simply
+ * attributed to nobody.
+ */
+export async function optionalAuth(request: FastifyRequest): Promise<void> {
+  const token = bearerToken(request);
+  if (!token) return;
+
+  try {
+    const { publicKey } = await getSigningKeys();
+    const { payload } = await jwtVerify(token, publicKey, {
+      algorithms: [JWT_ALGORITHM],
+      issuer: config.JWT_ISSUER,
+      audience: config.JWT_AUDIENCE,
+    });
+
+    const sub = payload.sub;
+    if (!sub) return;
+    const userId = base64urlToUuid(sub);
+    if (!userId) return;
+
+    request.userId = userId;
+    request.userRole = (payload.role as string | undefined) ?? null;
+  } catch {
+    // Anonymous, not rejected. See the note above.
   }
 }
