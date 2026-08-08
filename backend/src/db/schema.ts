@@ -178,6 +178,43 @@ export const loginTokens = pgTable(
   (table) => [index("login_tokens_user_idx").on(table.userId)],
 );
 
+/**
+ * Every mutation made through the admin panel, append-only.
+ *
+ * The panel can change roles, move credits and issue bans, so "who did this
+ * and when" has to be answerable after the fact — both to review an admin and
+ * to reconstruct an account's history when a player disputes it.
+ *
+ * `actorId` is `set null` rather than cascade: deleting an admin account must
+ * not erase the record of what it did. `detail` holds the action-specific
+ * payload (before/after values, reasons) as JSON because the shape differs per
+ * action and a column per variant would be mostly nulls.
+ */
+export const adminAuditLog = pgTable(
+  "admin_audit_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorId: uuid("actor_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    // Denormalised so the log still names the actor after the account is gone.
+    actorName: text("actor_name"),
+    action: text("action").notNull(),
+    // Free-form rather than a foreign key: later actions target cosmetics and
+    // shop rotations, not only users.
+    targetId: text("target_id"),
+    detail: jsonb("detail").notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // The log is read newest-first, either whole or filtered to one target.
+    index("admin_audit_created_idx").on(table.createdAt),
+    index("admin_audit_target_idx").on(table.targetId, table.createdAt),
+  ],
+);
+
 // ---------------------------------------------------------------------------
 // Social
 // ---------------------------------------------------------------------------
