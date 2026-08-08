@@ -54,8 +54,13 @@ export function truncateIp(ip: string | null): string | null {
       // For compressed addresses like "2001:db8::1", get everything before "::"
       const beforeDoubleColon = candidate.substring(0, doubleColonIndex);
       leading = beforeDoubleColon === "" ? [] : beforeDoubleColon.split(":");
-      // A compressed address can have fewer groups
-      minRequired = 1;
+      // A compressed address can legitimately know fewer than three leading
+      // groups, but one alone ("fe80::", "2001::") is only a /16 — too coarse
+      // to identify a network usefully, so it is rejected as null rather than
+      // stored as a near-meaningless prefix. Two groups gives a /32, which is
+      // coarser than the usual /48 but errs toward more privacy, not less, so
+      // it is kept.
+      minRequired = 2;
     } else {
       // For full addresses, just take the first 3 groups
       leading = candidate.split(":").slice(0, 3);

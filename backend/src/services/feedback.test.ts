@@ -28,6 +28,19 @@ describe("truncateIp", () => {
     expect(truncateIp("2001:db8::1")).toBe("2001:db8::");
   });
 
+  it("rejects a compressed address with only one known group", () => {
+    // "fe80::" would be a /16 — too coarse to identify a network usefully,
+    // so it is worth nothing as a stored prefix.
+    expect(truncateIp("fe80::1")).toBeNull();
+    expect(truncateIp("2001::1")).toBeNull();
+  });
+
+  it("keeps a compressed address with two known groups", () => {
+    // A /32 rather than the usual /48: coarser than the target, which errs
+    // toward more privacy, not less.
+    expect(truncateIp("2001:db8::1")).toBe("2001:db8::");
+  });
+
   it("truncates an IPv4-mapped IPv6 address as IPv4", () => {
     // Node reports these for IPv4 clients on a dual-stack socket. Treating
     // the string as IPv6 would keep "::ffff:203" — meaningless as a prefix.
