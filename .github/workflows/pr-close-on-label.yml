@@ -25,7 +25,7 @@ jobs:
 
             This PR was closed because it appears to be AI-generated. We require contributions to be hand-written and understood by their author — if a regression shows up later, we need someone who can debug their own code.
 
-            If this was misclassified, please reach out on our [Discord](https://discord.gg/K9zernJB5z) or comment below.
+            If this was misclassified, please reach out on our [Discord](https://discord.gg/FztuCAcVGD) or comment below.
 
             See [CONTRIBUTING.md](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md) for the full contribution process.`,
             };

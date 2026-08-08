@@ -39,7 +39,7 @@ const BTN_DANGER =
   "rounded bg-red-800 px-2 py-1 text-xs text-white hover:bg-red-700 " +
   "disabled:cursor-not-allowed disabled:opacity-40";
 
-type Section = "resources" | "build" | "self" | "players";
+type Section = "resources" | "build" | "self" | "players" | "gift";
 
 @customElement("admin-cheat-menu")
 export class AdminCheatMenu extends LitElement {
@@ -57,6 +57,8 @@ export class AdminCheatMenu extends LitElement {
   @state() private troopAmount = "100000";
   @state() private radius = "5";
   @state() private relation = "100";
+  @state() private giftAmount = "1000000";
+  @state() private giftGodMode = false;
   @state() private unitType: UnitType = UnitType.City;
   @state() private godMode = false;
   @state() private lastAction: string | null = null;
@@ -190,6 +192,11 @@ export class AdminCheatMenu extends LitElement {
             "players",
             translateText("admin_cheat.sec_players"),
             () => this.renderPlayerActions(),
+          )}
+          ${this.renderSection(
+            "gift",
+            translateText("admin_cheat.sec_gift"),
+            () => this.renderGiftActions(),
           )}
         </div>
 
@@ -511,6 +518,144 @@ export class AdminCheatMenu extends LitElement {
           }}
         >
           ${translateText("admin_cheat.set")}
+        </button>
+      </div>
+    `;
+  }
+
+  /**
+   * The giving counterpart to the Players section.
+   *
+   * Shares the same target dropdown state deliberately: picking someone once
+   * and then choosing to help or to punish them is the actual workflow, and
+   * two separate pickers would silently disagree about who is selected.
+   */
+  private renderGiftActions(): TemplateResult {
+    const players = this.otherPlayers();
+    const dead = this.game
+      .playerViews()
+      .filter((p) => p !== this.game.myPlayer() && !p.isAlive())
+      .sort((a, b) => a.displayName().localeCompare(b.displayName()));
+
+    if (players.length === 0 && dead.length === 0) {
+      return html`<div class="text-xs text-lt-500">
+        ${translateText("admin_cheat.no_players")}
+      </div>`;
+    }
+
+    const noTarget = this.targetPlayerID === null;
+    const noTile = this.selectedTile === null;
+    const act =
+      (action: AdminCheatAction, extra: object = {}) =>
+      () => {
+        if (this.targetPlayerID === null) return;
+        this.send(action, { targetID: this.targetPlayerID, ...extra });
+      };
+    const amount = () => this.parseAmount(this.giftAmount);
+
+    return html`
+      <label class="mb-1 block text-xs text-lt-400"
+        >${translateText("admin_cheat.recipient")}</label
+      >
+      <select
+        class="${SELECT} mb-2"
+        .value=${this.targetPlayerID ?? ""}
+        @change=${(e: Event) => {
+          const value = (e.target as HTMLSelectElement).value;
+          this.targetPlayerID = value === "" ? null : value;
+        }}
+      >
+        <option value="">${translateText("admin_cheat.pick_player")}</option>
+        ${players.map(
+          (p) => html`<option value=${p.id()}>${p.displayName()}</option>`,
+        )}
+        <!-- Eliminated players are listed too, marked, because revive is the
+             one action that only applies to them. -->
+        ${dead.map(
+          (p) =>
+            html`<option value=${p.id()}>
+              ${p.displayName()} ${translateText("admin_cheat.eliminated")}
+            </option>`,
+        )}
+      </select>
+
+      <label class="mb-1 block text-xs text-lt-400"
+        >${translateText("admin_cheat.gift_amount")}</label
+      >
+      <input
+        type="number"
+        class="${FIELD} mb-1"
+        .value=${this.giftAmount}
+        @input=${(e: Event) => {
+          this.giftAmount = (e.target as HTMLInputElement).value;
+        }}
+      />
+      <div class="mb-2 flex gap-1">
+        <button
+          class="${BTN} flex-1"
+          ?disabled=${noTarget}
+          @click=${() => {
+            const value = amount();
+            if (value !== null) act("gift_gold", { amount: value })();
+          }}
+        >
+          ${translateText("admin_cheat.gift_gold")}
+        </button>
+        <button
+          class="${BTN} flex-1"
+          ?disabled=${noTarget}
+          @click=${() => {
+            const value = amount();
+            if (value !== null) act("gift_troops", { amount: value })();
+          }}
+        >
+          ${translateText("admin_cheat.gift_troops")}
+        </button>
+      </div>
+
+      <div class="mb-2 flex flex-col gap-1">
+        <button
+          class="w-full rounded px-2 py-1 text-xs text-white ${this.giftGodMode
+            ? "bg-green-700 hover:bg-green-600"
+            : "bg-lt-700 hover:bg-lt-600"} disabled:cursor-not-allowed disabled:opacity-40"
+          ?disabled=${noTarget}
+          @click=${() => {
+            this.giftGodMode = !this.giftGodMode;
+            act("gift_god_mode", { enabled: this.giftGodMode })();
+          }}
+        >
+          ${translateText("admin_cheat.gift_god_mode")}:
+          ${this.giftGodMode
+            ? translateText("admin_cheat.on")
+            : translateText("admin_cheat.off")}
+        </button>
+        <button
+          class="${BTN}"
+          ?disabled=${noTarget}
+          @click=${act("pardon_player")}
+        >
+          ${translateText("admin_cheat.pardon")}
+        </button>
+        <button
+          class="${BTN}"
+          ?disabled=${noTarget || noTile}
+          title=${translateText("admin_cheat.gift_unit_hint")}
+          @click=${() =>
+            act("gift_unit", {
+              unitType: this.unitType,
+              tile: this.selectedTile,
+            })()}
+        >
+          ${translateText("admin_cheat.gift_unit")} (${this.unitType})
+        </button>
+        <button
+          class="${BTN}"
+          ?disabled=${noTarget || noTile}
+          title=${translateText("admin_cheat.revive_hint")}
+          @click=${() =>
+            act("revive_player", { tile: this.selectedTile, amount: 3 })()}
+        >
+          ${translateText("admin_cheat.revive")}
         </button>
       </div>
     `;
