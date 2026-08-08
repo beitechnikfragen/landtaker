@@ -107,6 +107,9 @@ export default defineConfig(({ mode }) => {
     ? buildPublicAssetManifest(sourceDirs)
     : {};
   const cdnBase = env.CDN_BASE ?? "";
+  // Origin used in canonical/og:url. DOMAIN is unset in a plain dev checkout,
+  // where the dev server is the only consumer of these tags anyway.
+  const devSiteUrl = env.DOMAIN ? `https://${env.DOMAIN}` : "";
   const htmlAssetData = {
     assetManifest: JSON.stringify(assetManifest),
     cdnBase: JSON.stringify(cdnBase),
@@ -119,6 +122,16 @@ export default defineConfig(({ mode }) => {
     instanceId: JSON.stringify(env.INSTANCE_ID ?? "DEV_ID"),
     manifestHref: buildAssetUrl("manifest.json", assetManifest, cdnBase),
     faviconHref: buildAssetUrl("images/Favicon.svg", assetManifest, cdnBase),
+    // Mirrors RenderHtml.ts, which serves these same tags in production.
+    siteUrl: devSiteUrl,
+    socialImageUrl: (() => {
+      const url = buildAssetUrl(
+        "images/social/og-1200x630.png",
+        assetManifest,
+        cdnBase,
+      );
+      return /^https?:\/\//i.test(url) ? url : `${devSiteUrl}${url}`;
+    })(),
     gameplayScreenshotUrl: buildAssetUrl(
       "images/GameplayScreenshot.png",
       assetManifest,

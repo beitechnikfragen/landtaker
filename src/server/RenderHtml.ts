@@ -1,7 +1,7 @@
 import ejs from "ejs";
 import type { Response } from "express";
 import fs from "fs/promises";
-import { buildAssetUrl } from "../core/AssetUrls";
+import { type AssetManifest, buildAssetUrl } from "../core/AssetUrls";
 import { setNoStoreHeaders } from "./NoStoreHeaders";
 import { getRuntimeAssetManifest } from "./RuntimeAssetManifest";
 import { ServerEnv } from "./ServerEnv";
@@ -10,6 +10,39 @@ const APP_SHELL_CACHE_CONTROL =
   "public, max-age=0, s-maxage=300, stale-while-revalidate=86400, stale-if-error=86400";
 
 const appShellContentCache = new Map<string, Promise<string>>();
+
+/**
+ * The public origin this deployment answers on, e.g. "https://landtaker.io".
+ *
+ * Derived from DOMAIN rather than hardcoded so a staging deploy advertises
+ * itself in its own canonical and og:url instead of pointing crawlers and link
+ * previews at production. Falls back to a relative-safe empty string in dev,
+ * where DOMAIN is often unset.
+ */
+function siteUrl(): string {
+  const domain = ServerEnv.domain();
+  if (!domain) return "";
+  return `https://${domain}`;
+}
+
+/**
+ * An asset URL that is safe to hand to an external scraper.
+ *
+ * buildAssetUrl returns a root-relative path when no CDN is configured, and a
+ * root-relative og:image is dropped by every link-preview scraper — they fetch
+ * it with no page context to resolve against. Prefixing with the site origin
+ * makes it absolute; when CDN_BASE is set the value is already absolute and is
+ * returned unchanged.
+ */
+function absoluteAssetUrl(
+  assetPath: string,
+  assetManifest: AssetManifest,
+  cdnBase: string,
+): string {
+  const url = buildAssetUrl(assetPath, assetManifest, cdnBase);
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${siteUrl()}${url}`;
+}
 
 export async function renderHtmlContent(htmlPath: string): Promise<string> {
   const htmlContent = await fs.readFile(htmlPath, "utf-8");
@@ -31,6 +64,14 @@ export async function renderHtmlContent(htmlPath: string): Promise<string> {
     instanceId: JSON.stringify(ServerEnv.instanceId()),
     manifestHref: buildAssetUrl("manifest.json", assetManifest, cdnBase),
     faviconHref: buildAssetUrl("images/Favicon.svg", assetManifest, cdnBase),
+    siteUrl: siteUrl(),
+    // Link-preview card. Absolute, because the scrapers behind Discord,
+    // WhatsApp and Slack fetch og:image with no page to resolve against.
+    socialImageUrl: absoluteAssetUrl(
+      "images/social/og-1200x630.png",
+      assetManifest,
+      cdnBase,
+    ),
     gameplayScreenshotUrl: buildAssetUrl(
       "images/GameplayScreenshot.png",
       assetManifest,

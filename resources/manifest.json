@@ -18,8 +18,12 @@
   "display": "standalone",
   "dir": "auto",
   "lang": "en",
-  "name": "OpenFront.io",
-  "short_name": "OpenFront",
+  "name": "Landtaker",
+  "short_name": "Landtaker",
+  "description": "Claim territory, forge alliances and betray them. A free real-time strategy game for up to 100 players in the browser.",
+  "categories": ["games", "entertainment"],
+  "background_color": "#0d1013",
+  "theme_color": "#0d1013",
   "start_url": "/",
   "id": "/"
 }

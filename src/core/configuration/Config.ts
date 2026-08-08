@@ -569,6 +569,11 @@ export class Config {
   quickChatCooldown(): Tick {
     return 3 * 10;
   }
+  textChatCooldown(): Tick {
+    // 2s at 10 ticks/s. Short enough for a real conversation, long enough that
+    // a script cannot flood the log.
+    return 2 * 10;
+  }
   targetDuration(): Tick {
     return 10 * 10;
   }

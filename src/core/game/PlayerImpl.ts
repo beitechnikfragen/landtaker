@@ -124,6 +124,9 @@ export class PlayerImpl implements Player {
 
   private outgoingEmojis_: EmojiMessage[] = [];
   private outgoingQuickChats_ = new Map<number, Tick>();
+  // One cooldown for all free-text chat regardless of channel or recipient, so
+  // switching target or channel cannot be used to send faster.
+  private lastTextChatAt_: Tick | null = null;
 
   private sentDonations: Donation[] = [];
 
@@ -942,6 +945,18 @@ export class PlayerImpl implements Player {
 
   recordQuickChat(recipient: Player): void {
     this.outgoingQuickChats_.set(recipient.smallID(), this.mg.ticks());
+  }
+
+  canSendTextChat(): boolean {
+    return (
+      this.lastTextChatAt_ === null ||
+      this.mg.ticks() - this.lastTextChatAt_ >=
+        this.mg.config().textChatCooldown()
+    );
+  }
+
+  recordTextChat(): void {
+    this.lastTextChatAt_ = this.mg.ticks();
   }
 
   canDonateGold(recipient: Player): boolean {

@@ -203,8 +203,11 @@ export async function buildPreview(
         `maps/${encodeURIComponent(normalizedMap)}/thumbnail.webp`,
       )
     : null;
+  // Falls back to the branded social card rather than a gameplay screenshot:
+  // the screenshot still shows the pre-redesign render, so a link to a game on
+  // an unrecognised map would advertise the old look.
   const image =
-    mapThumbnail ?? buildAbsoluteAssetUrl("images/GameplayScreenshot.png");
+    mapThumbnail ?? buildAbsoluteAssetUrl("images/social/og-1200x630.png");
 
   const gameType = lobby?.gameConfig?.gameType ?? config.gameType;
   const gameTypeLabel = gameType ? ` (${gameType})` : "";
@@ -213,7 +216,7 @@ export async function buildPreview(
     ? `${mode ?? "Game"} on ${map ?? "Unknown Map"}${gameTypeLabel}`
     : mode && map
       ? `${mode} on ${map}${gameTypeLabel}`
-      : "OpenFront Game";
+      : "Landtaker Game";
 
   let description: string;
   if (isFinished) {

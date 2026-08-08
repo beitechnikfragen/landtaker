@@ -45,6 +45,7 @@ import { PlayerPanel } from "./layers/PlayerPanel";
 import { ReplayPanel } from "./layers/ReplayPanel";
 import { SettingsModal } from "./layers/SettingsModal";
 import { SpawnTimer } from "./layers/SpawnTimer";
+import { TextChatPanel } from "./layers/TextChatPanel";
 import { UnitDisplay } from "./layers/UnitDisplay";
 import { WinModal } from "./layers/WinModal";
 import { loadAllSprites } from "./SpriteLoader";
@@ -143,6 +144,15 @@ export function createRenderer(
   }
   chatDisplay.eventBus = eventBus;
   chatDisplay.game = game;
+
+  const textChatPanel = document.querySelector(
+    "text-chat-panel",
+  ) as TextChatPanel;
+  if (!(textChatPanel instanceof TextChatPanel)) {
+    console.error("text chat panel not found");
+  }
+  textChatPanel.eventBus = eventBus;
+  textChatPanel.game = game;
 
   const playerInfo = document.querySelector(
     "player-info-overlay",
@@ -347,6 +357,7 @@ export function createRenderer(
     actionableEvents,
     attacksDisplay,
     chatDisplay,
+    textChatPanel,
     buildMenu,
     new MainRadialMenu(
       eventBus,

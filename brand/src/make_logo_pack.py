@@ -642,6 +642,17 @@ def main():
             mapped.save(w(os.path.join(OUT, "social", "map", name + ".png")), "PNG", optimize=True)
             social_count += 1
 
+            # The og card is also the link preview the game server serves, and
+            # only brand/images/ is published as an asset root — dist/ is not.
+            # Writing it here keeps the served copy from going stale when a
+            # master SVG changes.
+            if name == "og-1200x630":
+                mapped.save(
+                    w(os.path.join(BRAND, "images", "social", name + ".png")),
+                    "PNG", optimize=True,
+                )
+                social_count += 1
+
         # Transparent: same geometry, no canvas — for dropping onto anything.
         canvas = Image.new("RGBA", (sw, sh), (0, 0, 0, 0))
         canvas.alpha_composite(*place(hi[lockup], sw, sh, fit, safe, ax))
