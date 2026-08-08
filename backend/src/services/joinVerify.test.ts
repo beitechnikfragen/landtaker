@@ -134,13 +134,20 @@ describe("clan tag normalisation", () => {
 
 describe("turnstile", () => {
   /**
-   * Documents the gap rather than hiding it: no TURNSTILE_SECRET_KEY exists
-   * for this backend, so there is no verdict to give. If someone implements
-   * siteverify, this test is the thing that should fail and force a rewrite.
+   * The no-op is gone: verification now delegates to services/turnstile.ts.
+   * What must NOT change is the fail-open contract — a join is never refused
+   * because we could not reach Cloudflare, and a null token (a reconnect
+   * whose single-use token is already spent) skips siteverify entirely.
    */
-  it("yields no verdict, because we cannot actually verify a token", () => {
-    expect(verifyTurnstile("some-token")).toBeNull();
-    expect(verifyTurnstile(null)).toBeNull();
+  it("skips verification for a null token", async () => {
+    // A re-admit has no token to redeem. Calling siteverify with null would
+    // be a guaranteed rejection of a player who is already legitimately in.
+    expect(await verifyTurnstile(null, null)).toBe("skipped");
+  });
+
+  it("reports unavailable when no secret is configured", async () => {
+    // Default dev config has no TURNSTILE_SECRET_KEY.
+    expect(await verifyTurnstile("some-token", null)).toBe("unavailable");
   });
 });
 
