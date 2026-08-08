@@ -59,20 +59,33 @@ social/transparent/                      logo only, no canvas
 
 ## Social sizes
 
-| File             | Size      | Where                      |
-| ---------------- | --------- | -------------------------- |
-| `avatar-400`     | 400×400   | Discord, X, generic        |
-| `avatar-512`     | 512×512   | Steam, YouTube             |
-| `avatar-1024`    | 1024×1024 | High-dpi source            |
-| `og-1200x630`    | 1200×630  | Open Graph / link previews |
-| `x-banner`       | 1500×500  | X header                   |
-| `youtube-banner` | 2048×1152 | YouTube channel art        |
-| `discord-banner` | 960×540   | Discord server banner      |
-| `post-square`    | 1080×1080 | Instagram, feed posts      |
-| `post-story`     | 1080×1920 | Stories, Shorts, Reels     |
+| File               | Size      | Where                        |
+| ------------------ | --------- | ---------------------------- |
+| `avatar-400`       | 400×400   | Discord, X, generic          |
+| `avatar-512`       | 512×512   | Steam, YouTube               |
+| `avatar-1024`      | 1024×1024 | High-dpi source              |
+| `og-1200x630`      | 1200×630  | Open Graph / link previews   |
+| `x-banner`         | 1500×500  | X header                     |
+| `youtube-banner`   | 2048×1152 | YouTube channel art          |
+| `discord-banner`   | 960×540   | Discord server banner        |
+| `post-square`      | 1080×1080 | Instagram, feed posts        |
+| `post-story`       | 1080×1920 | Stories, Shorts, Reels       |
+| `reddit-icon-256`  | 256×256   | Subreddit icon               |
+| `reddit-icon-512`  | 512×512   | Subreddit icon, high-dpi     |
+| `reddit-header`    | 256×64    | old.reddit header image      |
+| `reddit-banner`    | 1920×384  | Community banner             |
+| `reddit-banner-sm` | 1920×256  | Community banner, short crop |
 
 The YouTube banner keeps everything inside the 1546×423 safe box, so it survives
 the crop on phones — the full 2048×1152 is only ever shown on desktop.
+
+Reddit needs two departures from the other platforms. The community banners are
+aligned right rather than centred, because Reddit paints the subreddit icon and
+name across the left of the banner and a centred logo ends up underneath it. The
+subreddit icons are displayed inside a circular clip, so they are fitted smaller
+and carry no accent rule — the clip would reduce a bottom-edge bar to a stray
+smudge. The build asserts the icon artwork stays inside the inscribed circle and
+fails if it does not.
 
 ## Favicons
 

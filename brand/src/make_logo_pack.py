@@ -13,7 +13,7 @@ import re
 import sys
 
 import resvg_py
-from PIL import Image
+from PIL import Image, ImageChops, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BRAND = os.path.dirname(HERE)
@@ -129,7 +129,6 @@ def render_mono(svg, color, width):
 
     # A light path only becomes a hole where the body actually covers it.
     # Elsewhere (the crown, the rocket tip) it has to stay solid.
-    from PIL import ImageChops
     cut = ImageChops.multiply(hole, bod)
     alpha = ImageChops.subtract(sil.split()[3], cut)
 
@@ -345,6 +344,17 @@ SOCIAL = [
     ("discord-banner",    960,  540,  "lockup-horizontal", (0.68, 0.48), "Discord server banner"),
     ("post-square",      1080, 1080,  "lockup-stacked", (0.66, 0.60), "Instagram / feed"),
     ("post-story",       1080, 1920,  "lockup-stacked", (0.72, 0.40), "Story / Shorts / Reels"),
+
+    # Reddit. The icons render inside a circular clip, so they use the same
+    # centred mark as the other avatars but with a smaller fit — the corners of
+    # a square-fitted mark would be shaved off by the crop.
+    ("reddit-icon-256",   256,  256,  "mark", (0.62, 0.62), "subreddit icon (circular crop)"),
+    ("reddit-icon-512",   512,  512,  "mark", (0.62, 0.62), "subreddit icon, high-dpi"),
+    ("reddit-header",     256,   64,  "lockup-horizontal", (0.86, 0.70), "old.reddit header"),
+    # Reddit overlays the subreddit name and icon across the left of the banner,
+    # so the artwork is pushed right instead of centred.
+    ("reddit-banner",    1920,  384,  "lockup-horizontal", (0.34, 0.52), "community banner"),
+    ("reddit-banner-sm", 1920,  256,  "lockup-horizontal", (0.34, 0.56), "community banner, short"),
 ]
 
 # YouTube crops its banner hard on small screens; everything essential has to sit
@@ -353,9 +363,21 @@ SOCIAL = [
 # and gets cropped away on phones.
 YT_SAFE = {"youtube-banner": (1546, 423)}
 
+# Horizontal placement, as a fraction of the free space: 0.0 hard left, 0.5
+# centred, 1.0 hard right. Reddit puts its own chrome over the left third of a
+# community banner, so the logo sits right of it rather than underneath.
+ALIGN_X = {
+    "reddit-banner": 0.72,
+    "reddit-banner-sm": 0.72,
+}
 
-def compose(logo_img, w, h, fit, bg, accent=None, backdrop=None, safe=None):
-    """Centre the logo on a canvas, fitted into `fit` (fraction of w, of h)."""
+# Assets Reddit displays inside a circle. Rendered square, but checked against
+# the inscribed circle so nothing important is lost to the clip.
+CIRCLE_CROP = {"reddit-icon-256", "reddit-icon-512"}
+
+
+def compose(logo_img, w, h, fit, bg, accent=None, backdrop=None, safe=None, align_x=0.5):
+    """Place the logo on a canvas, fitted into `fit` (fraction of w, of h)."""
     canvas = Image.new("RGBA", (w, h), bg)
 
     if backdrop is not None:
@@ -364,11 +386,11 @@ def compose(logo_img, w, h, fit, bg, accent=None, backdrop=None, safe=None):
     if accent is not None:
         canvas.alpha_composite(accent)
 
-    canvas.alpha_composite(*place(logo_img, w, h, fit, safe))
+    canvas.alpha_composite(*place(logo_img, w, h, fit, safe, align_x))
     return canvas
 
 
-def place(logo_img, w, h, fit, safe=None):
+def place(logo_img, w, h, fit, safe=None, align_x=0.5):
     """Scale the logo into the fit box and return (image, top-left offset)."""
     # On a platform with a crop-safe area the logo is fitted to that box, so it
     # survives the crop; elsewhere the full canvas is the reference.
@@ -380,7 +402,53 @@ def place(logo_img, w, h, fit, safe=None):
     nw, nh = max(1, round(lw * scale)), max(1, round(lh * scale))
 
     resized = logo_img.resize((nw, nh), Image.LANCZOS)
-    return resized, ((w - nw) // 2, (h - nh) // 2)
+    return resized, (round((w - nw) * align_x), (h - nh) // 2)
+
+
+def check_circle_safe(path, name):
+    """
+    Assert the artwork in `path` survives a circular clip.
+
+    Compares the mark against the inscribed circle and reports how much ink
+    falls outside it. Anything above a hair of antialiasing means the corners
+    get shaved off once Reddit applies its own mask.
+    """
+    im = Image.open(path).convert("RGBA")
+    w, h = im.size
+    r = min(w, h) / 2.0
+    cx, cy = w / 2.0, h / 2.0
+
+    mask = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(mask).ellipse([cx - r, cy - r, cx + r, cy + r], fill=255)
+
+    # Ink = anything visibly different from the flat background, sampled from a
+    # corner that the circle never covers.
+    bg = im.getpixel((0, 0))
+    ink = Image.new("L", (w, h), 0)
+    ipx = ink.load()
+    src = im.load()
+    outside = 0
+    total = 0
+    mpx = mask.load()
+    for y in range(h):
+        for x in range(w):
+            p = src[x, y]
+            if abs(p[0] - bg[0]) + abs(p[1] - bg[1]) + abs(p[2] - bg[2]) > 24:
+                total += 1
+                ipx[x, y] = 255
+                if mpx[x, y] == 0:
+                    outside += 1
+
+    if total == 0:
+        raise SystemExit("%s: rendered empty" % name)
+
+    pct = outside * 100.0 / total
+    if pct > 0.5:
+        raise SystemExit(
+            "%s: %.1f%% of the mark falls outside the circular crop — "
+            "reduce its fit fraction" % (name, pct)
+        )
+    print("  %s: %.2f%% outside circle (ok)" % (name, pct))
 
 
 def fit_cover(img, w, h):
@@ -512,32 +580,45 @@ def main():
     social_count = 0
     for name, sw, sh, lockup, fit, note in SOCIAL:
         safe = YT_SAFE.get(name)
+        ax = ALIGN_X.get(name, 0.5)
+
+        # A circular-crop asset gets no accent rule: the bar runs along the
+        # bottom edge of the square and the clip removes all but its middle,
+        # which reads as a stray orange smudge rather than a deliberate rule.
+        bar = None if name in CIRCLE_CROP else accent_bar(sw, sh)
 
         # Plain set: mark on brand ink, orange rule at the foot.
-        plain = compose(hi[lockup], sw, sh, fit, INK, accent=accent_bar(sw, sh), safe=safe)
+        plain = compose(hi[lockup], sw, sh, fit, INK, accent=bar, safe=safe, align_x=ax)
         plain.save(w(os.path.join(OUT, "social", "plain", name + ".png")), "PNG", optimize=True)
         social_count += 1
 
         # Light set: the on-light variant so the mark reads against #e8ecef.
-        light = compose(hi_light[lockup], sw, sh, fit, LIGHT, accent=accent_bar(sw, sh), safe=safe)
+        light = compose(hi_light[lockup], sw, sh, fit, LIGHT, accent=bar, safe=safe, align_x=ax)
         light.save(w(os.path.join(OUT, "social", "light", name + ".png")), "PNG", optimize=True)
         social_count += 1
 
         if backdrop is not None:
             mapped = compose(
                 hi[lockup], sw, sh, fit, INK,
-                accent=accent_bar(sw, sh), backdrop=backdrop, safe=safe,
+                accent=bar, backdrop=backdrop, safe=safe, align_x=ax,
             )
             mapped.save(w(os.path.join(OUT, "social", "map", name + ".png")), "PNG", optimize=True)
             social_count += 1
 
         # Transparent: same geometry, no canvas — for dropping onto anything.
         canvas = Image.new("RGBA", (sw, sh), (0, 0, 0, 0))
-        canvas.alpha_composite(*place(hi[lockup], sw, sh, fit, safe))
+        canvas.alpha_composite(*place(hi[lockup], sw, sh, fit, safe, ax))
         canvas.save(w(os.path.join(OUT, "social", "transparent", name + ".png")), "PNG", optimize=True)
         social_count += 1
 
     print("social: %d files" % social_count)
+
+    # Reddit clips its icons to a circle. Verify the artwork actually survives
+    # that clip rather than trusting the fit fraction — a mark that overflows
+    # the inscribed circle loses its corners in the live UI, where it is too
+    # late to notice.
+    for name in sorted(CIRCLE_CROP):
+        check_circle_safe(os.path.join(OUT, "social", "plain", name + ".png"), name)
 
     print("done -> %s" % OUT)
 
