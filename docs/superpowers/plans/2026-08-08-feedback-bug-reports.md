@@ -13,8 +13,8 @@
 ## Global Constraints
 
 - **The `backend/` directory is a separate npm project.** Run all backend commands from `backend/`, not the repo root. It has its own `package.json`, `tsconfig.json`, and `vitest.config.ts`.
-- **Backend imports use explicit `.ts` extensions** (`from "../db/index.ts"`) — required by `verbatimModuleSyntax`. The game's own client code does NOT do this. Match the directory you are editing.
-- **Backend runs stricter TypeScript than the game**: `noUncheckedIndexedAccess` and `verbatimModuleSyntax` are on. Indexing an array yields `T | undefined`; type-only imports need `import type`.
+- **Backend imports use explicit `.ts` extensions** (`from "../db/index.ts"`). This comes from `allowImportingTsExtensions` plus running Node with type-stripping and no build step — NOT from `verbatimModuleSyntax`, which `backend/tsconfig.json` deliberately sets to `false`. The game's own client code does NOT use `.ts` extensions. Match the directory you are editing.
+- **Backend TypeScript is `strict: true`, but `noUncheckedIndexedAccess` and `verbatimModuleSyntax` are both explicitly `false`** (see the comments in `backend/tsconfig.json` — enabling them would report hundreds of errors in the game's sources, which this project imports for types but does not own). So indexing an array does NOT yield `T | undefined`, and `import type` is not mandatory. Defensive undefined-checks in this plan's code are still correct and should be kept, but they are belt-and-braces rather than compiler-forced.
 - **All user-visible client text goes through `translateText()`**, with new keys added to `resources/lang/en.json` ONLY. Never modify another `resources/lang/*.json` — they are managed via Crowdin.
 - **No changes to `src/core/`.** If a change seems to require one, stop and ask — it would trigger the determinism rules and the mandatory-test rule in CLAUDE.md.
 - **Never use `npm install`** in this repo; use `npm run inst` (which is `npm ci --ignore-scripts`). The backend uses plain `npm install` — that one is fine, it is a separate project.
