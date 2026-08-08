@@ -36,6 +36,13 @@
       "when": 1786150492184,
       "tag": "0004_chunky_edwin_jarvis",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786154845658,
+      "tag": "0005_loose_sue_storm",
+      "breakpoints": true
     }
   ]
 }

@@ -406,6 +406,78 @@ export const leaderboardEntries = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Feedback
+// ---------------------------------------------------------------------------
+
+/**
+ * In-game bug reports, ideas and other feedback.
+ *
+ * Submitted by guests as well as logged-in players (a bug that prevents login
+ * must still be reportable), which is why `userId` is nullable and why the
+ * route in front of this is gated by Turnstile and a rate limit.
+ *
+ * Rows are written by players and read by admins. Nothing here is ever sent
+ * back to another player, so the only consumer of the shape is our own future
+ * admin area.
+ */
+export const feedbackReports = pgTable(
+  "feedback_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    // Null for guests. ON DELETE SET NULL rather than CASCADE: if an account
+    // goes away the report is still a valid bug report, it just loses its
+    // author. Deleting real feedback because someone closed their account
+    // would lose information we cannot recover.
+    userId: uuid("user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+
+    // 'bug' | 'idea' | 'other'. Text, not a pg enum, so the admin area can
+    // grow a category without a migration. Zod validates at the boundary.
+    type: text("type").notNull(),
+
+    // 'new' | 'triaged' | 'resolved' | 'rejected'. Same reasoning; the real
+    // triage vocabulary will only be known once the admin area is built.
+    status: text("status").notNull().default("new"),
+
+    message: text("message").notNull(),
+
+    // Guests only, optional — their sole route to a reply. Logged-in users
+    // have a contactable account already, so the route drops this for them.
+    contactEmail: text("contact_email"),
+
+    // Client version, user agent, screen size and similar. jsonb because the
+    // diagnostic shape will change and a column per field means a migration
+    // every time. Only ever read by a human.
+    context: jsonb("context"),
+
+    // Truncated to a /24 (IPv4) or /48 (IPv6) prefix — see truncateIp() in
+    // services/feedback.ts. Enough to correlate an abuse pattern, without
+    // this table becoming a years-long log of identifying addresses.
+    submitterIp: text("submitter_ip"),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    // NOT maintained by a trigger. The admin area sets it when it changes
+    // status; until then it equals createdAt.
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // The admin area's default view: unhandled reports, newest first.
+    index("feedback_reports_status_created_idx").on(
+      table.status,
+      table.createdAt,
+    ),
+    // "Everything this user reported" — for spotting a serial reporter.
+    index("feedback_reports_user_idx").on(table.userId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Relations
 // ---------------------------------------------------------------------------
 
