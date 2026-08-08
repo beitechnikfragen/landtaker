@@ -29,14 +29,16 @@ describe("desktop nav bar sizing", () => {
     );
   });
 
-  it("scales the brand mark instead of pinning it", () => {
-    expect(navBar).toMatch(/h-\[clamp\([^\]]+\)\]\s+w-\[clamp\(/);
+  it("scales the brand lockup instead of pinning it", () => {
+    expect(navBar).toMatch(/h-\[clamp\([^\]]+\)\]\s+w-auto/);
   });
 
-  it("scales the wordmark", () => {
-    // The class list and the LANDTAKER text sit on separate lines in the
-    // template, so match across them.
-    expect(navBar).toMatch(/text-\[clamp\([^\]]+\)\][\s\S]{0,200}LANDTAKER/);
+  it("draws the wordmark as artwork, never as live text", () => {
+    // Live text made the brand's width depend on whether the display webfont
+    // had loaded; before it did, the fallback rendered wider and pushed the
+    // wordmark over its divider. The SVG has a fixed aspect ratio.
+    expect(navBar).toMatch(/logo\/lockup-horizontal\.svg/);
+    expect(navBar).not.toMatch(/>LANDTAKER</);
   });
 
   it("keeps the brand at a fixed size", () => {
