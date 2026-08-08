@@ -41,6 +41,15 @@ const ConfigSchema = z.object({
   // works out of the box; it must be replaced in production.
   API_KEY: z.string().default("WARNING_DEV_API_KEY_DO_NOT_USE_IN_PRODUCTION"),
 
+  // Cloudflare Turnstile secret for siteverify. Absent => tokens cannot be
+  // verified at all, and every caller falls back to its documented fail-open
+  // behaviour (see services/turnstile.ts). Deliberately optional: a local dev
+  // backend and a self-hosted instance without a Cloudflare account must both
+  // still work. The matching PUBLIC site key lives in the game's own env as
+  // TURNSTILE_SITE_KEY — this is the private half and must never be sent to a
+  // client.
+  TURNSTILE_SECRET_KEY: z.string().optional(),
+
   CORS_ORIGIN: z.string().default("http://localhost:9000"),
 
   // Discord OAuth. Absent => the /auth/login/discord routes are not registered
