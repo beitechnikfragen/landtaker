@@ -41,8 +41,10 @@ export class PhoneSounds {
 
   setVolume(position: number): void {
     this.volume = perceptualGain(position);
-    for (const howl of this.loops.values()) howl.volume(this.volume);
-    for (const howl of this.oneShots.values()) howl.volume(this.volume);
+    for (const howl of this.loops.values())
+      this.safely("set loop volume", () => howl.volume(this.volume));
+    for (const howl of this.oneShots.values())
+      this.safely("set one-shot volume", () => howl.volume(this.volume));
   }
 
   startRinging(): void {

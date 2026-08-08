@@ -16,6 +16,7 @@ import {
   ClientIntentMessage,
   ClientJoinMessage,
   ClientMessage,
+  ClientPhonePayload,
   ClientPingMessage,
   ClientRejoinMessage,
   ClientSendLiveStatsMessage,
@@ -438,6 +439,13 @@ export class Transport {
       lastTurn: lastTurn,
       token: await getPlayToken(),
     } satisfies ClientRejoinMessage);
+  }
+
+  sendPhone(payload: ClientPhonePayload) {
+    this.sendMsg({
+      type: "phone",
+      payload,
+    });
   }
 
   leaveGame() {

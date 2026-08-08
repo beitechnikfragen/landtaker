@@ -69,6 +69,7 @@ import { createCanvas } from "./Utils";
 import { WebGLFrameBuilder } from "./WebGLFrameBuilder";
 import { MapLayerController } from "./controllers/MapLayerController";
 import { createRenderer, GameRenderer } from "./hud/GameRenderer";
+import { PhoneController } from "./phone/PhoneController";
 import {
   applyGraphicsOverrides,
   createRenderSettings,
@@ -749,6 +750,10 @@ export class ClientGameRunner {
   private lastTickReceiveTime: number = 0;
   private currentTickDelay: number | undefined = undefined;
 
+  // Only exists when clientID is known (i.e. not a pure spectator connection
+  // that never got assigned one) — there is no phone identity without it.
+  private readonly phoneController: PhoneController | null = null;
+
   constructor(
     private lobby: LobbyConfig,
     private clientID: ClientID | undefined,
@@ -765,6 +770,13 @@ export class ClientGameRunner {
     private disposeRenderer: (() => void) | null = null,
   ) {
     this.lastMessageTime = Date.now();
+    if (this.clientID !== undefined) {
+      this.phoneController = new PhoneController(
+        this.clientID,
+        this.transport,
+        this.userSettings,
+      );
+    }
   }
 
   /**
@@ -978,6 +990,9 @@ export class ClientGameRunner {
         // everyone else.
         this.eventBus.emit(new NewLobbyEvent(message.gameID));
       }
+      if (message.type === "phone") {
+        this.phoneController?.receive(message.payload);
+      }
       if (message.type === "turn") {
         if (
           !this.gameView.inSpawnPhase() &&
@@ -1025,6 +1040,7 @@ export class ClientGameRunner {
 
   public stop() {
     this.soundManager.dispose();
+    this.phoneController?.dispose();
     this.graphicsListenerAbort?.abort();
     this.disposeRenderer?.();
     if (!this.isActive) return;
