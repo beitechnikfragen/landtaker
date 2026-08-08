@@ -36,7 +36,13 @@ export class PhoneExchange {
   removePlayer(clientID: ClientID): PhoneOutbox[] {
     this.players.delete(clientID);
     const out = this.leaveCall(clientID, { missedForCaller: false });
-    this.prefs.delete(clientID);
+    // Prefs (mode, alliesOnly, blocked) deliberately outlive this: a socket
+    // drop is not the end of the match, and GameServer calls removePlayer on
+    // every disconnect — including brief ones expected to reconnect via
+    // addPlayer. Wiping prefs here would silently turn DND off and, worse,
+    // drop blocks (a safety control) on every network blip. Prefs are small
+    // and bounded by the match; the whole PhoneExchange is discarded when the
+    // game ends, so there is nothing else to clean up.
     return out;
   }
 

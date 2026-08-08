@@ -195,4 +195,26 @@ describe("PhoneExchange", () => {
     const out2 = ex.handle(A, { kind: "dial", target: B });
     expect(kinds(out2, B)).toContain("ringing");
   });
+
+  it("keeps DND set across a disconnect/reconnect cycle", () => {
+    ex.handle(B, { kind: "setMode", mode: "dnd" });
+    // Simulates GameServer: handleClientDisconnect always calls
+    // removePlayer, even for a brief drop; rejoinClient then re-registers
+    // via addPlayer. Prefs must not reset in between.
+    ex.removePlayer(B);
+    ex.addPlayer(player(B, "Bob"));
+
+    const out = ex.handle(A, { kind: "dial", target: B });
+    expect(kinds(out, A)).toEqual(["busy"]);
+    expect(kinds(out, B)).toEqual([]);
+  });
+
+  it("keeps a block set across a disconnect/reconnect cycle", () => {
+    ex.handle(B, { kind: "block", target: A });
+    ex.removePlayer(B);
+    ex.addPlayer(player(B, "Bob"));
+
+    const out = ex.handle(A, { kind: "dial", target: B });
+    expect(kinds(out, A)).toEqual(["busy"]);
+  });
 });
