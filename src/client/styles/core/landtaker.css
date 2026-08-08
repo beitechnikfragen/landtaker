@@ -244,10 +244,12 @@
 .lt-nav-item {
   display: flex;
   align-items: center;
-  /* 14px, not 18: with the match-history tab the row runs eight tabs plus
-     brand and cells inside the 1300px shell. Never wrap — a two-line tab
+  /* Eight tabs plus the brand and the status cells have to share one row.
+     Padding scales with the viewport instead of being fixed: at a fixed
+     14px the row overflowed by ~100px at 1280 and clipped the account cell
+     off the right edge — measured, not guessed. Never wraps; a two-line tab
      reads as a layout bug. */
-  padding: 0 14px;
+  padding: 0 clamp(7px, 1vw, 14px);
   white-space: nowrap;
   font-family: var(--font-lt-util);
   font-size: 15px;
