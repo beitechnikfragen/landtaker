@@ -142,6 +142,11 @@ export class PhoneWidget extends LitElement {
             ${translateText("phone.mic_blocked")}
           </div>`
         : ""}
+      ${this.controller!.connectionFailed
+        ? html`<div class="mb-2 text-xs text-yellow-300">
+            ${translateText("phone.no_connection")}
+          </div>`
+        : ""}
     `;
   }
 

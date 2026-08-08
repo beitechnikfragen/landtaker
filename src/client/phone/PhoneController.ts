@@ -15,6 +15,7 @@ export class PhoneController {
   private rtc: PhoneTransport;
   private sounds: PhoneSounds;
   private _muted = false;
+  private _connectionFailed = false;
   private unsubscribe: () => void;
 
   constructor(
@@ -23,8 +24,12 @@ export class PhoneController {
     private readonly userSettings: UserSettings,
   ) {
     this.sounds = new PhoneSounds(userSettings.phoneVolume());
-    this.rtc = new PhoneTransport(myId, (to, data) =>
-      this.send({ kind: "signal", to, data }),
+    this.rtc = new PhoneTransport(
+      myId,
+      (to, data) => this.send({ kind: "signal", to, data }),
+      () => {
+        this._connectionFailed = true;
+      },
     );
     this.unsubscribe = this.machine.onChange(() => this.onStateChange());
 
@@ -42,6 +47,12 @@ export class PhoneController {
 
   get micDenied(): boolean {
     return this.rtc.micDenied;
+  }
+
+  // STUN-only in v1: no TURN server means some peers behind strict NATs
+  // never connect. This surfaces that honestly instead of ringing forever.
+  get connectionFailed(): boolean {
+    return this._connectionFailed;
   }
 
   // Die UI liest den Modus hierüber, statt in die Einstellungen zu greifen.
@@ -62,6 +73,9 @@ export class PhoneController {
       void this.rtc.handleSignal(payload.from, payload.data);
       return;
     }
+    if (payload.kind === "ringing") {
+      this._connectionFailed = false;
+    }
     this.machine.receive(payload);
     if (payload.kind === "callState") {
       void this.rtc.syncPeers(payload.peers);
@@ -71,11 +85,13 @@ export class PhoneController {
   }
 
   dial(target: ClientID): void {
+    this._connectionFailed = false;
     this.sounds.playDialClick();
     this.send({ kind: "dial", target });
   }
 
   answer(): void {
+    this._connectionFailed = false;
     this.sounds.playPickUp();
     this.send({ kind: "answer" });
   }

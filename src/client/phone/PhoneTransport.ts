@@ -21,6 +21,7 @@ export class PhoneTransport {
   constructor(
     private readonly myId: ClientID,
     private readonly send: (to: ClientID, data: string) => void,
+    private readonly onConnectionFailed?: (peer: ClientID) => void,
   ) {}
 
   get micDenied(): boolean {
@@ -121,6 +122,16 @@ export class PhoneTransport {
     };
     pc.ontrack = (e) => {
       if (e.streams[0]) audio.attach(e.streams[0]);
+    };
+    // "disconnected" is often a transient blip (brief ICE hiccup) that
+    // recovers on its own; only "failed" means STUN-only connectivity has
+    // genuinely broken down (see design spec: no TURN server in v1, so
+    // players behind strict NATs get an honest "no connection" instead of
+    // endless ringing).
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === "failed") {
+        this.onConnectionFailed?.(id);
+      }
     };
 
     const peer = { pc, audio };
