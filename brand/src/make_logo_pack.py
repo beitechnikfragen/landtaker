@@ -78,8 +78,32 @@ def variant_color(svg):
 
 
 def variant_on_light(svg):
-    """For light backgrounds: the light outlines become ink so they stay visible."""
-    return recolor(svg, {LIGHT.lower(): INK, SLATE.lower(): INK})
+    """
+    For light backgrounds: swap the light and ink roles.
+
+    Swapping both ways matters. Recolouring only the light paths to ink — the
+    obvious reading of "make it work on white" — turns the shield into a solid
+    black slab, because the ink paths that were the fill stay ink and swallow
+    the map seams and the rocket. Trading the two roles keeps the plate light
+    and the detail dark, so the artwork still reads.
+
+    A hand-authored master takes precedence over this where one exists; see
+    ON_LIGHT_MASTERS.
+    """
+    return recolor(svg, {
+        LIGHT.lower(): INK,
+        INK.lower(): LIGHT,
+        SLATE.lower(): INK,
+    })
+
+
+# Hand-authored light versions, preferred over the generated swap above. The
+# horizontal lockup has one because the automatic swap cannot decide which of
+# two ink paths is plate and which is detail — a person drew that distinction
+# deliberately, and it looks better than anything the recolour produces.
+ON_LIGHT_MASTERS = {
+    "lockup-horizontal": "lockup-horizontal-light.svg",
+}
 
 
 def variant_mono(svg, color):
@@ -493,6 +517,17 @@ def w(path):
     return path
 
 
+def on_light_svg(lockup, svg):
+    """The light-background artwork: hand-authored master if there is one."""
+    fname = ON_LIGHT_MASTERS.get(lockup)
+    if fname:
+        path = os.path.join(SRC, fname)
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                return f.read()
+    return svg if lockup == "wordmark" else variant_on_light(svg)
+
+
 def main():
     masters = {}
     for name in ("mark", "lockup-horizontal", "lockup-stacked"):
@@ -511,6 +546,8 @@ def main():
             if lockup == "wordmark":
                 colors = {"color": LIGHT, "on-light": INK, "mono-light": LIGHT, "mono-ink": INK}
                 out_svg = recolor(svg, {LIGHT.lower(): colors[vname]})
+            elif vname == "on-light":
+                out_svg = on_light_svg(lockup, svg)
             else:
                 out_svg = fn(svg)
 
@@ -573,7 +610,7 @@ def main():
 
     # The on-light recolour, rendered once per lockup rather than per target.
     hi_light = {
-        k: render(v if k == "wordmark" else variant_on_light(v), width=3000)
+        k: render(on_light_svg(k, v), width=3000)
         for k, v in masters.items()
     }
 
