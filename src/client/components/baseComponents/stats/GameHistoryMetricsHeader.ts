@@ -93,9 +93,17 @@ export class GameHistoryMetricsHeader extends LitElement {
         : result === "defeat"
           ? "bg-lt-bad"
           : "bg-gray-500";
+    const label =
+      result === "victory"
+        ? translateText("clan_modal.history_result_victory")
+        : result === "defeat"
+          ? translateText("clan_modal.history_result_defeat")
+          : translateText("account_modal.games_result_incomplete");
     return html`<span
       class="inline-block w-2.5 h-2.5 rounded-full ${tint}"
-      title=${result}
+      title=${label}
+      aria-label=${label}
+      role="img"
     ></span>`;
   }
 }
