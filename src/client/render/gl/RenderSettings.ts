@@ -288,6 +288,20 @@ export interface RenderSettings {
     hoverGlowWidth: number;
     /** Peak opacity of the hover glow (0 disables it). */
     hoverGlowAlpha: number;
+    /**
+     * Admin nameplate: how strongly the sweeping highlight replaces the normal
+     * name fill, 0..1. 0 disables the effect entirely, which is the escape
+     * hatch if it ever proves distracting in a real match.
+     */
+    adminShimmerStrength: number;
+    /** Sweep low color (RGB 0..1). */
+    adminColorAR: number;
+    adminColorAG: number;
+    adminColorAB: number;
+    /** Sweep peak color (RGB 0..1). */
+    adminColorBR: number;
+    adminColorBG: number;
+    adminColorBB: number;
   };
   fx: {
     shockwaveRingWidth: number;

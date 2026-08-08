@@ -35,6 +35,8 @@ out vec2 vUV;
 out vec4 vPlayerColor;  // player territory color (rgb) + alpha
 out float vNameShade;     // name fill grayscale shade (0.0 = black)
 flat out float vHighlight; // 1.0 when this player is hovered (white glow)
+flat out float vAdmin;     // 1.0 for an admin/root account (animated nameplate)
+out float vShimmerT;       // animation phase for the admin nameplate
 
 void main() {
   // 1. Decode instance ID → playerIdx, lineIdx, charPos
@@ -59,6 +61,8 @@ void main() {
     vPlayerColor = vec4(0.0);
     vNameShade = 0.0;
     vHighlight = 0.0;
+    vAdmin = 0.0;
+    vShimmerT = 0.0;
     return;
   }
 
@@ -70,6 +74,8 @@ void main() {
     vPlayerColor = vec4(0.0);
     vNameShade = 0.0;
     vHighlight = 0.0;
+    vAdmin = 0.0;
+    vShimmerT = 0.0;
     return;
   }
 
@@ -82,6 +88,8 @@ void main() {
     vPlayerColor = vec4(0.0);
     vNameShade = 0.0;
     vHighlight = 0.0;
+    vAdmin = 0.0;
+    vShimmerT = 0.0;
     return;
   }
 
@@ -117,6 +125,8 @@ void main() {
     vPlayerColor = vec4(0.0);
     vNameShade = 0.0;
     vHighlight = 0.0;
+    vAdmin = 0.0;
+    vShimmerT = 0.0;
     return;
   }
 
@@ -142,6 +152,8 @@ void main() {
     vPlayerColor = vec4(0.0);
     vNameShade = 0.0;
     vHighlight = 0.0;
+    vAdmin = 0.0;
+    vShimmerT = 0.0;
     return;
   }
 
@@ -173,4 +185,18 @@ void main() {
   vPlayerColor = vec4(pd2.rgb, pd2.a * hoverAlpha); // player territory color + alpha
   vNameShade = pd3.z;         // name fill grayscale shade (0.0 = black)
   vHighlight = isHighlighted ? 1.0 : 0.0;
+
+  // 12. Admin nameplate. Column 8 is only fetched here, at the end, so the
+  // early-out paths above never pay for it. The troop line is excluded — the
+  // effect marks the name, and animating the troop count too reads as a bug.
+  vec4 pd8 = texelFetch(uPlayerData, ivec2(8, playerIdx), 0); // crownIdx, verified, iconCount, admin
+  vAdmin = (pd8.w > 0.5 && lineIdx == 0) ? 1.0 : 0.0;
+
+  // Sweep phase: position along the name plus time, so the highlight travels
+  // left-to-right rather than pulsing the whole name at once. nameHalfWidth
+  // (pd3.w) normalises it so the sweep takes the same time on a short name as
+  // a long one.
+  float halfWidth = max(pd3.w, 0.001);
+  float alongName = (cursorX * worldScale) / (halfWidth * 2.0);
+  vShimmerT = alongName - uTime * 0.6;
 }

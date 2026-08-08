@@ -16,6 +16,7 @@ import { GameType } from "../core/game/Game";
 import { UserSettings } from "../core/game/UserSettings";
 import "./AccountModal";
 import { adGatekeeper } from "./AdGatekeeper";
+import "./AdminModal";
 import { loadAdmiral, onAdmiralMeasured } from "./Admiral";
 import { getUserMe, invalidateUserMe } from "./Api";
 import { reauthAfterCrazyGamesChange, userAuth } from "./Auth";
@@ -270,6 +271,13 @@ class Client {
     modalRouter.register("troubleshooting", {
       tag: "troubleshooting-modal",
       pageId: "page-troubleshooting",
+    });
+    // Registered for every player, not only admins: the modal itself answers
+    // "not authorized" for non-admins, and gating the route would make an
+    // admin's #modal=admin link fail silently before the check ever runs.
+    modalRouter.register("admin", {
+      tag: "admin-modal",
+      pageId: "page-admin",
     });
     modalRouter.register("cosmetics", { tag: "cosmetics-modal" });
     modalRouter.register("flag-input", { tag: "flag-input-modal" });

@@ -628,6 +628,24 @@ export class GameServer {
         return outcome;
       }
 
+      case "admin_cheat": {
+        // THE enforcement point. The simulation runs on every client and has
+        // no concept of an admin, so once this intent is in a turn every
+        // client applies it unconditionally. Refusing it here is the only
+        // thing standing between an ordinary player and god mode — there is
+        // no second check downstream.
+        if (!actor.isAdmin) {
+          return finish({ status: 403, error: "admin role required" });
+        }
+        if (!this.hasStarted()) {
+          return finish({ status: 409, error: "game not started" });
+        }
+        const paused = this.isPaused;
+        const outcome = finish({ status: 200 }, paused ? "paused" : undefined);
+        if (!paused) this.addIntent(stamped);
+        return outcome;
+      }
+
       default: {
         // Gameplay intents: websocket players only, into the turn queue.
         if (actor.isAdminBot) {
@@ -734,6 +752,26 @@ export class GameServer {
       persistentID: client.persistentID,
       clientIP: ipAnonymize(client.ip),
     });
+
+    // Stamp the admin nameplate flag from the connection's verified JWT role.
+    // Unlike the verified badge — a client claim the server merely validates —
+    // this is never accepted from the client at all, so a forged `admin: true`
+    // in the join payload is overwritten here either way.
+    //
+    // Mutated in place rather than reassigned: `cosmetics` is a readonly
+    // reference on Client (the object itself is not), which is the same reason
+    // the verified-badge strip above uses `delete`. The websocket join path
+    // always supplies an object (Privilege.isAllowed returns one even when
+    // every cosmetic is refused), so an admin never silently loses the
+    // nameplate; the undefined branch only covers directly-constructed
+    // clients in tests.
+    if (client.cosmetics !== undefined) {
+      if (isAdminRole(client.role)) {
+        client.cosmetics.admin = true;
+      } else {
+        delete client.cosmetics.admin;
+      }
+    }
 
     // Skipped in dev: local testing (multi-tab, the matchmaking e2e) is
     // inherently same-IP.

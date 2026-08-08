@@ -51,6 +51,9 @@ export class TextProgram {
   private uFillUsePlayerColor: WebGLUniformLocation;
   private uHoverGlowWidth: WebGLUniformLocation;
   private uHoverGlowAlpha: WebGLUniformLocation;
+  private uAdminShimmerStrength: WebGLUniformLocation;
+  private uAdminColorA: WebGLUniformLocation;
+  private uAdminColorB: WebGLUniformLocation;
 
   private distanceRange: number;
 
@@ -138,6 +141,12 @@ export class TextProgram {
       this.program,
       "uHoverGlowAlpha",
     )!;
+    this.uAdminShimmerStrength = gl.getUniformLocation(
+      this.program,
+      "uAdminShimmerStrength",
+    )!;
+    this.uAdminColorA = gl.getUniformLocation(this.program, "uAdminColorA")!;
+    this.uAdminColorB = gl.getUniformLocation(this.program, "uAdminColorB")!;
 
     this.loadAtlas();
   }
@@ -200,6 +209,19 @@ export class TextProgram {
     gl.uniform1f(this.uFillUsePlayerColor, ns.fillUsePlayerColor ? 1.0 : 0.0);
     gl.uniform1f(this.uHoverGlowWidth, ns.hoverGlowWidth);
     gl.uniform1f(this.uHoverGlowAlpha, ns.hoverGlowAlpha);
+    gl.uniform1f(this.uAdminShimmerStrength, ns.adminShimmerStrength);
+    gl.uniform3f(
+      this.uAdminColorA,
+      ns.adminColorAR,
+      ns.adminColorAG,
+      ns.adminColorAB,
+    );
+    gl.uniform3f(
+      this.uAdminColorB,
+      ns.adminColorBR,
+      ns.adminColorBG,
+      ns.adminColorBB,
+    );
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.atlasTex!);

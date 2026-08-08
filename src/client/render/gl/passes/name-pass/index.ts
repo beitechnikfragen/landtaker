@@ -667,7 +667,7 @@ export class NamePass {
     d[off + 30] = slot.allianceFraction;
     d[off + 31] = slot.allianceRemainingTicks;
 
-    // Column 8: crownLayerIdx (crown cosmetic), verified badge, statusIconCount, free
+    // Column 8: crownLayerIdx (crown cosmetic), verified badge, statusIconCount, admin
     d[off + 32] = slot.crownLayerIdx;
     d[off + 33] = slot.static.verified === true ? 1.0 : 0.0;
     // Count of active status-row icons so shaders don't recompute it independently.
@@ -682,7 +682,9 @@ export class NamePass {
       slot.nukeActive,
       slot.inDoomsdayClock || slot.doomsdayClockDraining,
     ].filter(Boolean).length;
-    d[off + 35] = 0.0;
+    // Admin nameplate. Drives the animated fill in the text shader; the flag
+    // is server-stamped from the JWT role, so it is identical on every client.
+    d[off + 35] = slot.static.admin === true ? 1.0 : 0.0;
 
     this.playerDataDirty = true;
   }

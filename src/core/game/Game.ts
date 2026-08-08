@@ -574,6 +574,11 @@ export interface Player {
   isDisconnected(): boolean;
   markDisconnected(isDisconnected: boolean): void;
 
+  // Admin god mode (AdminCheatExecution). Simulation state, not display state:
+  // it feeds isImmune(), so every client must agree on it.
+  adminGodMode(): boolean;
+  setAdminGodMode(enabled: boolean): void;
+
   hasSpawned(): boolean;
   setSpawnTile(spawnTile: TileRef): void;
   spawnTile(): TileRef | undefined;

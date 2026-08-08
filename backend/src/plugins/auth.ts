@@ -1,8 +1,12 @@
+import { isAdminRole } from "@game/ApiSchemas.ts";
 import { base64urlToUuid } from "@game/Base64.ts";
+import { eq } from "drizzle-orm";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { jwtVerify } from "jose";
 import { getSigningKeys, JWT_ALGORITHM } from "../auth/keys.ts";
 import { config } from "../config.ts";
+import { db } from "../db/index.ts";
+import { users } from "../db/schema.ts";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -112,4 +116,50 @@ export async function optionalAuth(request: FastifyRequest): Promise<void> {
   } catch {
     // Anonymous, not rejected. See the note above.
   }
+}
+
+/**
+ * Gate for /admin/*. Runs requireAuth first, then re-reads the role from the
+ * database.
+ *
+ * The re-read is the point. Access tokens live ~15 minutes and carry the role
+ * as a claim, so a demoted or compromised admin would keep full panel access
+ * for the remainder of their token's life — long enough to grant themselves a
+ * fresh one. These routes edit roles, credits and bans, so that window is not
+ * acceptable; every admin request pays one indexed primary-key lookup instead.
+ *
+ * `request.userRole` is overwritten with the authoritative value so handlers
+ * downstream (notably the root-only checks) never see the stale claim.
+ */
+export async function requireAdmin(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  await requireAuth(request, reply);
+  // requireAuth already answered; anything further would be a second send.
+  if (reply.sent) return;
+
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, request.userId!),
+    columns: { role: true },
+  });
+
+  if (!isAdminRole(user?.role)) {
+    // 404, not 403: a 403 confirms /admin/* exists and that the caller's token
+    // is valid but under-privileged. There is nothing to gain from telling a
+    // non-admin either fact.
+    await reply.code(404).send({ error: "Not found" });
+    return;
+  }
+
+  request.userRole = user!.role;
+}
+
+/**
+ * Gate for the handful of actions only `root` may take — currently promoting
+ * or demoting an admin. Assumes requireAdmin has already run and refreshed
+ * `request.userRole` from the database.
+ */
+export function isRoot(request: FastifyRequest): boolean {
+  return request.userRole === "root";
 }

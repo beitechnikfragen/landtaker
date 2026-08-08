@@ -49,16 +49,7 @@ export async function registerStubRoutes(app: FastifyInstance): Promise<void> {
     });
   });
 
-  // PLACEHOLDER: empty cosmetics catalog. CosmeticsSchema
-  // (src/core/CosmeticSchemas.ts) requires `patterns` and `flags`; every other
-  // key is optional, and omitting `currencyPacks`/`subscriptions`/`tribeNames`
-  // makes the store render its empty states instead of broken tiles. TODO:
-  // serve a real catalog when cosmetics are implemented.
-  app.get("/cosmetics.json", async (_request, reply) => {
-    return reply
-      .header("cache-control", "public, max-age=60")
-      .send({ patterns: {}, flags: {} });
-  });
+  // /cosmetics.json is served for real by routes/shop.ts now.
 
   // PLACEHOLDER: no clan tags are reserved yet. ReservedClanTagsResponseSchema
   // (src/core/ClanApiSchemas.ts) is a bare string array. Returning [] rather

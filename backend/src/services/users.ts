@@ -72,6 +72,12 @@ export async function buildUserMeResponse(
       credits: user.credits,
       unlimitedRanked: user.unlimitedRanked,
       canCreatePublicLobbies: user.canCreatePublicLobbies,
+      // Cosmetic entitlements. The client decides owned/purchasable purely
+      // from these (Cosmetics.ts cosmeticRelationship), so omitting them makes
+      // every item read as unowned no matter what was bought.
+      flares: user.flares ?? [],
+      // Shop wallet. Both keys are required by CurrencyBalancesSchema.
+      currency: { soft: user.currencySoft, hard: user.currencyHard },
       username: resolveDisplayUsername(user),
       usernameBase: user.usernameBase,
       usernameDiscriminator: user.usernameDiscriminator,

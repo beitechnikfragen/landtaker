@@ -52,7 +52,8 @@ export type Intent =
   | KickPlayerIntent
   | TogglePauseIntent
   | UpdateGameConfigIntent
-  | ToggleGameStartTimer;
+  | ToggleGameStartTimer
+  | AdminCheatIntent;
 
 export type AttackIntent = z.infer<typeof AttackIntentSchema>;
 export type CancelAttackIntent = z.infer<typeof CancelAttackIntentSchema>;
@@ -89,6 +90,8 @@ export type UpdateGameConfigIntent = z.infer<
 export type ToggleGameStartTimer = z.infer<
   typeof ToggleGameStartTimerIntentSchema
 >;
+export type AdminCheatIntent = z.infer<typeof AdminCheatIntentSchema>;
+export type AdminCheatAction = (typeof ADMIN_CHEAT_ACTIONS)[number];
 
 export type Turn = z.infer<typeof TurnSchema>;
 export type GameConfig = z.infer<typeof GameConfigSchema>;
@@ -585,6 +588,46 @@ export const ToggleGameStartTimerIntentSchema = z.object({
   type: z.literal("toggle_game_start_timer"),
 });
 
+/**
+ * Admin cheat actions. One intent with an action discriminator rather than a
+ * dozen sibling intents: each new member of IntentSchema costs a case in the
+ * server's authorization switch AND a case in the Executor factory, and a
+ * missed case in the latter throws inside the simulation worker on every
+ * client. Keeping this to one intent means one gate and one factory case, so
+ * adding a cheat cannot silently skip either.
+ *
+ * Every action is self-targeted except `kill_player` and the alliance actions,
+ * which name a target the executing player is acting upon.
+ */
+export const ADMIN_CHEAT_ACTIONS = [
+  "give_gold",
+  "give_troops",
+  "set_troops",
+  "spawn_unit",
+  "capture_tile",
+  "god_mode",
+  "kill_player",
+  "force_alliance",
+  "break_alliance",
+] as const;
+
+export const AdminCheatIntentSchema = z.object({
+  type: z.literal("admin_cheat"),
+  action: z.enum(ADMIN_CHEAT_ACTIONS),
+  // Gold/troop amount. Not .int(): troops are fractional throughout the sim,
+  // and gold crosses the wire as a number before toInt() widens it to bigint.
+  amount: z.number().finite().optional(),
+  // Target player for kill_player and the alliance actions.
+  targetID: ID.optional(),
+  // A TileRef indexes the typed-array terrain buffers, so it must be a
+  // non-negative integer — fractional refs silently corrupt those lookups.
+  tile: z.number().int().nonnegative().optional(),
+  // Unit to place for spawn_unit.
+  unitType: z.enum(UnitType).optional(),
+  // Toggle payload for god_mode.
+  enabled: z.boolean().optional(),
+});
+
 export const IntentSchema = z.discriminatedUnion("type", [
   AttackIntentSchema,
   CancelAttackIntentSchema,
@@ -611,6 +654,7 @@ export const IntentSchema = z.discriminatedUnion("type", [
   TogglePauseIntentSchema,
   UpdateGameConfigIntentSchema,
   ToggleGameStartTimerIntentSchema,
+  AdminCheatIntentSchema,
 ]);
 
 // StampedIntent = Intent with server-stamped clientID (used in turns and execution)
@@ -709,6 +753,13 @@ export const PlayerCosmeticsSchema = z.object({
   effects: z.record(z.string(), PlayerEffectSchema).optional(),
   // Plays under the verified account username — renders the blue check.
   verified: z.boolean().optional(),
+  // Holds an admin/root role — renders the animated nameplate.
+  //
+  // Unlike `verified`, this is never a client claim: the game server writes it
+  // from the connection's JWT role at join (GameServer.joinClient) and
+  // overwrites whatever the client sent. It reaches the renderer through
+  // GameStartInfo, so every client sees the same value.
+  admin: z.boolean().optional(),
 });
 
 export const PlayerSchema = z.object({

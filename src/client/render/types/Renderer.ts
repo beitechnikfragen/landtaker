@@ -31,6 +31,8 @@ export interface PlayerStatic {
   crown?: string;
   /** Plays under the verified account username — blue check next to the name. */
   verified?: boolean;
+  /** Holds an admin/root role — animated nameplate. Server-stamped, never claimed. */
+  admin?: boolean;
   /** Hex color (e.g. "#ff0000"). Populated from territoryColor (live) or palette (replay). */
   color?: string;
 }
