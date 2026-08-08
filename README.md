@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="resources/images/LandtakerLogoDark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="resources/images/LandtakerLogo.svg">
-    <img src="resources/images/LandtakerLogo.svg" alt="Landtaker Logo" width="300">
+    <source media="(prefers-color-scheme: dark)" srcset="brand/images/logo/lockup-horizontal.svg">
+    <source media="(prefers-color-scheme: light)" srcset="brand/images/logo/lockup-horizontal-light.svg">
+    <img src="brand/images/logo/lockup-horizontal.svg" alt="Landtaker" width="420">
   </picture>
 </p>
 
