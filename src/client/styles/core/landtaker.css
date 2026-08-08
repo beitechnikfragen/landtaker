@@ -413,3 +413,15 @@
     transition: none;
   }
 }
+
+/* The nav tab strip may scroll in the extreme (very narrow window, long
+   translations) but must never show a scrollbar — a bar with a visible
+   scrollbar reads as broken chrome, not as a scrollable list. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

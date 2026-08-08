@@ -39,10 +39,22 @@ describe("desktop nav bar sizing", () => {
     expect(navBar).toMatch(/text-\[clamp\([^\]]+\)\][\s\S]{0,200}LANDTAKER/);
   });
 
-  it("lets the brand column give up space", () => {
-    // Without `shrink`, flex refuses to compress the widest item and the row
-    // overflows to the right no matter how small the tabs get.
-    expect(navBar).toMatch(/border-r border-lt-700 shrink min-w-0/);
+  it("keeps the brand at a fixed size", () => {
+    // The brand must NOT be the thing that gives way: shrinking it squeezed
+    // the wordmark until it collided with its own divider once signing in
+    // added the credits and account cells.
+    expect(navBar).toMatch(/border-r border-lt-700 shrink-0/);
+  });
+
+  it("makes the tab strip absorb the pressure instead", () => {
+    // The tabs are what may compress (their padding is fluid) and, in the
+    // extreme, scroll — without ever showing a scrollbar in the chrome.
+    expect(navBar).toMatch(
+      /flex items-stretch min-w-0 overflow-x-auto no-scrollbar/,
+    );
+    expect(primitives).toMatch(
+      /\.no-scrollbar\s*\{[\s\S]*?scrollbar-width:\s*none/,
+    );
   });
 
   it("never wraps a tab onto a second line", () => {

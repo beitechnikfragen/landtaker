@@ -145,7 +145,7 @@ export class DesktopNavBar extends LitElement {
              because the SVG renders its lettering at a fraction of the mark's
              height — this stays razor-sharp at any size. -->
         <div
-          class="flex items-center gap-2.5 pl-3 pr-4 mr-1 border-r border-lt-700 shrink min-w-0 overflow-hidden"
+          class="flex items-center gap-2.5 pl-3 pr-4 mr-1 border-r border-lt-700 shrink-0"
         >
           <!-- The mark carries the brand, so it gets almost the full bar
                height; wordmark and version stack beside it. -->
@@ -166,77 +166,82 @@ export class DesktopNavBar extends LitElement {
             ></div>
           </div>
         </div>
-        <button
-          class="nav-menu-item lt-nav-item ${currentPage === "page-play"
-            ? "active"
-            : ""}"
-          data-page="page-play"
-          data-i18n="main.play"
-        ></button>
-        <!-- Desktop Navigation Menu Items -->
-        <div class="relative flex items-stretch">
+        <!-- The tab strip is the row's shock absorber: brand and status
+             cells keep their size, this shrinks (tab padding scales with it)
+             and scrolls only in the extreme. -->
+        <div class="flex items-stretch min-w-0 overflow-x-auto no-scrollbar">
           <button
-            class="nav-menu-item lt-nav-item ${currentPage === "page-news"
+            class="nav-menu-item lt-nav-item ${currentPage === "page-play"
               ? "active"
               : ""}"
-            data-page="page-news"
-            data-i18n="main.news"
-            @click=${this._notifications.onNewsClick}
+            data-page="page-play"
+            data-i18n="main.play"
           ></button>
-          ${this._notifications.showNewsDot()
-            ? html`
-                <span
-                  class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"
-                ></span>
-                <span
-                  class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
-                ></span>
-              `
-            : ""}
-        </div>
-        <!-- The store sells cosmetics for in-game currency now; only its
+          <!-- Desktop Navigation Menu Items -->
+          <div class="relative flex items-stretch">
+            <button
+              class="nav-menu-item lt-nav-item ${currentPage === "page-news"
+                ? "active"
+                : ""}"
+              data-page="page-news"
+              data-i18n="main.news"
+              @click=${this._notifications.onNewsClick}
+            ></button>
+            ${this._notifications.showNewsDot()
+              ? html`
+                  <span
+                    class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"
+                  ></span>
+                  <span
+                    class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
+                  ></span>
+                `
+              : ""}
+          </div>
+          <!-- The store sells cosmetics for in-game currency now; only its
              real-money tabs are still gated (see Store.ts). -->
-        <button
-          class="nav-menu-item lt-nav-item"
-          data-page="page-item-store"
-          data-i18n="main.store"
-        ></button>
-        <button
-          class="nav-menu-item lt-nav-item"
-          data-page="page-settings"
-          data-i18n="main.settings"
-        ></button>
-        <button
-          class="nav-menu-item lt-nav-item"
-          data-page="page-leaderboard"
-          data-i18n="main.leaderboard"
-        ></button>
-        <button
-          class="nav-menu-item lt-nav-item"
-          data-page="page-history"
-          data-i18n="main.match_history"
-        ></button>
-        <!-- Clans exist upstream but aren't wired to our backend yet. -->
-        ${this.renderComingSoon("main.clans")}
-        <!-- Party moved into the social dock (friends-panel), so the nav
-             stays about pages; page-party still exists for deep links. -->
-        <div class="relative flex items-stretch">
           <button
             class="nav-menu-item lt-nav-item"
-            data-page="page-help"
-            data-i18n="main.help"
-            @click=${this._notifications.onHelpClick}
+            data-page="page-item-store"
+            data-i18n="main.store"
           ></button>
-          ${this._notifications.showHelpDot()
-            ? html`
-                <span
-                  class="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-ping"
-                ></span>
-                <span
-                  class="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"
-                ></span>
-              `
-            : ""}
+          <button
+            class="nav-menu-item lt-nav-item"
+            data-page="page-settings"
+            data-i18n="main.settings"
+          ></button>
+          <button
+            class="nav-menu-item lt-nav-item"
+            data-page="page-leaderboard"
+            data-i18n="main.leaderboard"
+          ></button>
+          <button
+            class="nav-menu-item lt-nav-item"
+            data-page="page-history"
+            data-i18n="main.match_history"
+          ></button>
+          <!-- Clans exist upstream but aren't wired to our backend yet. -->
+          ${this.renderComingSoon("main.clans")}
+          <!-- Party moved into the social dock (friends-panel), so the nav
+             stays about pages; page-party still exists for deep links. -->
+          <div class="relative flex items-stretch">
+            <button
+              class="nav-menu-item lt-nav-item"
+              data-page="page-help"
+              data-i18n="main.help"
+              @click=${this._notifications.onHelpClick}
+            ></button>
+            ${this._notifications.showHelpDot()
+              ? html`
+                  <span
+                    class="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-ping"
+                  ></span>
+                  <span
+                    class="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"
+                  ></span>
+                `
+              : ""}
+          </div>
         </div>
         <!-- Push the status and account cells to the right edge; tabs stay left. -->
         <div class="flex-1"></div>
@@ -251,7 +256,7 @@ export class DesktopNavBar extends LitElement {
         >
           <img
             id="nav-account-avatar"
-            class="hidden w-7 h-7 object-cover border border-lt-600"
+            class="hidden w-10 h-10 object-cover border border-lt-600"
             alt=""
             data-i18n-alt="main.discord_avatar_alt"
             referrerpolicy="no-referrer"
