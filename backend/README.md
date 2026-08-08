@@ -6,9 +6,9 @@ everything that has to persist — accounts, auth, stats, the game archive.
 
 Implemented: auth (JWKS, tokens, cookie sessions), `/users/@me`, player
 profiles, parties (incl. live updates over SSE), friends, the game archive,
-ranked leaderboards with Elo scoring, ranked matchmaking, and join
-verification. Clans, the shop and cosmetics answer as placeholders for now.
-What is still missing is listed under [Roadmap](#roadmap).
+ranked leaderboards with Elo scoring, ranked matchmaking, join verification,
+and in-game feedback reports. Clans, the shop and cosmetics answer as
+placeholders for now. What is still missing is listed under [Roadmap](#roadmap).
 
 Run every end-to-end check at once against a running backend:
 
@@ -48,32 +48,33 @@ curl -s -X POST http://localhost:8787/auth/dev-login -H 'Content-Type: applicati
 
 ## Endpoints
 
-| Method | Path                     | Auth    | Notes                                                |
-| ------ | ------------------------ | ------- | ---------------------------------------------------- |
-| GET    | `/health`                | —       | Liveness                                             |
-| GET    | `/.well-known/jwks.json` | —       | Public verification key                              |
-| GET    | `/users/@me`             | Bearer  | Drives ads, ranked limits, ban screen                |
-| POST   | `/auth/refresh`          | —       | Rotates the refresh token                            |
-| POST   | `/auth/logout`           | —       | Revokes one refresh token                            |
-| POST   | `/auth/dev-login`        | —       | **Development only**, never registered in production |
-| GET    | `/parties/@me`           | Bearer  | The caller's party, or null                          |
-| POST   | `/parties`               | Bearer  | Create; returns the invite code                      |
-| POST   | `/parties/join`          | Bearer  | Join by invite code                                  |
-| POST   | `/parties/leave`         | Bearer  | Leave; transfers leadership or deletes               |
-| POST   | `/parties/kick`          | Bearer  | Leader only                                          |
-| GET    | `/parties/@me/fit`       | Bearer  | Can this party be seated in a lobby of that shape?   |
-| GET    | `/parties/@me/events`    | Bearer  | SSE stream of party changes                          |
-| GET    | `/parties/members`       | api key | Server-to-server; publicIds of a player's party      |
-| GET    | `/friends`               | Bearer  | Paged friends list                                   |
-| GET    | `/friends/requests`      | Bearer  | Incoming and outgoing                                |
-| GET    | `/leaderboard/ranked`    | —       | Paged, elo DESC                                      |
-| GET    | `/player/:publicId`      | Bearer  | Public profile                                       |
-| POST   | `/game/:id`              | api key | Archive a finished match                             |
-| GET    | `/game/:id`              | —       | Replay data; PII withheld without the api key        |
-| WS     | `/matchmaking/join`      | Bearer  | Ranked queue, 1v1 and 2v2                            |
-| POST   | `/matchmaking/checkin`   | api key | Workers offer a game slot; long-polls for a match    |
-| POST   | `/join_verify`           | api key | Ban check on every join; fails open                  |
-| POST   | `/custom_tribes`         | api key | Bot name pool; empty until purchases exist           |
+| Method | Path                     | Auth     | Notes                                                |
+| ------ | ------------------------ | -------- | ---------------------------------------------------- |
+| GET    | `/health`                | —        | Liveness                                             |
+| GET    | `/.well-known/jwks.json` | —        | Public verification key                              |
+| GET    | `/users/@me`             | Bearer   | Drives ads, ranked limits, ban screen                |
+| POST   | `/auth/refresh`          | —        | Rotates the refresh token                            |
+| POST   | `/auth/logout`           | —        | Revokes one refresh token                            |
+| POST   | `/auth/dev-login`        | —        | **Development only**, never registered in production |
+| GET    | `/parties/@me`           | Bearer   | The caller's party, or null                          |
+| POST   | `/parties`               | Bearer   | Create; returns the invite code                      |
+| POST   | `/parties/join`          | Bearer   | Join by invite code                                  |
+| POST   | `/parties/leave`         | Bearer   | Leave; transfers leadership or deletes               |
+| POST   | `/parties/kick`          | Bearer   | Leader only                                          |
+| GET    | `/parties/@me/fit`       | Bearer   | Can this party be seated in a lobby of that shape?   |
+| GET    | `/parties/@me/events`    | Bearer   | SSE stream of party changes                          |
+| GET    | `/parties/members`       | api key  | Server-to-server; publicIds of a player's party      |
+| GET    | `/friends`               | Bearer   | Paged friends list                                   |
+| GET    | `/friends/requests`      | Bearer   | Incoming and outgoing                                |
+| GET    | `/leaderboard/ranked`    | —        | Paged, elo DESC                                      |
+| GET    | `/player/:publicId`      | Bearer   | Public profile                                       |
+| POST   | `/game/:id`              | api key  | Archive a finished match                             |
+| GET    | `/game/:id`              | —        | Replay data; PII withheld without the api key        |
+| WS     | `/matchmaking/join`      | Bearer   | Ranked queue, 1v1 and 2v2                            |
+| POST   | `/matchmaking/checkin`   | api key  | Workers offer a game slot; long-polls for a match    |
+| POST   | `/join_verify`           | api key  | Ban check on every join; fails open                  |
+| POST   | `/feedback`              | Optional | Bug reports and ideas; Turnstile + rate limited      |
+| POST   | `/custom_tribes`         | api key  | Bot name pool; empty until purchases exist           |
 
 ### Party rules
 
