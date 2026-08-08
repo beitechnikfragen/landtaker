@@ -593,6 +593,17 @@
     "enter": "Enter fullscreen",
     "exit": "Exit fullscreen"
   },
+  "game_history": {
+    "avg_duration": "Avg. duration",
+    "best_map": "Best map",
+    "form": "Recent form",
+    "games": "Games",
+    "no_data": "—",
+    "not_signed_in": "Sign in to see your match history.",
+    "page_title": "Match history",
+    "scope_note": "Based on the {games} matches loaded below.",
+    "win_rate": "Win rate"
+  },
   "game_info_modal": {
     "all_gold": "All gold",
     "atoms": "Atoms",
