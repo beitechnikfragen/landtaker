@@ -1,12 +1,17 @@
 import { LitElement, html } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { assetUrl } from "../../core/AssetUrls";
+import { fetchAdminMe } from "../AdminApi";
 import { NavNotificationsController } from "./NavNotificationsController";
 import "./NavStatusCells";
 
 @customElement("desktop-nav-bar")
 export class DesktopNavBar extends LitElement {
   private _notifications = new NavNotificationsController(this);
+
+  // Drives the admin cell. Starts false so the bar renders identically for
+  // everyone until the check answers; only an admin ever sees it flip.
+  @state() private _isAdmin = false;
 
   createRenderRoot() {
     return this;
@@ -15,6 +20,7 @@ export class DesktopNavBar extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     window.addEventListener("showPage", this._onShowPage);
+    void this._checkAdmin();
 
     const current = window.currentPageId;
     if (current) {
@@ -34,6 +40,17 @@ export class DesktopNavBar extends LitElement {
     const pageId = (e as CustomEvent).detail;
     this._updateActiveState(pageId);
   };
+
+  /**
+   * Asks the backend whether this account may open the panel. Uses the real
+   * endpoint rather than reading the role out of the cached /users/@me, so the
+   * button and the routes agree on one authority — a demoted admin loses the
+   * button on the next page load instead of keeping it until their token
+   * expires.
+   */
+  private async _checkAdmin() {
+    this._isAdmin = (await fetchAdminMe()) !== false;
+  }
 
   private _updateActiveState(pageId: string) {
     this.querySelectorAll(".nav-menu-item").forEach((el) => {
@@ -71,6 +88,45 @@ export class DesktopNavBar extends LitElement {
           data-i18n="main.soon"
         ></span>
       </div>
+    `;
+  }
+
+  /**
+   * Admin entry, rendered only once the role check has come back positive.
+   *
+   * Deliberately a right-edge cell rather than a tab: the tab row is sized to
+   * fit exactly without wrapping, and a tab only one account ever sees is not
+   * worth risking that. It is also an icon cell for the same reason the other
+   * right-edge controls are — no label to translate, so it can render late
+   * without the data-i18n dance the tabs need.
+   *
+   * This is presentation only. Every /admin route re-checks the role against
+   * the database, so hiding the button is convenience, never protection.
+   */
+  private renderAdminCell() {
+    if (!this._isAdmin) return null;
+    return html`
+      <button
+        class="nav-menu-item lt-nav-cell relative"
+        data-page="page-admin"
+        title="Admin"
+        aria-label="Admin"
+      >
+        <svg
+          class="w-5 h-5"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 3l7 3v6c0 4-3 7.5-7 9-4-1.5-7-5-7-9V6l7-3Z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>
+      </button>
     `;
   }
 
@@ -180,6 +236,7 @@ export class DesktopNavBar extends LitElement {
         </div>
         <!-- Push the status and account cells to the right edge; tabs stay left. -->
         <div class="flex-1"></div>
+        ${this.renderAdminCell()}
         <nav-status-cells class="flex items-stretch"></nav-status-cells>
         <button
           id="nav-account-button"
