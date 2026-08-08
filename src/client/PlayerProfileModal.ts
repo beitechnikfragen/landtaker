@@ -19,7 +19,7 @@ import { verifiedBadge } from "./components/ui/VerifiedBadge";
 import { translateText } from "./Utils";
 
 /** Where a profile was opened from, i.e. where its Back button leads. */
-export type ProfileOrigin = "clan" | "leaderboard" | "account";
+export type ProfileOrigin = "clan" | "leaderboard";
 
 /** Build a shareable profile URL for a publicId. */
 export function playerProfileUrl(publicId: string): string {
@@ -344,11 +344,6 @@ export class PlayerProfileModal extends BaseModal {
     this.openedFrom = "leaderboard";
   }
 
-  public openFromAccount(publicId: string): void {
-    this.open({ publicID: publicId });
-    this.openedFrom = "account";
-  }
-
   private back(): void {
     const openedFrom = this.openedFrom;
     this.close();
@@ -362,12 +357,6 @@ export class PlayerProfileModal extends BaseModal {
       document
         .querySelector<HTMLElement & { open(): void }>("leaderboard-modal")
         ?.open();
-    } else if (openedFrom === "account") {
-      document
-        .querySelector<
-          HTMLElement & { returnToFriends(): void }
-        >("account-modal")
-        ?.returnToFriends();
     }
   }
 }
