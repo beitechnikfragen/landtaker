@@ -42,6 +42,17 @@ interface PartyChatLine {
 /** Cap the in-memory party chat; older lines scroll out of existence. */
 const PARTY_CHAT_CAP = 100;
 
+/**
+ * How often the friends list and incoming requests are re-fetched.
+ *
+ * The event stream carries messages, presence and party traffic, but the API
+ * emits nothing when a friendship itself changes — so someone adding you, or
+ * accepting the request you sent, would otherwise stay invisible until a
+ * reload. This poll is what makes those appear on their own. Drop it the day
+ * the backend gains a friendship event.
+ */
+const ROSTER_POLL_MS = 15_000;
+
 /** A pending "join my party" invite from a friend, newest per sender wins. */
 interface PartyInvite {
   from: string;
@@ -86,6 +97,7 @@ export class FriendsPanel extends LitElement {
 
   private stream: FriendsStreamHandle | null = null;
   private partyStream: PartyStreamHandle | null = null;
+  private rosterTimer: ReturnType<typeof setInterval> | null = null;
 
   createRenderRoot() {
     return this;
@@ -94,6 +106,7 @@ export class FriendsPanel extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener("userMeResponse", this.onUserMe as EventListener);
+    document.addEventListener("visibilitychange", this.onVisibility);
   }
 
   disconnectedCallback() {
@@ -101,6 +114,7 @@ export class FriendsPanel extends LitElement {
       "userMeResponse",
       this.onUserMe as EventListener,
     );
+    document.removeEventListener("visibilitychange", this.onVisibility);
     this.teardown();
     super.disconnectedCallback();
   }
@@ -129,7 +143,23 @@ export class FriendsPanel extends LitElement {
     await this.refresh();
     this.stream ??= connectFriendsStream((event) => this.onStreamEvent(event));
     this.connectPartyStream();
+    this.startRosterPoll();
   }
+
+  private startRosterPoll() {
+    if (this.rosterTimer !== null) return;
+    this.rosterTimer = setInterval(() => {
+      // Nothing to see on a backgrounded tab, and the visibility handler
+      // refreshes immediately on return — so skip rather than burn a request.
+      if (document.hidden) return;
+      void this.refresh();
+    }, ROSTER_POLL_MS);
+  }
+
+  /** Back on screen: catch up at once instead of waiting out the interval. */
+  private onVisibility = () => {
+    if (!document.hidden && this.linked()) void this.refresh();
+  };
 
   /**
    * (Re)opens the roster stream. The backend only subscribes the stream to
@@ -155,6 +185,10 @@ export class FriendsPanel extends LitElement {
     this.stream = null;
     this.partyStream?.close();
     this.partyStream = null;
+    if (this.rosterTimer !== null) {
+      clearInterval(this.rosterTimer);
+      this.rosterTimer = null;
+    }
     this.friends = [];
     this.incoming = [];
     this.unread = new Map();
@@ -170,7 +204,16 @@ export class FriendsPanel extends LitElement {
       fetchFriends(1, 100),
       fetchFriendRequests(),
     ]);
-    if (friends !== false) this.friends = friends.results;
+    if (friends !== false) {
+      // GET /friends carries presence, but a response that omits it must not
+      // erase what the stream already told us about that friend.
+      const known = new Map(this.friends.map((f) => [f.publicId, f.online]));
+      this.friends = friends.results.map((friend) =>
+        friend.online === undefined
+          ? { ...friend, online: known.get(friend.publicId) }
+          : friend,
+      );
+    }
     if (requests !== false) this.incoming = requests.incoming;
   }
 
