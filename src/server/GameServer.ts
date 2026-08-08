@@ -628,6 +628,24 @@ export class GameServer {
         return outcome;
       }
 
+      case "admin_cheat": {
+        // THE enforcement point. The simulation runs on every client and has
+        // no concept of an admin, so once this intent is in a turn every
+        // client applies it unconditionally. Refusing it here is the only
+        // thing standing between an ordinary player and god mode — there is
+        // no second check downstream.
+        if (!actor.isAdmin) {
+          return finish({ status: 403, error: "admin role required" });
+        }
+        if (!this.hasStarted()) {
+          return finish({ status: 409, error: "game not started" });
+        }
+        const paused = this.isPaused;
+        const outcome = finish({ status: 200 }, paused ? "paused" : undefined);
+        if (!paused) this.addIntent(stamped);
+        return outcome;
+      }
+
       default: {
         // Gameplay intents: websocket players only, into the turn queue.
         if (actor.isAdminBot) {

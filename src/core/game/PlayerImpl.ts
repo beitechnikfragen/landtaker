@@ -141,6 +141,11 @@ export class PlayerImpl implements Player {
   private _spawnTile: TileRef | undefined;
   private _isDisconnected = false;
 
+  // Admin god mode. Part of simulation state, not a client-side display flag:
+  // it feeds isImmune(), which every client evaluates when resolving attacks,
+  // so it has to be identical everywhere or the game desyncs.
+  private _adminGodMode = false;
+
   /**
    * Last PlayerUpdate emitted for this player on the worker→main channel.
    * Used by GameImpl's tick loop to compute field-level diffs. Undefined on
@@ -1589,6 +1594,14 @@ export class PlayerImpl implements Player {
     this._isDisconnected = isDisconnected;
   }
 
+  setAdminGodMode(enabled: boolean): void {
+    this._adminGodMode = enabled;
+  }
+
+  adminGodMode(): boolean {
+    return this._adminGodMode;
+  }
+
   hash(): number {
     return (
       simpleHash(this.id()) * (this.troops() + this.numTilesOwned()) +
@@ -1645,6 +1658,10 @@ export class PlayerImpl implements Player {
   }
 
   public isImmune(): boolean {
+    // Admin god mode rides the existing immunity path rather than adding a
+    // second one: every attack already consults isImmune, so one flag here
+    // covers land attacks, boat landings and nation AI targeting at once.
+    if (this._adminGodMode) return true;
     if (this.type() === PlayerType.Human) {
       return this.mg.isSpawnImmunityActive();
     }

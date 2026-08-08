@@ -2,6 +2,7 @@ import { Execution, Game } from "../game/Game";
 import { PseudoRandom } from "../PseudoRandom";
 import { ClientID, GameID, StampedIntent, Turn } from "../Schemas";
 import { simpleHash } from "../Util";
+import { AdminCheatExecution } from "./AdminCheatExecution";
 import { AllianceExtensionExecution } from "./alliance/AllianceExtensionExecution";
 import { AllianceRejectExecution } from "./alliance/AllianceRejectExecution";
 import { AllianceRequestExecution } from "./alliance/AllianceRequestExecution";
@@ -130,6 +131,16 @@ export class Executor {
         return new MarkDisconnectedExecution(player, intent.isDisconnected);
       case "toggle_pause":
         return new PauseExecution(player, intent.paused);
+      case "admin_cheat":
+        // Reaching here means the server already authorized it — the sim has
+        // no idea who is an admin. See AdminCheatExecution.
+        return new AdminCheatExecution(player, intent.action, {
+          amount: intent.amount,
+          targetID: intent.targetID,
+          tile: intent.tile,
+          unitType: intent.unitType,
+          enabled: intent.enabled,
+        });
       default:
         throw new Error(`intent type ${intent} not found`);
     }

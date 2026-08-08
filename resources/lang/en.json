@@ -135,6 +135,30 @@
     "title": "Admin",
     "unlimited_ranked": "Unlimited ranked"
   },
+  "admin_cheat": {
+    "break_alliance": "Break alliance",
+    "capture": "Capture tile",
+    "force_alliance": "Force alliance",
+    "give": "Give",
+    "god_mode": "God mode",
+    "gold": "Gold",
+    "kill": "Eliminate player",
+    "no_players": "No other players in this game.",
+    "no_tile": "right-click the map",
+    "off": "off",
+    "on": "on",
+    "open": "Open admin cheats",
+    "pick_player": "Pick a player…",
+    "place": "Place unit",
+    "sent": "Sent",
+    "set": "Set",
+    "short_label": "CHEAT",
+    "spawn_unit": "Unit",
+    "target": "Target player",
+    "tile": "Selected tile",
+    "title": "Admin cheats",
+    "troops": "Troops"
+  },
   "ban_notice": {
     "appeal": "If you believe this is a mistake, contact us on Discord.",
     "category": {
