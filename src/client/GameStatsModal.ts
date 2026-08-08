@@ -11,7 +11,7 @@ export class GameStatsModal extends BaseModal {
   protected routerName = "stats";
 
   @state() private gameId: string | null = null;
-  private openedFrom: "account" | "clan" | "profile" | null = null;
+  private openedFrom: "account" | "clan" | "profile" | "history" | null = null;
 
   protected modalConfig() {
     return { maxWidth: "960px" };
@@ -61,6 +61,11 @@ export class GameStatsModal extends BaseModal {
     this.open({ gameID: gameId });
   }
 
+  public openFromHistory(gameId: string): void {
+    this.openedFrom = "history";
+    this.open({ gameID: gameId });
+  }
+
   public openFromClan(gameId: string): void {
     this.openedFrom = "clan";
     this.open({ gameID: gameId });
@@ -90,6 +95,12 @@ export class GameStatsModal extends BaseModal {
           HTMLElement & { returnToGameHistory(): void }
         >("clan-modal")
         ?.returnToGameHistory();
+    } else if (openedFrom === "history") {
+      document
+        .querySelector<
+          HTMLElement & { returnToGames(): void }
+        >("game-history-page")
+        ?.returnToGames();
     }
   }
 }
