@@ -6,7 +6,6 @@ import {
   UserMeResponse,
   UserMeResponseSchema,
 } from "../core/ApiSchemas";
-import { GameEnv } from "../core/configuration/Config";
 import { PersistentIdSchema } from "../core/Schemas";
 import { ServerEnv } from "./ServerEnv";
 
@@ -22,14 +21,12 @@ export async function verifyClientToken(
   token: string,
 ): Promise<TokenVerificationResult> {
   if (PersistentIdSchema.safeParse(token).success) {
-    if (ServerEnv.env() === GameEnv.Dev) {
-      return { type: "success", persistentId: token, claims: null };
-    } else {
-      return {
-        type: "error",
-        message: "persistent ID not allowed in production",
-      };
-    }
+    // Anonymous play: the client identifies with its locally generated
+    // persistent id instead of a JWT. Upstream rejected this outside dev
+    // because openfront.io's API mints anonymous tokens — ours doesn't, and
+    // Landtaker allows anonymous play by design. Signed-in players still
+    // send a real JWT and get the full verification below.
+    return { type: "success", persistentId: token, claims: null };
   }
   try {
     const issuer = ServerEnv.jwtIssuer();

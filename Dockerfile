@@ -17,6 +17,10 @@ COPY eslint.config.js ./
 COPY index.html ./
 COPY resources ./resources
 COPY proprietary ./proprietary
+# Third asset root (see vite.config.ts sourceDirs): the Landtaker marks, rank
+# insignia and fonts. Without it the build emits no brand assets at all —
+# the deployed site then renders with a missing logo and blank rank badges.
+COPY brand ./brand
 COPY src ./src
 
 ARG GIT_COMMIT=unknown
