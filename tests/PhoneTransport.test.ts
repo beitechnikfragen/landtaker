@@ -169,10 +169,13 @@ describe("PhoneTransport", () => {
     vi.restoreAllMocks();
   });
 
-  it("attaches an outgoing audio track to a peer created before the mic resolved (regression)", async () => {
-    // Mic never resolves until we say so — simulates the real-world race
-    // where getUserMedia takes seconds (permission prompt) while a remote
-    // offer/candidates are already arriving.
+  it("never creates a peer connection before the local track exists (offer carries audio)", async () => {
+    // Mic resolves only after we say so — simulates the real-world race
+    // where getUserMedia takes time (permission prompt) while a remote
+    // offer/candidates are already arriving. The old behaviour created the
+    // peer connection immediately and patched audio in later via
+    // renegotiation; the new guarantee is that createPeer() never runs
+    // until the mic promise (resolved or denied) has settled.
     let resolveMic!: (s: FakeMediaStream) => void;
     getUserMediaImpl = () =>
       new Promise((resolve) => {
@@ -184,28 +187,46 @@ describe("PhoneTransport", () => {
       sent.push(JSON.parse(data)),
     );
 
-    // B (higher id) sends us an offer. handleSignal creates the peer
-    // connection immediately, but ensureMic() is still pending.
+    // B (higher id) sends us an offer. handleSignal must await ensureMic()
+    // before creating the peer connection, so no RTCPeerConnection exists
+    // yet while the mic promise is still pending.
     const handlePromise = transport.handleSignal(
       B,
       JSON.stringify({ type: "offer", sdp: "remote-offer" }),
     );
-
-    // At this point the peer connection exists but has no audio sender.
-    expect(allPeerConnections.length).toBe(1);
-    expect(allPeerConnections[0].getSenders().length).toBe(0);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(allPeerConnections.length).toBe(0);
 
     // Now the mic permission prompt resolves.
     resolveMic(new FakeMediaStream());
     await handlePromise;
-    // Let the ensureMic() continuation (attachMicToExistingPeers) run.
-    await new Promise((r) => setTimeout(r, 0));
 
+    // The peer connection is only created now, and it already has the
+    // audio track attached — no post-hoc renegotiation needed.
+    expect(allPeerConnections.length).toBe(1);
     const pc = allPeerConnections[0];
     const hasAudioSender = pc
       .getSenders()
       .some((s) => s.track?.kind === "audio");
     expect(hasAudioSender).toBe(true);
+  });
+
+  it("does not renegotiate: only one offer is ever sent for a given peer", async () => {
+    const sent: unknown[] = [];
+    const transport = new PhoneTransport(A, (_to, data) =>
+      sent.push(JSON.parse(data)),
+    );
+
+    await transport.syncPeers([B]);
+    // Let any potential renegotiation microtasks flush.
+    await new Promise((r) => setTimeout(r, 0));
+
+    const offers = sent.filter((m: any) => m.type === "offer");
+    expect(offers.length).toBe(1);
+
+    const pc = allPeerConnections[0];
+    expect(pc.onnegotiationneeded).toBeNull();
   });
 
   it("concurrent ensureMic callers trigger getUserMedia exactly once", async () => {

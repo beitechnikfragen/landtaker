@@ -59,11 +59,13 @@ export class PhoneTransport {
       this.stopMic();
       return;
     }
-    // Do not block peer/offer creation on the mic (see handleSignal for the
-    // same reasoning) — start the request in the background and let
-    // attachMicToExistingPeers()/onnegotiationneeded carry the track across
-    // once it resolves, however long that takes.
-    void this.ensureMic();
+    // Await the mic before creating any peer connection. If we don't,
+    // createPeer() snapshots localStream while it's still null, the initial
+    // offer goes out with zero audio tracks, and we're stuck relying on a
+    // renegotiation round to fix it up after the fact. A resolved mic (or a
+    // latched denial) guarantees createPeer() below always sees the right
+    // state on the very first offer/answer.
+    await this.ensureMic();
     for (const id of peers) {
       if (this.peers.has(id)) continue;
       const peer = this.createPeer(id);
@@ -86,12 +88,12 @@ export class PhoneTransport {
     console.log(
       `[phone] handleSignal inbound type=${msg.type} from=${from} dataLength=${data.length}`,
     );
-    // Do not block peer creation / signaling on the mic: getUserMedia() can
-    // take seconds (permission prompt), and an incoming offer/candidate
-    // must not be delayed by it. Kick off ensureMic() in the background —
-    // once it resolves, attachMicToExistingPeers() tops up this (and any
-    // other) connection and onnegotiationneeded carries the track across.
-    void this.ensureMic();
+    // Await the mic before creating a peer from an inbound offer/candidate,
+    // same reasoning as syncPeers: createPeer() must see a resolved (or
+    // denied) localStream so createAnswer() below reflects our real audio
+    // state on the first round, instead of answering silent and needing a
+    // second negotiation to add the track.
+    await this.ensureMic();
     const peer = this.peers.get(from) ?? this.createPeer(from);
     try {
       if (msg.type === "offer") {
@@ -157,30 +159,6 @@ export class PhoneTransport {
     pc.ontrack = (e) => {
       if (e.streams[0]) audio.attach(e.streams[0]);
     };
-    // Fires whenever tracks are added/removed after the initial handshake
-    // (e.g. the mic arriving late, see attachMicToExistingPeers). Both sides
-    // get this event, which would normally cause an offer collision — two
-    // simultaneous re-offers stomping on each other's signalingState. We
-    // apply the same "smaller id offers" rule used for the initial offer
-    // (see syncPeers) so only one side of any given pair ever re-offers.
-    //
-    // The other (higher-id) side still needs its new track to reach the
-    // peer: it doesn't send its own offer, but the moment it becomes the
-    // *answerer* of the lower side's renegotiation offer, its up-to-date
-    // set of senders (including the newly added track) is included in that
-    // answer automatically — createAnswer() always reflects the current
-    // local senders, not just the ones present at the original offer. So
-    // the lower-id side's onnegotiationneeded re-offer is what carries
-    // audio for *both* directions once handleSignal() answers it.
-    //
-    // Guard with signalingState === "stable" so an already-in-flight
-    // negotiation (or a race where onnegotiationneeded fires again before
-    // the previous round finished) doesn't double-offer and corrupt state.
-    pc.onnegotiationneeded = () => {
-      if (this.myId >= id) return;
-      if (pc.signalingState !== "stable") return;
-      void this.makeOffer(id, peer);
-    };
     // "disconnected" is often a transient blip (brief ICE hiccup) that
     // recovers on its own; only "failed" means STUN-only connectivity has
     // genuinely broken down (see design spec: no TURN server in v1, so
@@ -238,7 +216,6 @@ export class PhoneTransport {
           `[phone] ensureMic success trackCount=${this.localStream.getAudioTracks().length}`,
         );
         this.setMuted(this.muted);
-        this.attachMicToExistingPeers();
       } catch {
         // TEMP diagnostics: remove once the phone audio bug is found
         console.log(`[phone] ensureMic DENIED`);
@@ -248,24 +225,6 @@ export class PhoneTransport {
       }
     })();
     return this.micPromise;
-  }
-
-  // Once the mic arrives, top up any connection that was created before it
-  // resolved (createPeer() only adds tracks that exist at that instant).
-  // getSenders() is the source of truth rather than a separately tracked
-  // flag, so this stays correct even if createPeer's own snapshot logic
-  // changes.
-  private attachMicToExistingPeers(): void {
-    if (!this.localStream) return;
-    const [track] = this.localStream.getAudioTracks();
-    if (!track) return;
-    for (const peer of this.peers.values()) {
-      const hasAudioSender = peer.pc
-        .getSenders()
-        .some((s) => s.track?.kind === "audio");
-      if (hasAudioSender) continue;
-      peer.pc.addTrack(track, this.localStream);
-    }
   }
 
   private stopMic(): void {
