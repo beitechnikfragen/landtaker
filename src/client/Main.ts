@@ -32,11 +32,13 @@ import "./FlagInput";
 import { FlagInput } from "./FlagInput";
 import "./FlagInputModal";
 import { FlagInputModal } from "./FlagInputModal";
+import "./GameHistoryPage";
 import "./GameModeSelector";
 import { GameModeSelector } from "./GameModeSelector";
 import { GameStartingModal } from "./GameStartingModal";
 import "./GameStatsModal";
 import { HelpModal } from "./HelpModal";
+import { matchHistoryPath } from "./HistoryRoute";
 import "./HomepagePromos";
 import { HostLobbyModal as HostPrivateLobbyModal } from "./HostLobbyModal";
 import { showInGameConfirm } from "./InGameModal";
@@ -224,6 +226,10 @@ class Client {
       pageId: "page-profile",
     });
     modalRouter.register("help", { tag: "help-modal", pageId: "page-help" });
+    modalRouter.register("history", {
+      tag: "game-history-page",
+      pageId: "page-history",
+    });
     modalRouter.register("news", { tag: "news-modal", pageId: "page-news" });
     modalRouter.register("language", {
       tag: "language-modal",
@@ -835,6 +841,17 @@ class Client {
       return;
     }
 
+    if (matchHistoryPath(window.location.pathname)) {
+      window.showPage?.("page-history");
+      // A stats modal opened from /history rewrites the URL to
+      // /history#modal=stats&gameID=X (see GameStatsModal/BaseModal via
+      // modalRouter.syncOpened). Reloading or sharing that URL must still
+      // reopen the modal on top of the history page, so only return early
+      // when there's no hash route to honor.
+      if (!modalRouter.isHashRouted()) {
+        return;
+      }
+    }
     const pathMatch = window.location.pathname.match(
       /^\/(?:w\d+\/)?game\/([^/]+)/,
     );

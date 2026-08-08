@@ -610,13 +610,28 @@
     "enter": "Enter fullscreen",
     "exit": "Exit fullscreen"
   },
+  "game_history": {
+    "avg_duration": "Avg. duration",
+    "best_map": "Best map",
+    "form": "Recent form",
+    "games": "Games",
+    "no_data": "—",
+    "not_signed_in": "Sign in to see your match history.",
+    "page_title": "Match history",
+    "scope_note": "Based on the {games} matches loaded below.",
+    "win_rate": "Win rate"
+  },
   "game_info_modal": {
     "all_gold": "All gold",
     "atoms": "Atoms",
+    "attacks_sent": "Troops sent",
+    "betrayals": "Betrayals",
+    "buildings_built": "Buildings built",
     "conquered": "Conquered",
     "conquest_gold": "Conquered player gold",
     "duration": "Duration",
     "economy": "Economy",
+    "final_tiles": "Final territory",
     "hydros": "Hydros",
     "load_failed": "Couldn't load game stats.",
     "loading_game_info": "Loading game stats",
@@ -1035,6 +1050,7 @@
     "leaderboard": "Leaderboard",
     "login_discord": "Login with Discord",
     "login_google": "Login with Google",
+    "match_history": "Match history",
     "menu": "Menu",
     "news": "News",
     "play": "Play",
@@ -1445,7 +1461,7 @@
     "pvp_immunity": "PVP immunity duration",
     "starting_gold": "Starting Gold",
     "title": "Join Lobby",
-    "version_mismatch": "This game was created with a different version. Cannot join."
+    "version_mismatch": "This game was created with a different version and cannot be opened."
   },
   "public_game_modifier": {
     "compact_map": "Compact Map",

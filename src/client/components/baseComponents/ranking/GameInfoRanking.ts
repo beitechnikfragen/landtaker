@@ -1,10 +1,12 @@
 import { AnalyticsRecord, PlayerRecord } from "../../../../core/Schemas";
 import {
+  ATTACK_INDEX_SENT,
   GOLD_INDEX_STEAL,
   GOLD_INDEX_TRADE,
   GOLD_INDEX_TRAIN_OTHER,
   GOLD_INDEX_TRAIN_SELF,
   GOLD_INDEX_WAR,
+  OTHER_INDEX_BUILT,
   PLAYER_INDEX_BOT,
   PLAYER_INDEX_HUMAN,
   PLAYER_INDEX_NATION,
@@ -23,6 +25,10 @@ export enum RankType {
   TrainTrade = "TrainTrade",
   ConqueredGold = "ConqueredGold",
   Lifetime = "Lifetime",
+  FinalTiles = "FinalTiles",
+  BuildingsBuilt = "BuildingsBuilt",
+  AttacksSent = "AttacksSent",
+  Betrayals = "Betrayals",
 }
 
 export const RANK_TYPE_LABEL_KEYS: Record<RankType, string> = {
@@ -38,6 +44,10 @@ export const RANK_TYPE_LABEL_KEYS: Record<RankType, string> = {
   [RankType.NavalTrade]: "game_info_modal.naval_trade",
   [RankType.TrainTrade]: "game_info_modal.train_trade",
   [RankType.ConqueredGold]: "game_info_modal.conquest_gold",
+  [RankType.FinalTiles]: "game_info_modal.final_tiles",
+  [RankType.BuildingsBuilt]: "game_info_modal.buildings_built",
+  [RankType.AttacksSent]: "game_info_modal.attacks_sent",
+  [RankType.Betrayals]: "game_info_modal.betrayals",
 };
 
 export interface PlayerInfo {
@@ -52,6 +62,22 @@ export interface PlayerInfo {
   atoms: number;
   hydros: number;
   mirv: number;
+  finalTiles: number;
+  buildingsBuilt: number;
+  attacksSent: number;
+  betrayals: number;
+  /**
+   * Which of the four new stats were actually present on the underlying
+   * record, as opposed to defaulted to 0. Used purely for display (to
+   * distinguish "never recorded" from "genuinely zero"); sorting/scoring
+   * always uses the plain numeric fields above.
+   */
+  recordedStats?: {
+    finalTiles: boolean;
+    buildingsBuilt: boolean;
+    attacksSent: boolean;
+    betrayals: boolean;
+  };
 }
 
 function hasPlayed(player: PlayerRecord): boolean {
@@ -108,6 +134,22 @@ export class Ranking {
         atoms: Number(stats.bombs?.abomb?.[0]) || 0,
         hydros: Number(stats.bombs?.hbomb?.[0]) || 0,
         mirv: Number(stats.bombs?.mirv?.[0]) || 0,
+        finalTiles: Number(stats.finalTiles ?? 0n),
+        // Buildings are per-type index arrays; BUILT is one slot of each.
+        buildingsBuilt: Object.values(stats.units ?? {}).reduce(
+          (sum: number, counts) =>
+            sum + Number(counts?.[OTHER_INDEX_BUILT] ?? 0n),
+          0,
+        ),
+        attacksSent: Number(stats.attacks?.[ATTACK_INDEX_SENT] ?? 0n),
+        betrayals: Number(stats.betrayals ?? 0n),
+        recordedStats: {
+          finalTiles: stats.finalTiles !== undefined,
+          buildingsBuilt:
+            stats.units !== undefined && Object.keys(stats.units).length > 0,
+          attacksSent: stats.attacks?.[ATTACK_INDEX_SENT] !== undefined,
+          betrayals: stats.betrayals !== undefined,
+        },
         winner: false,
       };
     }
@@ -167,6 +209,14 @@ export class Ranking {
         const otherTrains = player.gold[GOLD_INDEX_TRAIN_OTHER] ?? 0n;
         return Number(ownTrains + otherTrains);
       }
+      case RankType.FinalTiles:
+        return player.finalTiles;
+      case RankType.BuildingsBuilt:
+        return player.buildingsBuilt;
+      case RankType.AttacksSent:
+        return player.attacksSent;
+      case RankType.Betrayals:
+        return player.betrayals;
     }
   }
 

@@ -15,6 +15,10 @@ const basePlayer: PlayerInfo = {
   atoms: 0,
   hydros: 0,
   mirv: 0,
+  finalTiles: 0,
+  buildingsBuilt: 0,
+  attacksSent: 0,
+  betrayals: 0,
 };
 
 type RowOptions = {
@@ -258,4 +262,113 @@ describe("PlayerRow", () => {
       ).toContain(`game_info_modal.${rankType.toLowerCase()}`);
     },
   );
+
+  describe("new count-based rank types", () => {
+    const cases: {
+      rankType: RankType;
+      statKey: keyof NonNullable<PlayerInfo["recordedStats"]>;
+      playerKey: "finalTiles" | "buildingsBuilt" | "attacksSent" | "betrayals";
+    }[] = [
+      {
+        rankType: RankType.FinalTiles,
+        statKey: "finalTiles",
+        playerKey: "finalTiles",
+      },
+      {
+        rankType: RankType.BuildingsBuilt,
+        statKey: "buildingsBuilt",
+        playerKey: "buildingsBuilt",
+      },
+      {
+        rankType: RankType.AttacksSent,
+        statKey: "attacksSent",
+        playerKey: "attacksSent",
+      },
+      {
+        rankType: RankType.Betrayals,
+        statKey: "betrayals",
+        playerKey: "betrayals",
+      },
+    ];
+
+    it.each(cases)(
+      "renders the number for $rankType when the stat was recorded",
+      async ({ rankType, statKey, playerKey }) => {
+        row = await mountRow({
+          rankType,
+          score: 42,
+          player: {
+            [playerKey]: 42,
+            recordedStats: {
+              finalTiles: false,
+              buildingsBuilt: false,
+              attacksSent: false,
+              betrayals: false,
+              [statKey]: true,
+            },
+          },
+        });
+
+        const score = row.querySelector("[data-player-score]")!;
+        expect(score.textContent?.trim()).toBe("42");
+      },
+    );
+
+    it.each(cases)(
+      "renders an em dash for $rankType when the stat was NOT recorded",
+      async ({ rankType, statKey, playerKey }) => {
+        row = await mountRow({
+          rankType,
+          score: 0,
+          player: {
+            [playerKey]: 0,
+            recordedStats: {
+              finalTiles: false,
+              buildingsBuilt: false,
+              attacksSent: false,
+              betrayals: false,
+              [statKey]: false,
+            },
+          },
+        });
+
+        const score = row.querySelector("[data-player-score]")!;
+        expect(score.textContent?.trim()).toBe("game_history.no_data");
+      },
+    );
+
+    it.each(cases)(
+      "renders 0 (not an em dash) for $rankType when genuinely zero but recorded",
+      async ({ rankType, statKey, playerKey }) => {
+        row = await mountRow({
+          rankType,
+          score: 0,
+          player: {
+            [playerKey]: 0,
+            recordedStats: {
+              finalTiles: false,
+              buildingsBuilt: false,
+              attacksSent: false,
+              betrayals: false,
+              [statKey]: true,
+            },
+          },
+        });
+
+        const score = row.querySelector("[data-player-score]")!;
+        expect(score.textContent?.trim()).toBe("0");
+      },
+    );
+
+    it("treats an absent recordedStats field as recorded (backward compatible)", async () => {
+      row = await mountRow({
+        rankType: RankType.FinalTiles,
+        score: 15,
+        player: { finalTiles: 15, recordedStats: undefined },
+      });
+
+      const score = row.querySelector("[data-player-score]")!;
+      expect(score.textContent?.trim()).toBe("15");
+    });
+  });
 });

@@ -1,4 +1,5 @@
 import {
+  RANK_TYPE_LABEL_KEYS,
   Ranking,
   RankType,
 } from "../src/client/components/baseComponents/ranking/GameInfoRanking";
@@ -107,6 +108,7 @@ describe("Ranking class", () => {
       gitCommit: "DEV",
       subdomain: "",
       domain: "",
+      ...overrides,
     };
   }
 
@@ -218,5 +220,160 @@ describe("Ranking class", () => {
     expect(r.score(p1, RankType.ConqueredGold)).toBe(
       Number(p1.gold[GOLD_INDEX_WAR] ?? 0n),
     );
+  });
+
+  it("ranks by final tiles", () => {
+    const session = makeSession({
+      info: {
+        ...makeSession().info,
+        players: [
+          {
+            clientID: "p1",
+            username: "Alice",
+            clanTag: null,
+            stats: { conquests: [1n], finalTiles: 500n },
+          },
+          {
+            clientID: "p2",
+            username: "Bob",
+            clanTag: null,
+            stats: { conquests: [1n], finalTiles: 1200n },
+          },
+        ],
+      },
+    } as Partial<AnalyticsRecord>);
+    const ranking = new Ranking(session);
+    const sorted = ranking.sortedBy(RankType.FinalTiles);
+    expect(sorted[0].username).toBe("Bob");
+    expect(ranking.score(sorted[0], RankType.FinalTiles)).toBe(1200);
+  });
+
+  it("sums buildings built across all building types", () => {
+    const session = makeSession({
+      info: {
+        ...makeSession().info,
+        players: [
+          {
+            clientID: "p1",
+            username: "Alice",
+            clanTag: null,
+            stats: {
+              conquests: [1n],
+              units: { city: [3n, 0n, 0n, 0n], port: [2n, 0n, 0n, 1n] },
+            },
+          },
+        ],
+      },
+    } as Partial<AnalyticsRecord>);
+    const ranking = new Ranking(session);
+    const alice = ranking.allPlayers[0];
+    expect(ranking.score(alice, RankType.BuildingsBuilt)).toBe(5);
+  });
+
+  it("scores missing stat fields as zero without throwing", () => {
+    const session = makeSession({
+      info: {
+        ...makeSession().info,
+        players: [
+          {
+            clientID: "p1",
+            username: "Alice",
+            clanTag: null,
+            stats: { conquests: [1n] },
+          },
+        ],
+      },
+    } as Partial<AnalyticsRecord>);
+    const ranking = new Ranking(session);
+    const alice = ranking.allPlayers[0];
+    expect(ranking.score(alice, RankType.FinalTiles)).toBe(0);
+    expect(ranking.score(alice, RankType.BuildingsBuilt)).toBe(0);
+    expect(ranking.score(alice, RankType.AttacksSent)).toBe(0);
+    expect(ranking.score(alice, RankType.Betrayals)).toBe(0);
+  });
+
+  it("gives every rank type a label key", () => {
+    for (const type of Object.values(RankType)) {
+      expect(RANK_TYPE_LABEL_KEYS[type]).toBeTruthy();
+    }
+  });
+
+  describe("recordedStats", () => {
+    it("marks all four new stats as recorded when present, including a genuine zero", () => {
+      const session = makeSession({
+        info: {
+          ...makeSession().info,
+          players: [
+            {
+              clientID: "p1",
+              username: "Alice",
+              clanTag: null,
+              stats: {
+                conquests: [1n],
+                finalTiles: 0n, // genuinely zero, but present
+                units: { city: [3n, 0n, 0n, 0n] },
+                attacks: [7n],
+                betrayals: 2n,
+              },
+            },
+          ],
+        },
+      } as Partial<AnalyticsRecord>);
+      const ranking = new Ranking(session);
+      const alice = ranking.allPlayers[0];
+
+      expect(alice.recordedStats).toStrictEqual({
+        finalTiles: true,
+        buildingsBuilt: true,
+        attacksSent: true,
+        betrayals: true,
+      });
+      expect(alice.finalTiles).toBe(0);
+    });
+
+    it("marks all four new stats as not recorded when absent from the record", () => {
+      const session = makeSession({
+        info: {
+          ...makeSession().info,
+          players: [
+            {
+              clientID: "p1",
+              username: "Alice",
+              clanTag: null,
+              stats: { conquests: [1n] },
+            },
+          ],
+        },
+      } as Partial<AnalyticsRecord>);
+      const ranking = new Ranking(session);
+      const alice = ranking.allPlayers[0];
+
+      expect(alice.recordedStats).toStrictEqual({
+        finalTiles: false,
+        buildingsBuilt: false,
+        attacksSent: false,
+        betrayals: false,
+      });
+    });
+
+    it("marks buildingsBuilt as not recorded when units is an empty object", () => {
+      const session = makeSession({
+        info: {
+          ...makeSession().info,
+          players: [
+            {
+              clientID: "p1",
+              username: "Alice",
+              clanTag: null,
+              stats: { conquests: [1n], units: {} },
+            },
+          ],
+        },
+      } as Partial<AnalyticsRecord>);
+      const ranking = new Ranking(session);
+      const alice = ranking.allPlayers[0];
+
+      expect(alice.recordedStats?.buildingsBuilt).toBe(false);
+    });
   });
 });

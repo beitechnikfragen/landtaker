@@ -151,6 +151,11 @@ export class DesktopNavBar extends LitElement {
           data-page="page-leaderboard"
           data-i18n="main.leaderboard"
         ></button>
+        <button
+          class="nav-menu-item lt-nav-item"
+          data-page="page-history"
+          data-i18n="main.match_history"
+        ></button>
         <!-- Clans exist upstream but aren't wired to our backend yet. -->
         ${this.renderComingSoon("main.clans")}
         <!-- Party moved into the social dock (friends-panel), so the nav

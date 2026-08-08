@@ -169,6 +169,11 @@ export class PlayerRow extends LitElement {
       case RankType.NavalTrade:
       case RankType.TrainTrade:
         return this.renderTradeScore();
+      case RankType.FinalTiles:
+      case RankType.BuildingsBuilt:
+      case RankType.AttacksSent:
+      case RankType.Betrayals:
+        return this.renderCountScore();
       default:
         return html``;
     }
@@ -230,8 +235,36 @@ export class PlayerRow extends LitElement {
     return this.renderValueScore(true);
   }
 
-  private renderValueScore(showCoin: boolean) {
-    const formattedScore = renderNumber(this.score);
+  private renderCountScore() {
+    return this.renderValueScore(false, !this.isStatRecorded());
+  }
+
+  /**
+   * Whether the current rankType is one of the four "new" count stats and,
+   * if so, whether that stat was actually present on the underlying record
+   * (as opposed to defaulted to zero). Non-count rank types are always
+   * treated as recorded.
+   */
+  private isStatRecorded(): boolean {
+    const recorded = this.player.recordedStats;
+    switch (this.rankType) {
+      case RankType.FinalTiles:
+        return recorded?.finalTiles ?? true;
+      case RankType.BuildingsBuilt:
+        return recorded?.buildingsBuilt ?? true;
+      case RankType.AttacksSent:
+        return recorded?.attacksSent ?? true;
+      case RankType.Betrayals:
+        return recorded?.betrayals ?? true;
+      default:
+        return true;
+    }
+  }
+
+  private renderValueScore(showCoin: boolean, showNoData = false) {
+    const formattedScore = showNoData
+      ? translateText("game_history.no_data")
+      : renderNumber(this.score);
     return html`
       <div
         data-player-score

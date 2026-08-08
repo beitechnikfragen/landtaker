@@ -36,6 +36,8 @@ describe("RankingControls", () => {
       RankType.Atoms,
       RankType.Hydros,
       RankType.MIRV,
+      RankType.AttacksSent,
+      RankType.Betrayals,
     ]);
     expect(metrics[0].getAttribute("aria-pressed")).toBe("true");
     expect(
@@ -67,6 +69,8 @@ describe("RankingControls", () => {
       RankType.StolenGold,
       RankType.TrainTrade,
       RankType.NavalTrade,
+      RankType.FinalTiles,
+      RankType.BuildingsBuilt,
     ]);
 
     const metrics = [
@@ -78,5 +82,29 @@ describe("RankingControls", () => {
         (button) => button.getAttribute("aria-pressed") === "true",
       ),
     ).toHaveLength(1);
+  });
+
+  it("makes all four new rank types selectable via a button", async () => {
+    // Regression guard: RankType.FinalTiles, BuildingsBuilt, AttacksSent and
+    // Betrayals must each be reachable through a rendered button, not just
+    // present in the enum. Without a button, PlayerRow's rendering branch
+    // for these types is unreachable by users.
+    const newTypes = [
+      RankType.FinalTiles,
+      RankType.BuildingsBuilt,
+      RankType.AttacksSent,
+      RankType.Betrayals,
+    ];
+
+    for (const type of newTypes) {
+      controls = await mountControls(type);
+      const button = controls.querySelector<HTMLButtonElement>(
+        `[data-ranking-metric="${type}"]`,
+      );
+      expect(button, `expected a button for ${type}`).not.toBeNull();
+      expect(button!.getAttribute("aria-pressed")).toBe("true");
+      controls.remove();
+    }
+    controls = null;
   });
 });
