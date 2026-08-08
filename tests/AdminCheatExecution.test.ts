@@ -701,3 +701,233 @@ describe("AdminCheatExecution — expanded player actions", () => {
     ).not.toThrow();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Giving
+// ---------------------------------------------------------------------------
+
+describe("AdminCheatExecution — gifts", () => {
+  it("gift_gold credits the target, not the caller", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+    const adminBefore = admin.gold();
+    const victimBefore = victim.gold();
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "gift_gold", {
+        targetID: victim.id(),
+        amount: 50_000,
+      }),
+      2,
+    );
+
+    expect(victim.gold()).toBeGreaterThanOrEqual(victimBefore + 50_000n);
+    // The gift is created, not transferred — the caller pays nothing. Passive
+    // income means the admin's balance can only have risen, never fallen.
+    expect(admin.gold()).toBeGreaterThanOrEqual(adminBefore);
+  });
+
+  it("gift_troops adds to the target", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+    const before = victim.troops();
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "gift_troops", {
+        targetID: victim.id(),
+        amount: 5000,
+      }),
+      2,
+    );
+
+    expect(victim.troops()).toBeGreaterThan(before);
+  });
+
+  it("gift_god_mode shields the target and is reversible", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+    expect(victim.isImmune()).toBe(false);
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "gift_god_mode", {
+        targetID: victim.id(),
+        enabled: true,
+      }),
+    );
+    expect(victim.isImmune()).toBe(true);
+    // The point: even the admin who granted it can no longer attack them.
+    expect(admin.canAttackPlayer(victim)).toBe(false);
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "gift_god_mode", {
+        targetID: victim.id(),
+        enabled: false,
+      }),
+    );
+    expect(victim.isImmune()).toBe(false);
+  });
+
+  it("gift_gold drops a NaN amount", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+    const before = victim.gold();
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "gift_gold", {
+        targetID: victim.id(),
+        amount: Number.NaN,
+      }),
+      2,
+    );
+
+    // Income still accrues, so assert it did not jump by the bogus amount.
+    expect(victim.gold()).toBeLessThan(before + 1000n);
+  });
+
+  it("gift_gold drops an unknown target", async () => {
+    const { game, admin } = await twoPlayerGame();
+    expect(() =>
+      runCheat(
+        game,
+        new AdminCheatExecution(admin, "gift_gold", {
+          targetID: "nobody",
+          amount: 100,
+        }),
+      ),
+    ).not.toThrow();
+  });
+
+  it("pardon_player clears the target's traitor mark", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+    victim.markTraitor();
+    expect(victim.isTraitor()).toBe(true);
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "pardon_player", {
+        targetID: victim.id(),
+      }),
+    );
+
+    expect(victim.isTraitor()).toBe(false);
+  });
+
+  it("gift_unit builds for the target while they are broke", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+    victim.removeGold(victim.gold());
+    const tile = Array.from(victim.tiles())[0];
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "gift_unit", {
+        targetID: victim.id(),
+        unitType: UnitType.City,
+        tile,
+      }),
+      6,
+    );
+
+    expect(victim.unitCount(UnitType.City)).toBeGreaterThan(0);
+    // Built for the recipient, not for the caller.
+    expect(admin.unitCount(UnitType.City)).toBe(0);
+  });
+});
+
+describe("AdminCheatExecution — revive", () => {
+  it("brings an eliminated player back with land and troops", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+
+    // Eliminate them first, which is what makes revive meaningful.
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "kill_player", { targetID: victim.id() }),
+    );
+    expect(victim.isAlive()).toBe(false);
+
+    // Revive onto land the admin now holds.
+    const tile = Array.from(admin.tiles())[0];
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "revive_player", {
+        targetID: victim.id(),
+        tile,
+        amount: 2,
+      }),
+      4,
+    );
+
+    // isAlive() is tiles.size > 0 — there is no separate dead flag, so owning
+    // land IS being alive.
+    expect(victim.isAlive()).toBe(true);
+    expect(victim.numTilesOwned()).toBeGreaterThan(0);
+    // Without troops the pocket cannot be held, so the revive grants some.
+    expect(victim.troops()).toBeGreaterThan(0);
+  });
+
+  it("refuses to revive someone already alive", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+    const before = victim.numTilesOwned();
+    const tile = Array.from(admin.tiles())[0];
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "revive_player", {
+        targetID: victim.id(),
+        tile,
+        amount: 3,
+      }),
+    );
+
+    // Would otherwise be a free land grant to a healthy player.
+    expect(victim.numTilesOwned()).toBe(before);
+  });
+
+  it("refuses a water tile", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "kill_player", { targetID: victim.id() }),
+    );
+
+    let water: number | null = null;
+    for (let y = 0; y < 20 && water === null; y++) {
+      for (let x = 0; x < 20; x++) {
+        const tile = game.ref(x, y);
+        if (!game.isLand(tile)) {
+          water = tile;
+          break;
+        }
+      }
+    }
+
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "revive_player", {
+        targetID: victim.id(),
+        tile: water!,
+        amount: 3,
+      }),
+    );
+
+    expect(victim.isAlive()).toBe(false);
+  });
+
+  it("drops an invalid tile without throwing", async () => {
+    const { game, admin, victim } = await twoPlayerGame();
+    runCheat(
+      game,
+      new AdminCheatExecution(admin, "kill_player", { targetID: victim.id() }),
+    );
+
+    expect(() =>
+      runCheat(
+        game,
+        new AdminCheatExecution(admin, "revive_player", {
+          targetID: victim.id(),
+          tile: 99_999_999,
+        }),
+      ),
+    ).not.toThrow();
+  });
+});
