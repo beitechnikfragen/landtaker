@@ -43,6 +43,13 @@
       "when": 1786155370580,
       "tag": "0005_clear_sway",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786158826341,
+      "tag": "0006_gigantic_tyrannus",
+      "breakpoints": true
     }
   ]
 }

@@ -8,15 +8,23 @@ import type {
   AdminUserSummary,
 } from "../core/AdminApiSchemas";
 import {
+  type AdminCosmetic,
+  type AdminShopConfig,
   adjustAdminCredits,
   banAdminUser,
+  deleteAdminCosmetic,
   fetchAdminAudit,
+  fetchAdminCosmetics,
   fetchAdminMe,
+  fetchAdminRotation,
+  fetchAdminShopConfig,
   fetchAdminUser,
   fetchAdminUsers,
   isAdminApiError,
   liftAdminBan,
   patchAdminUser,
+  saveAdminCosmetic,
+  saveAdminShopConfig,
 } from "./AdminApi";
 import { BaseModal } from "./components/BaseModal";
 import { modalHeader } from "./components/ui/ModalHeader";
@@ -62,6 +70,24 @@ export class AdminModal extends BaseModal {
   @state() private audit: AdminAuditEntry[] = [];
   @state() private loadingAudit = false;
 
+  // Shop tab
+  @state() private shopCosmetics: AdminCosmetic[] = [];
+  @state() private shopConfig: AdminShopConfig | null = null;
+  @state() private rotation: {
+    startsAt: string;
+    endsAt: string;
+    cosmeticIds: string[];
+  } | null = null;
+  @state() private loadingShop = false;
+  @state() private newCosmetic = {
+    kind: "flag",
+    name: "",
+    displayName: "",
+    priceSoft: "",
+    priceHard: "",
+    payload: "",
+  };
+
   @state() private error: string | null = null;
   @state() private notice: string | null = null;
 
@@ -82,6 +108,7 @@ export class AdminModal extends BaseModal {
       maxWidth: "1200px",
       tabs: [
         { key: "users", label: translateText("admin.tab_users") },
+        { key: "shop", label: translateText("admin.tab_shop") },
         { key: "audit", label: translateText("admin.tab_audit") },
       ],
     };
@@ -97,6 +124,7 @@ export class AdminModal extends BaseModal {
     if (this.authorized !== true) return;
     if (key === "users" && this.users.length === 0) void this.loadUsers();
     if (key === "audit") void this.loadAudit();
+    if (key === "shop") void this.loadShop();
   }
 
   private async checkAuthorization(): Promise<void> {
@@ -136,6 +164,31 @@ export class AdminModal extends BaseModal {
       return;
     }
     this.audit = result.entries;
+  }
+
+  private async loadShop(): Promise<void> {
+    this.loadingShop = true;
+    const [items, config, rotation] = await Promise.all([
+      fetchAdminCosmetics(),
+      fetchAdminShopConfig(),
+      fetchAdminRotation(),
+    ]);
+    this.loadingShop = false;
+
+    // Report the first failure rather than silently rendering partial state.
+    for (const result of [items, config, rotation]) {
+      if (isAdminApiError(result)) {
+        this.error = result.error;
+        return;
+      }
+    }
+    this.shopCosmetics = items as AdminCosmetic[];
+    this.shopConfig = config as AdminShopConfig;
+    this.rotation = rotation as {
+      startsAt: string;
+      endsAt: string;
+      cosmeticIds: string[];
+    };
   }
 
   private async selectUser(id: string): Promise<void> {
@@ -254,8 +307,275 @@ export class AdminModal extends BaseModal {
 
     return html`
       ${this.header()} ${this.renderBanner()}
-      ${tab === "audit" ? this.renderAudit() : this.renderUsers()}
+      ${tab === "audit"
+        ? this.renderAudit()
+        : tab === "shop"
+          ? this.renderShop()
+          : this.renderUsers()}
     `;
+  }
+
+  // ---- Shop tab ----
+
+  private renderShop(): TemplateResult {
+    if (this.loadingShop) return this.renderLoadingSpinner();
+    return html`
+      <div class="flex flex-col gap-4 p-4">
+        ${this.renderRotationPanel()} ${this.renderCosmeticsTable()}
+        ${this.renderNewCosmeticForm()}
+      </div>
+    `;
+  }
+
+  private renderRotationPanel(): TemplateResult {
+    const config = this.shopConfig;
+    const rotation = this.rotation;
+    return html`
+      <div class="rounded border border-lt-600 p-4 text-white">
+        <div class="mb-3 text-sm font-semibold">
+          ${translateText("admin.drop_settings")}
+        </div>
+        <div class="mb-3 flex flex-wrap items-end gap-3">
+          <label class="text-xs text-lt-400">
+            ${translateText("admin.rotation_hours")}
+            <input
+              type="number"
+              min="1"
+              class="mt-1 block w-24 rounded border border-lt-600 bg-lt-800 px-2 py-1 text-sm text-white"
+              .value=${String(config?.rotationHours ?? 6)}
+              @input=${(e: Event) => {
+                const value = Number((e.target as HTMLInputElement).value);
+                if (this.shopConfig) this.shopConfig.rotationHours = value;
+              }}
+            />
+          </label>
+          <label class="text-xs text-lt-400">
+            ${translateText("admin.items_per_drop")}
+            <input
+              type="number"
+              min="1"
+              class="mt-1 block w-24 rounded border border-lt-600 bg-lt-800 px-2 py-1 text-sm text-white"
+              .value=${String(config?.itemsPerRotation ?? 4)}
+              @input=${(e: Event) => {
+                const value = Number((e.target as HTMLInputElement).value);
+                if (this.shopConfig) this.shopConfig.itemsPerRotation = value;
+              }}
+            />
+          </label>
+          <button
+            class="rounded bg-blue-600 px-4 py-1.5 text-sm hover:bg-blue-500"
+            @click=${async () => {
+              if (!this.shopConfig) return;
+              const result = await saveAdminShopConfig(this.shopConfig);
+              if (isAdminApiError(result)) this.error = result.error;
+              else this.notice = translateText("admin.saved");
+            }}
+          >
+            ${translateText("admin.apply")}
+          </button>
+        </div>
+        <p class="mb-2 text-xs text-lt-500">
+          ${translateText("admin.rotation_takes_effect")}
+        </p>
+        ${rotation
+          ? html`<div class="text-xs text-lt-400">
+              ${translateText("admin.current_drop")}:
+              ${new Date(rotation.startsAt).toLocaleString()} —
+              ${new Date(rotation.endsAt).toLocaleString()}
+              (${rotation.cosmeticIds.length} ${translateText("admin.items")})
+            </div>`
+          : null}
+      </div>
+    `;
+  }
+
+  private renderCosmeticsTable(): TemplateResult {
+    if (this.shopCosmetics.length === 0) {
+      return html`<div
+        class="rounded border border-lt-600 p-6 text-center text-lt-400"
+      >
+        ${translateText("admin.no_cosmetics")}
+      </div>`;
+    }
+    const inDrop = new Set(this.rotation?.cosmeticIds ?? []);
+
+    return html`
+      <div class="overflow-x-auto rounded border border-lt-600">
+        <table class="w-full text-left text-sm text-white">
+          <thead class="bg-lt-800 text-lt-300">
+            <tr>
+              <th class="px-3 py-2">${translateText("admin.col_kind")}</th>
+              <th class="px-3 py-2">${translateText("admin.col_name")}</th>
+              <th class="px-3 py-2">${translateText("admin.col_soft")}</th>
+              <th class="px-3 py-2">${translateText("admin.col_hard")}</th>
+              <th class="px-3 py-2">${translateText("admin.col_live")}</th>
+              <th class="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${this.shopCosmetics.map(
+              (item) => html`
+                <tr class="border-t border-lt-700">
+                  <td class="px-3 py-2 text-lt-400">${item.kind}</td>
+                  <td class="px-3 py-2">
+                    ${item.displayName ?? item.name}
+                    ${inDrop.has(item.id)
+                      ? html`<span
+                          class="ml-2 rounded bg-green-700 px-1.5 py-0.5 text-[10px] uppercase"
+                          >${translateText("admin.in_drop")}</span
+                        >`
+                      : null}
+                  </td>
+                  <td class="px-3 py-2">${item.priceSoft ?? "—"}</td>
+                  <td class="px-3 py-2">${item.priceHard ?? "—"}</td>
+                  <td class="px-3 py-2">
+                    <input
+                      type="checkbox"
+                      .checked=${item.published}
+                      @change=${async (e: Event) => {
+                        const published = (e.target as HTMLInputElement)
+                          .checked;
+                        const result = await saveAdminCosmetic({
+                          ...item,
+                          payload: (item.payload ?? {}) as Record<
+                            string,
+                            unknown
+                          >,
+                          published,
+                        });
+                        if (isAdminApiError(result)) this.error = result.error;
+                        else void this.loadShop();
+                      }}
+                    />
+                  </td>
+                  <td class="px-3 py-2 text-right">
+                    <button
+                      class="rounded border border-lt-600 px-2 py-0.5 text-xs hover:bg-lt-700"
+                      @click=${async () => {
+                        const result = await deleteAdminCosmetic(
+                          item.kind,
+                          item.name,
+                        );
+                        if (isAdminApiError(result)) this.error = result.error;
+                        else void this.loadShop();
+                      }}
+                    >
+                      ${translateText("admin.delete")}
+                    </button>
+                  </td>
+                </tr>
+              `,
+            )}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  private renderNewCosmeticForm(): TemplateResult {
+    const draft = this.newCosmetic;
+    const set = (key: keyof typeof draft) => (e: Event) => {
+      this.newCosmetic = {
+        ...this.newCosmetic,
+        [key]: (e.target as HTMLInputElement).value,
+      };
+    };
+
+    return html`
+      <div class="rounded border border-lt-600 p-4 text-white">
+        <div class="mb-3 text-sm font-semibold">
+          ${translateText("admin.add_cosmetic")}
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <select
+            class="rounded border border-lt-600 bg-lt-800 px-2 py-1 text-sm"
+            .value=${draft.kind}
+            @change=${set("kind")}
+          >
+            ${["pattern", "flag", "crown", "skin", "effect"].map(
+              (kind) => html`<option value=${kind}>${kind}</option>`,
+            )}
+          </select>
+          <input
+            class="w-40 rounded border border-lt-600 bg-lt-800 px-2 py-1 text-sm"
+            placeholder=${translateText("admin.col_name")}
+            .value=${draft.name}
+            @input=${set("name")}
+          />
+          <input
+            type="number"
+            class="w-28 rounded border border-lt-600 bg-lt-800 px-2 py-1 text-sm"
+            placeholder=${translateText("admin.col_soft")}
+            .value=${draft.priceSoft}
+            @input=${set("priceSoft")}
+          />
+          <input
+            type="number"
+            class="w-28 rounded border border-lt-600 bg-lt-800 px-2 py-1 text-sm"
+            placeholder=${translateText("admin.col_hard")}
+            .value=${draft.priceHard}
+            @input=${set("priceHard")}
+          />
+        </div>
+        <textarea
+          class="mt-2 h-20 w-full rounded border border-lt-600 bg-lt-800 px-2 py-1 font-mono text-xs"
+          placeholder=${translateText("admin.payload_hint")}
+          .value=${draft.payload}
+          @input=${set("payload")}
+        ></textarea>
+        <button
+          class="mt-2 rounded bg-blue-600 px-4 py-1.5 text-sm hover:bg-blue-500"
+          @click=${() => void this.addCosmetic()}
+        >
+          ${translateText("admin.add")}
+        </button>
+      </div>
+    `;
+  }
+
+  private async addCosmetic(): Promise<void> {
+    const draft = this.newCosmetic;
+    if (!draft.name.trim()) {
+      this.error = translateText("admin.cosmetic_need_name");
+      return;
+    }
+
+    // The payload is kind-specific (a flag's url, an effect's attributes), so
+    // it is entered as raw JSON. Parse here rather than sending a string the
+    // server would have to guess about.
+    let payload: Record<string, unknown> = {};
+    if (draft.payload.trim()) {
+      try {
+        payload = JSON.parse(draft.payload);
+      } catch {
+        this.error = translateText("admin.payload_invalid");
+        return;
+      }
+    }
+
+    const result = await saveAdminCosmetic({
+      kind: draft.kind,
+      name: draft.name.trim(),
+      displayName: draft.displayName.trim() || null,
+      priceSoft: draft.priceSoft ? Number(draft.priceSoft) : null,
+      priceHard: draft.priceHard ? Number(draft.priceHard) : null,
+      payload,
+      published: false,
+    });
+    if (isAdminApiError(result)) {
+      this.error = result.error;
+      return;
+    }
+    this.newCosmetic = {
+      kind: draft.kind,
+      name: "",
+      displayName: "",
+      priceSoft: "",
+      priceHard: "",
+      payload: "",
+    };
+    this.notice = translateText("admin.saved");
+    void this.loadShop();
   }
 
   private renderBanner(): TemplateResult | null {

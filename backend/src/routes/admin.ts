@@ -4,11 +4,18 @@ import {
   AdminUserPatchSchema,
   AdminUserQuerySchema,
 } from "@game/AdminApiSchemas.ts";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, count, eq, isNull } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { db } from "../db/index.ts";
-import { bans, users } from "../db/schema.ts";
+import {
+  bans,
+  cosmetics,
+  shopConfig,
+  shopPurchases,
+  shopRotations,
+  users,
+} from "../db/schema.ts";
 import { requireAdmin } from "../plugins/auth.ts";
 import {
   banExpiresAt,
@@ -20,7 +27,13 @@ import {
   recordAudit,
   roleChangeRefusal,
 } from "../services/admin.ts";
+import {
+  getOrCreateCurrentRotation,
+  getShopConfig,
+  SHOP_CONFIG_ID,
+} from "../services/shop.ts";
 import { resolveDisplayUsername } from "../services/users.ts";
+import { CosmeticUpsertSchema, findCosmetic } from "./shop.ts";
 
 /**
  * Admin panel API. Every route is behind `requireAdmin`, which re-reads the
@@ -309,6 +322,298 @@ export async function registerAdminRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(400).send({ error: "Invalid query" });
       }
       return reply.send(await listAudit(parsed.data));
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // Shop: cosmetics catalog + drop rotation
+  // -------------------------------------------------------------------------
+
+  /** GET /admin/cosmetics — the whole catalog, published or not. */
+  app.get(
+    "/admin/cosmetics",
+    { preHandler: requireAdmin },
+    async (_request, reply) => {
+      const rows = await db
+        .select()
+        .from(cosmetics)
+        .orderBy(cosmetics.kind, cosmetics.name);
+      return reply.send({
+        cosmetics: rows.map((row) => ({
+          id: row.id,
+          kind: row.kind,
+          name: row.name,
+          displayName: row.displayName,
+          rarity: row.rarity,
+          artist: row.artist,
+          priceSoft: row.priceSoft,
+          priceHard: row.priceHard,
+          payload: row.payload,
+          published: row.published,
+          createdAt: row.createdAt.toISOString(),
+        })),
+      });
+    },
+  );
+
+  /**
+   * POST /admin/cosmetics — create or update by (kind, name).
+   *
+   * An upsert rather than separate create/update verbs: (kind, name) is the
+   * natural key that flares are built from, so "the flag called de" is the
+   * identity the operator thinks in, not a generated row id.
+   */
+  app.post(
+    "/admin/cosmetics",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const parsed = CosmeticUpsertSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply
+          .code(400)
+          .send({ error: parsed.error.issues[0]?.message ?? "Invalid body" });
+      }
+      const item = parsed.data;
+
+      const [saved] = await db
+        .insert(cosmetics)
+        .values({
+          kind: item.kind,
+          name: item.name,
+          displayName: item.displayName ?? null,
+          rarity: item.rarity ?? null,
+          artist: item.artist ?? null,
+          priceSoft: item.priceSoft ?? null,
+          priceHard: item.priceHard ?? null,
+          payload: item.payload ?? {},
+          published: item.published ?? false,
+        })
+        .onConflictDoUpdate({
+          target: [cosmetics.kind, cosmetics.name],
+          set: {
+            displayName: item.displayName ?? null,
+            rarity: item.rarity ?? null,
+            artist: item.artist ?? null,
+            priceSoft: item.priceSoft ?? null,
+            priceHard: item.priceHard ?? null,
+            payload: item.payload ?? {},
+            published: item.published ?? false,
+          },
+        })
+        .returning();
+
+      await recordAudit({
+        actorId: request.userId!,
+        actorName: await actorName(request.userId!),
+        action: "cosmetic.upsert",
+        targetId: saved?.id ?? null,
+        detail: { kind: item.kind, name: item.name, published: item.published },
+        log: request.log,
+      });
+
+      return reply.send({ id: saved?.id, kind: item.kind, name: item.name });
+    },
+  );
+
+  /**
+   * DELETE /admin/cosmetics/:kind/:name
+   *
+   * Refused once anyone owns it: the flare on their account would outlive the
+   * catalog entry and render as a broken item rather than disappearing.
+   * Unpublishing is the way to retire something that has been sold.
+   */
+  app.delete<{ Params: { kind: string; name: string } }>(
+    "/admin/cosmetics/:kind/:name",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const existing = await findCosmetic(
+        request.params.kind,
+        request.params.name,
+      );
+      if (!existing) return reply.code(404).send({ error: "Not found" });
+
+      const [{ value: sold } = { value: 0 }] = await db
+        .select({ value: count() })
+        .from(shopPurchases)
+        .where(eq(shopPurchases.cosmeticId, existing.id));
+
+      if (sold > 0) {
+        return reply.code(409).send({
+          error: `${sold} player(s) own this — unpublish it instead of deleting`,
+        });
+      }
+
+      await db.delete(cosmetics).where(eq(cosmetics.id, existing.id));
+
+      await recordAudit({
+        actorId: request.userId!,
+        actorName: await actorName(request.userId!),
+        action: "cosmetic.delete",
+        targetId: existing.id,
+        detail: { kind: existing.kind, name: existing.name },
+        log: request.log,
+      });
+
+      return reply.send({ deleted: true });
+    },
+  );
+
+  /** GET /admin/shop/config — the drop cadence. */
+  app.get(
+    "/admin/shop/config",
+    { preHandler: requireAdmin },
+    async (_request, reply) => {
+      return reply.send(await getShopConfig());
+    },
+  );
+
+  /**
+   * PUT /admin/shop/config — change how often a drop rotates, and how big.
+   *
+   * Takes effect at the next window boundary rather than immediately: windows
+   * are derived from a fixed epoch, so changing the cadence mid-window would
+   * otherwise retroactively move the boundary a live drop is sitting in.
+   */
+  app.put(
+    "/admin/shop/config",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const parsed = z
+        .object({
+          rotationHours: z
+            .number()
+            .int()
+            .min(1)
+            .max(24 * 30),
+          itemsPerRotation: z.number().int().min(1).max(100),
+        })
+        .safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: "Invalid config" });
+      }
+
+      await db
+        .insert(shopConfig)
+        .values({ id: SHOP_CONFIG_ID, ...parsed.data, updatedAt: new Date() })
+        .onConflictDoUpdate({
+          target: shopConfig.id,
+          set: { ...parsed.data, updatedAt: new Date() },
+        });
+
+      await recordAudit({
+        actorId: request.userId!,
+        actorName: await actorName(request.userId!),
+        action: "shop.config",
+        targetId: SHOP_CONFIG_ID,
+        detail: parsed.data,
+        log: request.log,
+      });
+
+      return reply.send(parsed.data);
+    },
+  );
+
+  /** GET /admin/shop/rotation — the live drop, as the players see it. */
+  app.get(
+    "/admin/shop/rotation",
+    { preHandler: requireAdmin },
+    async (_request, reply) => {
+      const rotation = await getOrCreateCurrentRotation();
+      return reply.send({
+        startsAt: rotation.startsAt.toISOString(),
+        endsAt: rotation.endsAt.toISOString(),
+        cosmeticIds: rotation.cosmeticIds,
+      });
+    },
+  );
+
+  /**
+   * POST /admin/shop/rotation — replace the live drop's lineup by hand.
+   *
+   * Marks the row pinned so the engine treats it as a deliberate choice.
+   */
+  app.post(
+    "/admin/shop/rotation",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const parsed = z
+        .object({ cosmeticIds: z.uuid().array().max(100) })
+        .safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: "Invalid rotation" });
+      }
+
+      const current = await getOrCreateCurrentRotation();
+      await db
+        .update(shopRotations)
+        .set({ cosmeticIds: parsed.data.cosmeticIds, pinned: true })
+        .where(eq(shopRotations.startsAt, current.startsAt));
+
+      await recordAudit({
+        actorId: request.userId!,
+        actorName: await actorName(request.userId!),
+        action: "shop.rotation",
+        targetId: current.startsAt.toISOString(),
+        detail: { cosmeticIds: parsed.data.cosmeticIds },
+        log: request.log,
+      });
+
+      return reply.send({ cosmeticIds: parsed.data.cosmeticIds });
+    },
+  );
+
+  /**
+   * POST /admin/users/:id/currency — grant or deduct shop currency.
+   *
+   * Separate from the credits endpoint: credits are the legacy balance that
+   * UserMeResponse still carries, while soft/hard are what the shop spends.
+   */
+  app.post<{ Params: { id: string } }>(
+    "/admin/users/:id/currency",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const parsed = z
+        .object({
+          currencyType: z.enum(["soft", "hard"]),
+          delta: z.number().int().min(-10_000_000).max(10_000_000),
+          reason: z.string().trim().min(1).max(500),
+        })
+        .safeParse(request.body);
+      if (!parsed.success) {
+        return reply
+          .code(400)
+          .send({ error: parsed.error.issues[0]?.message ?? "Invalid body" });
+      }
+      const targetId = request.params.id;
+
+      const target = await db.query.users.findFirst({
+        where: eq(users.id, targetId),
+        columns: { currencySoft: true, currencyHard: true },
+      });
+      if (!target) return reply.code(404).send({ error: "User not found" });
+
+      const isSoft = parsed.data.currencyType === "soft";
+      const before = isSoft ? target.currencySoft : target.currencyHard;
+      const next = clampCredits(before, parsed.data.delta);
+
+      await db
+        .update(users)
+        .set(isSoft ? { currencySoft: next } : { currencyHard: next })
+        .where(eq(users.id, targetId));
+
+      await recordAudit({
+        actorId: request.userId!,
+        actorName: await actorName(request.userId!),
+        action: "user.currency",
+        targetId,
+        detail: { ...parsed.data, before, after: next },
+        log: request.log,
+      });
+
+      return reply.send({
+        currencyType: parsed.data.currencyType,
+        balance: next,
+      });
     },
   );
 

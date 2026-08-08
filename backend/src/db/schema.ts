@@ -55,9 +55,14 @@ export const users = pgTable(
 
     adfree: boolean("adfree").notNull().default(false),
     unlimitedRanked: boolean("unlimited_ranked").notNull().default(false),
-    // Soft currency for the store-to-be. Earned/spent nowhere yet; the
-    // column exists so the balance has a home before the first sink does.
+    // Legacy balance, predating the two-currency split below. Kept because
+    // UserMeResponseSchema still carries `credits` and the admin panel edits
+    // it; the shop spends currencySoft/currencyHard.
     credits: integer("credits").notNull().default(0),
+    // Shop wallet. Two currencies because UserMeResponseSchema's
+    // CurrencyBalancesSchema requires both: soft is earned, hard is bought.
+    currencySoft: integer("currency_soft").notNull().default(0),
+    currencyHard: integer("currency_hard").notNull().default(0),
     canCreatePublicLobbies: boolean("can_create_public_lobbies")
       .notNull()
       .default(false),
@@ -212,6 +217,141 @@ export const adminAuditLog = pgTable(
     // The log is read newest-first, either whole or filtered to one target.
     index("admin_audit_created_idx").on(table.createdAt),
     index("admin_audit_target_idx").on(table.targetId, table.createdAt),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Shop
+// ---------------------------------------------------------------------------
+
+/**
+ * The cosmetics catalog served at GET /cosmetics.json.
+ *
+ * One row per item across every kind (pattern, flag, crown, skin, effect),
+ * discriminated by `kind`, because the game's CosmeticsSchema nests them under
+ * separate keys but they are otherwise the same shape: a name, a price, and a
+ * kind-specific payload. A table per kind would duplicate the price and
+ * rotation columns five times.
+ *
+ * `payload` holds the kind-specific part verbatim (a pattern's encoded data, a
+ * flag's URL, an effect's attributes) so adding a field to one kind needs no
+ * migration. It is validated against the game's own schema when the catalog is
+ * assembled, not here.
+ */
+export const cosmetics = pgTable(
+  "cosmetics",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // pattern | flag | crown | skin | effect
+    kind: text("kind").notNull(),
+    // The catalog key AND the flare suffix ("flag:<name>"), so it must be
+    // stable — renaming an item revokes it from everyone who owns it.
+    name: text("name").notNull(),
+    displayName: text("display_name"),
+    rarity: text("rarity"),
+    artist: text("artist"),
+    // Null price = not purchasable with that currency. An item with both null
+    // is display-only (granted by admin or bundled).
+    priceSoft: integer("price_soft"),
+    priceHard: integer("price_hard"),
+    // Kind-specific fields (pattern data, url, effect attributes, effectType).
+    payload: jsonb("payload").notNull().default({}),
+    // Hidden items never reach /cosmetics.json — the staging state for an item
+    // being prepared for a future drop.
+    published: boolean("published").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // A flare names an item by kind+name, so that pair has to be unique or
+    // ownership becomes ambiguous.
+    uniqueIndex("cosmetics_kind_name").on(table.kind, table.name),
+    index("cosmetics_published_idx").on(table.published),
+  ],
+);
+
+/**
+ * A rotating drop window: which items are for sale, and until when.
+ *
+ * Rows are created ahead of time by the rotation engine rather than computed
+ * on read. Two reasons: a player who loads the shop as a window closes must
+ * not see a different lineup than the purchase endpoint enforces, and the
+ * admin panel needs to preview and edit an upcoming drop before it goes live.
+ */
+export const shopRotations = pgTable(
+  "shop_rotations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+    // Cosmetic ids in this window. Denormalised into an array rather than a
+    // join table: the list is read whole on every shop load, never queried by
+    // member, and is small (a handful of items).
+    cosmeticIds: uuid("cosmetic_ids").array().notNull(),
+    // Set when an admin edited the lineup, so the engine leaves it alone
+    // instead of regenerating over a deliberate choice.
+    pinned: boolean("pinned").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // "Which window is live now" and "what is next" are the only two queries.
+    index("shop_rotations_window_idx").on(table.startsAt, table.endsAt),
+    // One lineup per window. Rotations are created on demand by whichever
+    // request first crosses a boundary, so two concurrent requests would
+    // otherwise insert two different lineups for the same window and players
+    // would see different drops depending on which row was read.
+    uniqueIndex("shop_rotations_starts_at").on(table.startsAt),
+  ],
+);
+
+/**
+ * Shop configuration. A single row (id = "default") rather than a settings
+ * file, so the admin panel can change the drop cadence without a redeploy.
+ */
+export const shopConfig = pgTable("shop_config", {
+  id: text("id").primaryKey(),
+  // How often a new drop replaces the last. Hours because that is how the
+  // feature is described ("every X hours") and it avoids cron syntax.
+  rotationHours: integer("rotation_hours").notNull().default(6),
+  // How many items each drop contains.
+  itemsPerRotation: integer("items_per_rotation").notNull().default(4),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * Purchase ledger, append-only.
+ *
+ * Entitlement itself lives in users.flares (that is what the game reads), so
+ * this exists to answer "what did they pay, and when" — for refunds, for
+ * disputes, and so a price change never rewrites history. `pricePaid` and
+ * `currencyType` are recorded rather than joined to the catalog for the same
+ * reason.
+ */
+export const shopPurchases = pgTable(
+  "shop_purchases",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    cosmeticId: uuid("cosmetic_id").references(() => cosmetics.id, {
+      onDelete: "set null",
+    }),
+    // Kept even if the cosmetic row is deleted — the flare granted survives it.
+    flare: text("flare").notNull(),
+    currencyType: text("currency_type").notNull(), // soft | hard
+    pricePaid: integer("price_paid").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("shop_purchases_user_idx").on(table.userId, table.createdAt),
   ],
 );
 

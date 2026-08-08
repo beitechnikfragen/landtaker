@@ -12,6 +12,7 @@ import { registerLeaderboardRoutes } from "./routes/leaderboard.ts";
 import { registerMatchmakingRoutes } from "./routes/matchmaking.ts";
 import { registerPartyRoutes } from "./routes/parties.ts";
 import { registerPartyEventRoutes } from "./routes/partyEvents.ts";
+import { registerShopRoutes } from "./routes/shop.ts";
 import { registerStubRoutes } from "./routes/stubs.ts";
 import { registerUserRoutes } from "./routes/users.ts";
 import { registerWellKnownRoutes } from "./routes/wellKnown.ts";
@@ -79,6 +80,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registerJoinVerifyRoutes(app);
   await registerMatchmakingRoutes(app);
   await registerCustomTribeRoutes(app);
+  await registerShopRoutes(app);
   await registerAdminRoutes(app);
   // Placeholder endpoints for features not built yet (clans, cosmetics,
   // streams, news, Stripe) — see routes/stubs.ts.

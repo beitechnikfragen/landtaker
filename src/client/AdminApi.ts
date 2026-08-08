@@ -213,6 +213,177 @@ export async function liftAdminBan(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Shop
+// ---------------------------------------------------------------------------
+
+export interface AdminCosmetic {
+  id: string;
+  kind: string;
+  name: string;
+  displayName: string | null;
+  rarity: string | null;
+  artist: string | null;
+  priceSoft: number | null;
+  priceHard: number | null;
+  payload: unknown;
+  published: boolean;
+  createdAt: string;
+}
+
+export async function fetchAdminCosmetics(): Promise<
+  AdminCosmetic[] | AdminApiError
+> {
+  try {
+    const res = await adminFetch("/admin/cosmetics");
+    if (!res.ok) {
+      return { error: await readError(res, "Failed to load cosmetics") };
+    }
+    const body = await res.json();
+    return Array.isArray(body?.cosmetics) ? body.cosmetics : [];
+  } catch (err) {
+    console.warn("fetchAdminCosmetics: request failed", err);
+    return { error: "Request failed" };
+  }
+}
+
+export async function saveAdminCosmetic(item: {
+  kind: string;
+  name: string;
+  displayName?: string | null;
+  rarity?: string | null;
+  priceSoft?: number | null;
+  priceHard?: number | null;
+  payload?: Record<string, unknown>;
+  published?: boolean;
+}): Promise<{ id: string } | AdminApiError> {
+  try {
+    const res = await adminFetch("/admin/cosmetics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(item),
+    });
+    if (!res.ok) return { error: await readError(res, "Failed to save") };
+    return await res.json();
+  } catch (err) {
+    console.warn("saveAdminCosmetic: request failed", err);
+    return { error: "Request failed" };
+  }
+}
+
+export async function deleteAdminCosmetic(
+  kind: string,
+  name: string,
+): Promise<{ deleted: true } | AdminApiError> {
+  try {
+    const res = await adminFetch(
+      `/admin/cosmetics/${encodeURIComponent(kind)}/${encodeURIComponent(name)}`,
+      { method: "DELETE" },
+    );
+    if (!res.ok) return { error: await readError(res, "Failed to delete") };
+    return { deleted: true };
+  } catch (err) {
+    console.warn("deleteAdminCosmetic: request failed", err);
+    return { error: "Request failed" };
+  }
+}
+
+export interface AdminShopConfig {
+  rotationHours: number;
+  itemsPerRotation: number;
+}
+
+export async function fetchAdminShopConfig(): Promise<
+  AdminShopConfig | AdminApiError
+> {
+  try {
+    const res = await adminFetch("/admin/shop/config");
+    if (!res.ok)
+      return { error: await readError(res, "Failed to load config") };
+    return await res.json();
+  } catch (err) {
+    console.warn("fetchAdminShopConfig: request failed", err);
+    return { error: "Request failed" };
+  }
+}
+
+export async function saveAdminShopConfig(
+  config: AdminShopConfig,
+): Promise<AdminShopConfig | AdminApiError> {
+  try {
+    const res = await adminFetch("/admin/shop/config", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(config),
+    });
+    if (!res.ok)
+      return { error: await readError(res, "Failed to save config") };
+    return await res.json();
+  } catch (err) {
+    console.warn("saveAdminShopConfig: request failed", err);
+    return { error: "Request failed" };
+  }
+}
+
+export async function fetchAdminRotation(): Promise<
+  { startsAt: string; endsAt: string; cosmeticIds: string[] } | AdminApiError
+> {
+  try {
+    const res = await adminFetch("/admin/shop/rotation");
+    if (!res.ok) {
+      return { error: await readError(res, "Failed to load rotation") };
+    }
+    return await res.json();
+  } catch (err) {
+    console.warn("fetchAdminRotation: request failed", err);
+    return { error: "Request failed" };
+  }
+}
+
+export async function saveAdminRotation(
+  cosmeticIds: string[],
+): Promise<{ cosmeticIds: string[] } | AdminApiError> {
+  try {
+    const res = await adminFetch("/admin/shop/rotation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cosmeticIds }),
+    });
+    if (!res.ok) {
+      return { error: await readError(res, "Failed to save rotation") };
+    }
+    return await res.json();
+  } catch (err) {
+    console.warn("saveAdminRotation: request failed", err);
+    return { error: "Request failed" };
+  }
+}
+
+export async function adjustAdminCurrency(
+  id: string,
+  currencyType: "soft" | "hard",
+  delta: number,
+  reason: string,
+): Promise<{ balance: number } | AdminApiError> {
+  try {
+    const res = await adminFetch(
+      `/admin/users/${encodeURIComponent(id)}/currency`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currencyType, delta, reason }),
+      },
+    );
+    if (!res.ok) {
+      return { error: await readError(res, "Failed to adjust currency") };
+    }
+    return await res.json();
+  } catch (err) {
+    console.warn("adjustAdminCurrency: request failed", err);
+    return { error: "Request failed" };
+  }
+}
+
 export async function fetchAdminAudit(query: {
   targetId?: string;
   limit?: number;

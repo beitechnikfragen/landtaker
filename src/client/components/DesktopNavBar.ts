@@ -194,9 +194,13 @@ export class DesktopNavBar extends LitElement {
               `
             : ""}
         </div>
-        <!-- Store isn't stocked yet: the tab is visible so the plan reads,
-             but disabled until there is something to sell. -->
-        ${this.renderComingSoon("main.store")}
+        <!-- The store sells cosmetics for in-game currency now; only its
+             real-money tabs are still gated (see Store.ts). -->
+        <button
+          class="nav-menu-item lt-nav-item"
+          data-page="page-item-store"
+          data-i18n="main.store"
+        ></button>
         <button
           class="nav-menu-item lt-nav-item"
           data-page="page-settings"

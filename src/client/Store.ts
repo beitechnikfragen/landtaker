@@ -30,14 +30,21 @@ type StoreTab =
   | "tribes";
 
 /**
- * PLACEHOLDER: the store has no working backend — Stripe checkout returns 501
- * and /cosmetics.json serves an empty catalog (backend/src/routes/stubs.ts).
- * The nav button stays visible so players see the store is planned, but the
- * modal shows a "coming soon" panel instead of empty grids and buy buttons
- * that cannot complete a purchase. Flip to false once Stripe and the cosmetics
- * catalog are implemented.
+ * The cosmetics half of the store is live: /cosmetics.json serves a real
+ * catalog and /shop/purchase spends soft/hard currency (backend/src/routes/
+ * shop.ts). Currency-purchasable items are therefore buyable now.
+ *
+ * Real-money checkout is NOT: Stripe still returns 501, so the tabs that only
+ * sell for money — currency packs, subscriptions, merch — would show buy
+ * buttons that cannot complete. Those stay behind the coming-soon panel until
+ * a payment provider is wired up.
  */
-const STORE_COMING_SOON = true;
+const MONEY_TABS_COMING_SOON = true;
+const MONEY_TABS: ReadonlySet<string> = new Set([
+  "packs",
+  "subscriptions",
+  "merch",
+]);
 
 const COSMETICS_SUB_TABS = ["patterns", "flags", "crowns"] as const;
 type CosmeticsSubTab = (typeof COSMETICS_SUB_TABS)[number];
@@ -51,10 +58,6 @@ export class StoreModal extends BaseModal {
   private cosmeticsSubTab: CosmeticsSubTab = "patterns";
 
   protected modalConfig() {
-    // PLACEHOLDER: renderBody shows a "coming soon" panel, so tabs would only
-    // switch between identical screens. Restore the tabs below when Stripe and
-    // the cosmetics catalog land (see backend/src/routes/stubs.ts).
-    if (STORE_COMING_SOON) return {};
     if (this.affiliateCode) {
       // Affiliate mode: hide tabs, show only items associated with the code.
       return {};
@@ -376,7 +379,11 @@ export class StoreModal extends BaseModal {
   }
 
   protected renderBody(key: string): TemplateResult {
-    if (STORE_COMING_SOON) return renderComingSoon();
+    // Only the money-only tabs are gated; cosmetics and effects sell for
+    // in-game currency, which works.
+    if (MONEY_TABS_COMING_SOON && MONEY_TABS.has(key)) {
+      return renderComingSoon();
+    }
     if (this.affiliateCode) {
       return this.renderAffiliateGrid();
     }
