@@ -24,11 +24,11 @@ export class CallStateMachine {
   }
 
   get peers(): ClientID[] {
-    return this._peers;
+    return [...this._peers];
   }
 
   get missed(): MissedCall[] {
-    return this._missed;
+    return [...this._missed];
   }
 
   get incoming(): { from: ClientID; username: string } | null {
@@ -116,6 +116,12 @@ export class CallStateMachine {
   }
 
   private emit(): void {
-    for (const l of this.listeners) l();
+    for (const l of this.listeners) {
+      try {
+        l();
+      } catch (err) {
+        console.error("CallStateMachine: listener threw", err);
+      }
+    }
   }
 }

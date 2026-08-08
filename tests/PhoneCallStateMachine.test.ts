@@ -110,4 +110,131 @@ describe("CallStateMachine", () => {
     m.receive({ kind: "signal", from: A, data: "sdp" });
     expect(m.state).toBe("idle");
   });
+
+  // Regression tests for robustness fixes
+  it("returns a defensive copy of peers so external mutation does not affect state", () => {
+    m.receive({ kind: "callState", callId: "c1", peers: [B] });
+    const peers1 = m.peers;
+    peers1.push("HACKED");
+    // Verify the machine's internal state is unchanged
+    expect(m.peers).toEqual([B]);
+    // Verify subsequent calls also return uncorrupted state
+    const peers2 = m.peers;
+    expect(peers2).toEqual([B]);
+  });
+
+  it("returns a defensive copy of missed so external mutation does not affect state", () => {
+    m.receive({ kind: "missed", from: A, fromUsername: "Alice" });
+    const missed1 = m.missed;
+    missed1.push({ from: B, username: "Bob" });
+    // Verify the machine's internal state is unchanged
+    expect(m.missed).toEqual([{ from: A, username: "Alice" }]);
+    // Verify subsequent calls also return uncorrupted state
+    const missed2 = m.missed;
+    expect(missed2).toEqual([{ from: A, username: "Alice" }]);
+  });
+
+  it("does not let a throwing listener silence other listeners", () => {
+    const events: string[] = [];
+    const throwingListener = vi.fn(() => {
+      throw new Error("Listener error");
+    });
+    const goodListener = vi.fn(() => {
+      events.push("listener2");
+    });
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    m.onChange(throwingListener);
+    m.onChange(goodListener);
+    m.receive({ kind: "dialing", callId: "c1" });
+
+    // Both listeners should have been called
+    expect(throwingListener).toHaveBeenCalled();
+    expect(goodListener).toHaveBeenCalled();
+    // The good listener should have run despite the throwing one
+    expect(events).toEqual(["listener2"]);
+    // The error should have been logged
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "CallStateMachine: listener threw",
+      expect.any(Error),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("second busy arriving while one is pending replaces the timer cleanly", () => {
+    m.receive({ kind: "dialing", callId: "c1" });
+    m.receive({ kind: "busy" });
+    expect(m.state).toBe("busy");
+
+    // Advance partway through the first busy timeout
+    vi.advanceTimersByTime(1000);
+    expect(m.state).toBe("busy");
+
+    // A second busy arrives and replaces the timer
+    m.receive({ kind: "busy" });
+    expect(m.state).toBe("busy");
+
+    // Advance 2000 more (total 3000) — the original timer would have fired at 3000
+    vi.advanceTimersByTime(2000);
+    // Should still be busy because the new timer started fresh
+    expect(m.state).toBe("busy");
+
+    // Advance 1000 more (total 3000 from the new timer start)
+    vi.advanceTimersByTime(1000);
+    // Now should be idle
+    expect(m.state).toBe("idle");
+  });
+
+  it("dialing/ringing/callState arriving while busy timer is pending cancels it", () => {
+    m.receive({ kind: "dialing", callId: "c1" });
+    m.receive({ kind: "busy" });
+    expect(m.state).toBe("busy");
+
+    // Advance partway through the busy timeout
+    vi.advanceTimersByTime(1500);
+    expect(m.state).toBe("busy");
+
+    // A dialing arrives and should cancel the busy timer
+    m.receive({ kind: "dialing", callId: "c2" });
+    expect(m.state).toBe("dialing");
+
+    // Advance past where the original busy timer would have fired
+    vi.advanceTimersByTime(2000);
+    // Should still be dialing, not kicked back to idle by the stale busy timer
+    expect(m.state).toBe("dialing");
+  });
+
+  it("ringing arriving while busy timer pending cancels it", () => {
+    m.receive({ kind: "dialing", callId: "c1" });
+    m.receive({ kind: "busy" });
+    expect(m.state).toBe("busy");
+
+    vi.advanceTimersByTime(1500);
+    m.receive({
+      kind: "ringing",
+      callId: "c2",
+      from: A,
+      fromUsername: "Alice",
+    });
+    expect(m.state).toBe("ringing");
+
+    vi.advanceTimersByTime(2000);
+    expect(m.state).toBe("ringing");
+  });
+
+  it("callState arriving while busy timer pending cancels it", () => {
+    m.receive({ kind: "dialing", callId: "c1" });
+    m.receive({ kind: "busy" });
+    expect(m.state).toBe("busy");
+
+    vi.advanceTimersByTime(1500);
+    m.receive({ kind: "callState", callId: "c2", peers: [A] });
+    expect(m.state).toBe("in-call");
+
+    vi.advanceTimersByTime(2000);
+    expect(m.state).toBe("in-call");
+  });
 });
