@@ -738,6 +738,7 @@
     "load_more": "Load More",
     "no_friends": "You haven't added any friends yet.",
     "no_messages": "No messages yet - say hi.",
+    "offline": "offline",
     "online": "online",
     "outgoing": "Outgoing",
     "pending_requests": "Pending Requests",
@@ -1883,13 +1884,13 @@
   "text_chat": {
     "channel_all": "All",
     "channel_team": "Team",
-    "channel_whisper": "To",
+    "close_tab": "Close conversation",
     "empty": "No messages yet.",
     "hide": "Hide",
-    "placeholder": "Enter to send, Tab to switch channel, Esc to cancel",
+    "placeholder": "Enter to send, Tab to switch conversation, Esc to cancel",
     "prompt": "Press Enter to chat",
     "title": "Chat",
-    "to": "to"
+    "unknown": "Unknown"
   },
   "token_login_modal": {
     "logging_in": "Logging in...",

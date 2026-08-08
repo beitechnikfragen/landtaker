@@ -47,7 +47,23 @@ export class TextChatExecution implements Execution {
     this.sender.recordTextChat();
 
     for (const recipient of recipients) {
-      this.mg.displayTextChat(text, this.channel, this.sender, recipient);
+      // For a whisper, tell each side who the other party is. The sender's own
+      // copy would otherwise only name themselves, leaving the client unable to
+      // file the message under the right conversation.
+      const whisperWith =
+        this.channel === "player"
+          ? recipient === this.sender
+            ? recipients.find((p) => p !== this.sender)
+            : this.sender
+          : undefined;
+
+      this.mg.displayTextChat(
+        text,
+        this.channel,
+        this.sender,
+        recipient,
+        whisperWith,
+      );
     }
   }
 

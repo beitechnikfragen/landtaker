@@ -98,6 +98,9 @@ export class FriendsPanel extends LitElement {
   private stream: FriendsStreamHandle | null = null;
   private partyStream: PartyStreamHandle | null = null;
   private rosterTimer: ReturnType<typeof setInterval> | null = null;
+  /** True while a match is running; moves the dock clear of the chat panel. */
+  @state() private inGame = false;
+  private bodyClassObserver: MutationObserver | null = null;
 
   createRenderRoot() {
     return this;
@@ -107,6 +110,25 @@ export class FriendsPanel extends LitElement {
     super.connectedCallback();
     document.addEventListener("userMeResponse", this.onUserMe as EventListener);
     document.addEventListener("visibilitychange", this.onVisibility);
+
+    // Entering a match is a class toggle on <body> with no event to listen for,
+    // so the dock watches for it. It has to re-render rather than just restyle:
+    // in game it moves to the opposite corner, away from the chat panel.
+    this.inGame = document.body.classList.contains("in-game");
+    this.bodyClassObserver = new MutationObserver(() => {
+      const inGame = document.body.classList.contains("in-game");
+      if (inGame === this.inGame) return;
+      this.inGame = inGame;
+      // Enter a match collapsed even if the dock was left open in the menu —
+      // the panel expands upward over the map, and the first thing a player
+      // needs on entry is the map, not their friends list. Deliberately not
+      // written to localStorage, so leaving the game restores their choice.
+      if (inGame) this.open = false;
+    });
+    this.bodyClassObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
   }
 
   disconnectedCallback() {
@@ -115,6 +137,8 @@ export class FriendsPanel extends LitElement {
       this.onUserMe as EventListener,
     );
     document.removeEventListener("visibilitychange", this.onVisibility);
+    this.bodyClassObserver?.disconnect();
+    this.bodyClassObserver = null;
     this.teardown();
     super.disconnectedCallback();
   }
@@ -546,8 +570,15 @@ export class FriendsPanel extends LitElement {
     const unreadTotal = this.unreadTotal();
 
     return html`
+      <!-- In a match the dock moves to the bottom-left, clear of the chat
+           panel that now occupies the bottom-right, and sits above the
+           feedback button rather than on top of it. Kept below the radial
+           menu's z-index so it never covers a right-click on the map. -->
       <div
-        class="hidden lg:block in-[.in-game]:!hidden fixed bottom-0 right-[72px] z-[900] w-[340px] pointer-events-auto"
+        class="hidden lg:block fixed z-[900] w-[340px] pointer-events-auto ${this
+          .inGame
+          ? "bottom-[68px] left-4"
+          : "bottom-0 right-[72px]"}"
       >
         <!-- Collapsed bar / panel header -->
         <button
@@ -957,11 +988,22 @@ export class FriendsPanel extends LitElement {
             <div
               class="flex items-center gap-2 px-2.5 py-1.5 border-b border-lt-700/45 last:border-b-0"
             >
+              <!-- Presence, same rule as the friends list: green online, grey
+                   offline, hollow when the backend sent no presence at all.
+                   Leadership is carried by the label beside the name, so this
+                   dot only ever means one thing. -->
               <span
-                class="w-2 h-2 shrink-0 rounded-full ${member.isLeader
-                  ? "bg-lt-accent"
-                  : "bg-lt-ok"}"
-                title=${member.isLeader ? translateText("party.leader") : ""}
+                class="w-2 h-2 shrink-0 rounded-full ${member.online ===
+                undefined
+                  ? "border border-lt-600"
+                  : member.online
+                    ? "bg-lt-ok"
+                    : "bg-lt-600"}"
+                title=${member.online === undefined
+                  ? ""
+                  : translateText(
+                      member.online ? "friends.online" : "friends.offline",
+                    )}
               ></span>
               <span
                 class="flex-1 min-w-0 truncate text-[14px] ${member.publicId ===

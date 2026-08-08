@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { randomInt } from "node:crypto";
 import { db } from "../db/index.ts";
 import { parties, partyMembers, users } from "../db/schema.ts";
+import { arePresent } from "./friendChat.ts";
 
 /**
  * Parties let a group enter a match together. Membership is persisted so a
@@ -74,6 +75,11 @@ export async function getParty(
     .innerJoin(users, eq(users.id, partyMembers.userId))
     .where(eq(partyMembers.partyId, partyId));
 
+  // Presence comes from the same Redis keys the friends list reads, so a
+  // member shows the same state in both places rather than being assumed
+  // online just because they are in the party.
+  const online = await arePresent(rows.map((row) => row.userId));
+
   return {
     id: party.id,
     inviteCode: party.inviteCode,
@@ -81,7 +87,7 @@ export async function getParty(
     maxMembers: party.maxMembers,
     leaderId: party.leaderId,
     ...(viewerId ? { viewerId } : {}),
-    members: rows.map((row) => ({
+    members: rows.map((row, i) => ({
       userId: row.userId,
       publicId: row.publicId,
       // Mirrors resolveDisplayUsername: only entitled statuses render bare.
@@ -92,6 +98,7 @@ export async function getParty(
         : null,
       isLeader: row.userId === party.leaderId,
       joinedAt: row.joinedAt.toISOString(),
+      online: online[i] ?? false,
     })),
   };
 }

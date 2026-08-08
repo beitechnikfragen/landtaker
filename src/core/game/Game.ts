@@ -845,12 +845,19 @@ export interface Game extends GameMap {
     recipient: string,
   ): void;
 
-  /** Delivers one free-text chat message to a single recipient. */
+  /**
+   * Delivers one free-text chat message to a single recipient.
+   *
+   * whisperWith is the other party in a private exchange, seen from this
+   * recipient's side — the sender for the receiving copy, the addressee for the
+   * sender's own copy. Only meaningful for channel "player".
+   */
   displayTextChat(
     text: string,
     channel: TextChatChannel,
     sender: Player,
     recipient: Player,
+    whisperWith?: Player,
   ): void;
 
   // Nations

@@ -349,6 +349,16 @@ export type DisplayTextChatUpdate = {
   senderName: string;
   /** The player this update is for. Clients drop anything not addressed to them. */
   recipientID: number;
+  /**
+   * For channel "player" only: the other party in the whisper, from this
+   * recipient's point of view. On the receiving copy that is the sender; on the
+   * sender's own copy it is who they wrote to — which the sender could not
+   * otherwise recover, since senderID is themselves. Lets a client group a
+   * whisper thread by counterpart without tracking send state.
+   */
+  whisperWithID?: number;
+  /** Display name matching whisperWithID. */
+  whisperWithName?: string;
 };
 
 export interface WinUpdate {

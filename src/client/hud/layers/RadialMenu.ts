@@ -13,6 +13,19 @@ import {
 } from "./RadialMenuElements";
 const backIcon = assetUrl("images/BackIconWhite.svg");
 
+/**
+ * The radial's own copies of the design tokens. The menu is drawn into raw SVG
+ * by d3, outside any Lit template, so it cannot reach the CSS custom
+ * properties the rest of the HUD uses — these must be kept in step with the
+ * `lt-*` palette in the stylesheet by hand.
+ */
+/** --color-lt-750: the same slab every other panel sits on. */
+const PLATE = "#181d22";
+/** --color-lt-600: hairline seams. */
+const SEAM = "#333c45";
+/** --color-lt-accent: hover and selection. */
+const ACCENT = "#ff8a1f";
+
 function resolveColor(
   item: MenuElement,
   params: MenuElementParams | null,
@@ -211,6 +224,10 @@ export class RadialMenu implements Controller {
       .attr("class", "center-button-visible")
       .attr("r", this.config.centerButtonSize)
       .attr("fill", this.centerButtonColor)
+      // Same hairline the segments carry, so the hub reads as part of the set
+      // rather than a floating disc.
+      .attr("stroke", SEAM)
+      .attr("stroke-width", 1.5)
       .style("pointer-events", "none");
 
     centerButton
@@ -316,6 +333,27 @@ export class RadialMenu implements Controller {
     return menuGroup;
   }
 
+  /**
+   * The resting plate colour for a segment.
+   *
+   * Shared by the initial render and the mouse-out restore so the two cannot
+   * drift; when they did, leaving a segment repainted it a different colour
+   * than it started.
+   */
+  private plateFill(
+    item: MenuElement,
+    disabled: boolean,
+    level: number,
+  ): string {
+    if (disabled) {
+      return d3.color(PLATE)?.copy({ opacity: 0.55 })?.toString() ?? PLATE;
+    }
+    const color = resolveColor(item, this.params) ?? PLATE;
+    const open = item.id === this.selectedItemId && this.currentLevel > level;
+    const mixed = d3.color(d3.interpolateRgb(PLATE, color)(open ? 0.34 : 0.14));
+    return mixed?.copy({ opacity: 0.94 })?.toString() ?? PLATE;
+  }
+
   private renderPaths(
     arcs: d3.Selection<
       SVGGElement,
@@ -330,20 +368,32 @@ export class RadialMenu implements Controller {
       .append("path")
       .attr("class", "menu-item-path")
       .attr("d", arc)
-      .attr("fill", (d) => {
+      // Plates are the same near-black slab as every other panel; the category
+      // colour arrives as the rim and the icon, not as a full wash. A wash made
+      // six saturated wedges compete with the map underneath.
+      .attr("fill", (d) =>
+        this.plateFill(
+          d.data,
+          this.params === null || d.data.disabled(this.params),
+          level,
+        ),
+      )
+      // Hairline seams, matching the 1px borders the rest of the HUD uses.
+      // Drawn per segment rather than relying on padAngle alone so the wedges
+      // read as separate plates instead of one ring with gaps in it.
+      .attr("stroke", (d) => {
         const disabled = this.params === null || d.data.disabled(this.params);
-        const color = disabled
-          ? this.config.disabledColor
-          : (resolveColor(d.data, this.params) ?? "#181d22");
-        const opacity = disabled ? 0.4 : 0.82;
-
-        if (d.data.id === this.selectedItemId && this.currentLevel > level) {
-          return color;
-        }
-
-        return d3.color(color)?.copy({ opacity: opacity })?.toString() ?? color;
+        if (disabled) return SEAM;
+        return resolveColor(d.data, this.params) ?? SEAM;
       })
-      .attr("stroke", "none")
+      .attr("stroke-width", (d) => {
+        const disabled = this.params === null || d.data.disabled(this.params);
+        return disabled ? 1 : 1.5;
+      })
+      .attr("stroke-opacity", (d) => {
+        const disabled = this.params === null || d.data.disabled(this.params);
+        return disabled ? 0.5 : 0.85;
+      })
       .style("cursor", (d) =>
         this.params === null || d.data.disabled(this.params)
           ? "not-allowed"
@@ -363,19 +413,19 @@ export class RadialMenu implements Controller {
       if (d.data.timerFraction && this.params) {
         const fraction = d.data.timerFraction(this.params);
         const disabled = this.params === null || d.data.disabled(this.params);
-        const baseColor = disabled
-          ? this.config.disabledColor
-          : (resolveColor(d.data, this.params) ?? "#181d22");
-        const opacity = disabled ? 0.4 : 0.82;
 
-        const normalColor =
-          d3.color(baseColor)?.copy({ opacity: opacity })?.toString() ??
-          baseColor;
-        const interpolated = d3.color(
-          d3.interpolateRgb(baseColor, "white")(0.4),
-        );
+        // The elapsed part is the ordinary plate; the remaining part carries
+        // the category colour, so a cooldown reads as the plate filling up
+        // rather than as two arbitrary shades.
+        const normalColor = this.plateFill(d.data, disabled, level);
+        const accentTo = disabled
+          ? SEAM
+          : (resolveColor(d.data, this.params) ?? ACCENT);
         const fadedColor =
-          interpolated?.copy({ opacity })?.toString() ?? normalColor;
+          d3
+            .color(d3.interpolateRgb(PLATE, accentTo)(0.45))
+            ?.copy({ opacity: 0.94 })
+            ?.toString() ?? normalColor;
 
         const gradientId = `timer-gradient-${d.data.id}`;
         const defs = this.menuElement.select("defs");
@@ -464,7 +514,25 @@ export class RadialMenu implements Controller {
         return;
       }
 
-      path.style("filter", "brightness(1.5)");
+      // An accent rim rather than a brightness bump: the plates are nearly
+      // black, so brightening them washes the colour out instead of reading as
+      // a highlight, and it matches how every other control marks hover.
+      path
+        .attr("stroke", ACCENT)
+        .attr("stroke-width", 2)
+        .attr("stroke-opacity", 1)
+        .attr(
+          "fill",
+          d3
+            .color(
+              d3.interpolateRgb(
+                PLATE,
+                resolveColor(d.data, this.params) ?? ACCENT,
+              )(0.3),
+            )
+            ?.copy({ opacity: 0.97 })
+            ?.toString() ?? PLATE,
+        );
     };
 
     const onMouseOut = (d: d3.PieArcDatum<MenuElement>, path: any) => {
@@ -484,18 +552,19 @@ export class RadialMenu implements Controller {
       )
         return;
       path.style("filter", null);
-      const color = disabled
-        ? this.config.disabledColor
-        : (resolveColor(d.data, this.params) ?? "#181d22");
-      const opacity = disabled ? 0.4 : 0.82;
+      // Put the resting rim and plate back; hover replaced both.
+      path
+        .attr(
+          "stroke",
+          disabled ? SEAM : (resolveColor(d.data, this.params) ?? SEAM),
+        )
+        .attr("stroke-width", disabled ? 1 : 1.5)
+        .attr("stroke-opacity", disabled ? 0.5 : 0.85);
 
       if (d.data.timerFraction) {
         path.attr("fill", `url(#timer-gradient-${d.data.id})`);
       } else {
-        path.attr(
-          "fill",
-          d3.color(color)?.copy({ opacity: opacity })?.toString() ?? color,
-        );
+        path.attr("fill", this.plateFill(d.data, disabled, level));
       }
     };
 

@@ -1,4 +1,4 @@
-﻿import { TextChatExecution } from "../src/core/execution/TextChatExecution";
+import { TextChatExecution } from "../src/core/execution/TextChatExecution";
 import { Game, Player, PlayerType } from "../src/core/game/Game";
 import {
   DisplayTextChatUpdate,
@@ -82,6 +82,35 @@ describe("TextChat delivery", () => {
     // The uninvolved player must not receive it at all — not merely have it
     // hidden client-side.
     expect(recipientsOf(updates)).not.toContain(player3.smallID());
+  });
+
+  test("a whisper names the other party on both copies", () => {
+    // Each side needs to know who the conversation is with so a client can file
+    // the message under the right thread. The sender's own copy cannot derive
+    // it — senderID is themselves.
+    const updates = sendTextChat(player1, "player", "just for you", player2);
+
+    const senderCopy = updates.find(
+      (u) => u.recipientID === player1.smallID(),
+    )!;
+    const receiverCopy = updates.find(
+      (u) => u.recipientID === player2.smallID(),
+    )!;
+
+    expect(senderCopy.whisperWithID).toBe(player2.smallID());
+    expect(receiverCopy.whisperWithID).toBe(player1.smallID());
+    expect(senderCopy.whisperWithName).toBe(player2.displayName());
+    expect(receiverCopy.whisperWithName).toBe(player1.displayName());
+  });
+
+  test("all and team chat carry no whisper counterpart", () => {
+    for (const channel of ["all", "team"] as const) {
+      const updates = sendTextChat(player1, channel, `hi ${channel}`);
+      expect(updates.every((u) => u.whisperWithID === undefined)).toBe(true);
+      // Cooldown would drop the second send, so advance past it.
+      const cooldown = game.config().textChatCooldown();
+      for (let i = 0; i < cooldown; i++) game.executeNextTick();
+    }
   });
 
   test("whisper to a player who does not exist delivers nothing", () => {
