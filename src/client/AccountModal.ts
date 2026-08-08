@@ -267,20 +267,27 @@ export class AccountModal extends BaseModal {
   // a magic link to a plain email (the backend associates a not-yet-registered
   // email with the current session — the "new-association" path), or linking a
   // Google account. Reuses the login form's email field/handlers.
+  //
+  // With Google disabled the divider would head an empty section, so it is
+  // bound to the same flag as the button it introduces.
   private renderEmailBinding(): TemplateResult {
     return html`
       <div class="mt-4 space-y-3">
         ${this.renderEmailField()}
-        <div class="flex items-center gap-4 py-1">
-          <div class="h-px bg-white/10 flex-1"></div>
-          <span
-            class="text-[10px] uppercase tracking-widest text-white/30 font-bold"
-          >
-            ${translateText("account_modal.or")}
-          </span>
-          <div class="h-px bg-white/10 flex-1"></div>
-        </div>
-        ${this.renderLinkGoogleButton()}
+        ${this.GOOGLE_LOGIN_ENABLED
+          ? html`
+              <div class="flex items-center gap-4 py-1">
+                <div class="h-px bg-white/10 flex-1"></div>
+                <span
+                  class="text-[10px] uppercase tracking-widest text-white/30 font-bold"
+                >
+                  ${translateText("account_modal.or")}
+                </span>
+                <div class="h-px bg-white/10 flex-1"></div>
+              </div>
+              ${this.renderLinkGoogleButton()}
+            `
+          : nothing}
       </div>
     `;
   }
@@ -640,6 +647,7 @@ export class AccountModal extends BaseModal {
   // Shown when logged in without a Google identity yet. Lets the user attach
   // Google to their existing account (we never auto-merge by email).
   private renderLinkGoogleButton(): TemplateResult {
+    if (!this.GOOGLE_LOGIN_ENABLED) return html``;
     if (this.userMeResponse?.user?.google) return html``;
     return html`
       <button
@@ -719,6 +727,24 @@ export class AccountModal extends BaseModal {
     `;
   }
 
+  // Google sign-in is built on both ends but the backend has no
+  // /auth/login/google yet, so the buttons would dead-end. Flip to true once
+  // GOOGLE_CLIENT_ID/SECRET are configured in the backend — nothing else
+  // needs changing, the handlers and link-result plumbing stay wired.
+  private readonly GOOGLE_LOGIN_ENABLED = false;
+
+  // The OAuth providers dictate their own surface colours, so they cannot be
+  // <o-button>s. This mirrors that component's chrome (BASE + size "md" +
+  // width "block") so the provider buttons and the magic-link button below
+  // them read as one stack.
+  private readonly OAUTH_BUTTON =
+    "font-[family-name:var(--font-lt-display)] font-semibold uppercase tracking-[0.14em] border " +
+    "transition-colors duration-150 " +
+    "outline-none focus-visible:outline-2 focus-visible:outline-lt-accent focus-visible:-outline-offset-2 " +
+    "text-center whitespace-normal break-words leading-tight overflow-hidden relative " +
+    "py-3 px-4 text-base lg:text-lg " +
+    "flex w-full items-center justify-center gap-3";
+
   private renderLoginOptions() {
     return html`
       <div class="flex items-center justify-center p-6 min-h-full">
@@ -748,41 +774,52 @@ export class AccountModal extends BaseModal {
             ${this.renderCurrency()}
           </div>
 
-          <div class="space-y-6">
-            <!-- Discord Login Button -->
+          <div class="space-y-3">
+            <!-- Discord Login Button. Wears the Landtaker button chrome (hard
+                 edges, display face, colour-shift hover) so it sits in the same
+                 stack as <o-button>; only Blurple is kept from Discord's brand. -->
             <button
               @click="${this.handleDiscordLogin}"
-              class="w-full px-6 py-4 text-white bg-[#5865F2] hover:bg-[#4752C4] border border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5865F2] transition-colors duration-200 flex items-center justify-center gap-3 group relative overflow-hidden shadow-lg hover:shadow-[#5865F2]/20"
+              class="${this
+                .OAUTH_BUTTON} text-white bg-[#5865F2] border-[#5865F2] hover:bg-[#4752C4] hover:border-[#4752C4]"
             >
               <img
                 src=${assetUrl("images/DiscordLogo.svg")}
-                alt="Discord"
-                class="w-6 h-6 relative z-10"
+                alt=""
+                aria-hidden="true"
+                class="w-5 h-5 shrink-0"
               />
-              <span class="font-bold relative z-10 tracking-wide"
+              <span class="min-w-0"
                 >${translateText("main.login_discord") ||
                 translateText("account_modal.link_discord")}</span
               >
             </button>
 
-            <!-- Google Login Button (Google brand guidelines: white surface,
-                 dark text, the multicolor "G" mark) -->
-            <button
-              @click="${this.handleGoogleLogin}"
-              class="w-full px-6 py-4 text-[#1f1f1f] bg-white hover:bg-[#f7f8f8] border border-[#dadce0] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] transition-colors duration-200 flex items-center justify-center gap-3 group relative overflow-hidden shadow-lg"
-            >
-              <img
-                src=${assetUrl("images/GoogleLogo.svg")}
-                alt=${translateText("account_modal.google_alt")}
-                class="w-6 h-6 relative z-10"
-              />
-              <span class="font-bold relative z-10 tracking-wide"
-                >${translateText("main.login_google")}</span
-              >
-            </button>
+            <!-- Google Login Button. Google's brand guidelines fix the surface
+                 (white), the text colour (dark) and the unmodified multicolour
+                 "G"; everything else follows the Landtaker chrome above. -->
+            ${this.GOOGLE_LOGIN_ENABLED
+              ? html`
+                  <button
+                    @click="${this.handleGoogleLogin}"
+                    class="${this
+                      .OAUTH_BUTTON} text-[#1f1f1f] bg-white border-[#dadce0] hover:bg-[#f7f8f8] hover:border-[#c8ccd0]"
+                  >
+                    <img
+                      src=${assetUrl("images/GoogleLogo.svg")}
+                      alt=${translateText("account_modal.google_alt")}
+                      class="w-5 h-5 shrink-0"
+                    />
+                    <span class="min-w-0"
+                      >${translateText("main.login_google")}</span
+                    >
+                  </button>
+                `
+              : nothing}
 
-            <!-- Divider -->
-            <div class="flex items-center gap-4 py-2">
+            <!-- Divider. Sets the two provider buttons apart from the
+                 magic-link form below, which is a different kind of sign-in. -->
+            <div class="flex items-center gap-4 pt-3 pb-1">
               <div class="h-px bg-white/10 flex-1"></div>
               <span
                 class="text-[10px] uppercase tracking-widest text-white/30 font-bold"

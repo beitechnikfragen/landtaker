@@ -15,6 +15,13 @@
       "when": 1786122663418,
       "tag": "0001_narrow_the_phantom",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786150063775,
+      "tag": "0002_exotic_penance",
+      "breakpoints": true
     }
   ]
 }

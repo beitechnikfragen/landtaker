@@ -239,3 +239,83 @@ export async function createUser(
   if (!row) throw new Error("Failed to create user");
   return row;
 }
+
+/**
+ * Resolves an external identity to an account, creating one on first sign-in.
+ *
+ * Returning players are matched on (provider, providerUserId) — never on
+ * email, which providers let users change and which would otherwise let
+ * someone take over an account by claiming its address elsewhere.
+ *
+ * The stored profile is refreshed on every login so a renamed or re-avatared
+ * player does not keep showing their old identity in game.
+ */
+export async function findOrCreateUserByIdentity(params: {
+  provider: string;
+  providerUserId: string;
+  profile: Record<string, unknown>;
+  email?: string | null;
+  /** Seeds the display name on first sign-in only. */
+  usernameBase?: string | null;
+}): Promise<typeof users.$inferSelect> {
+  const existing = await db.query.identities.findFirst({
+    where: and(
+      eq(identities.provider, params.provider),
+      eq(identities.providerUserId, params.providerUserId),
+    ),
+  });
+
+  if (existing) {
+    await db
+      .update(identities)
+      .set({ profile: params.profile })
+      .where(
+        and(
+          eq(identities.provider, params.provider),
+          eq(identities.providerUserId, params.providerUserId),
+        ),
+      );
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, existing.userId),
+    });
+    // The cascade on identities.user_id makes an orphan row impossible; if one
+    // exists the database is inconsistent and silently minting a new account
+    // would hide it.
+    if (!user) {
+      throw new Error(
+        `Identity ${params.provider}:${params.providerUserId} points at missing user ${existing.userId}`,
+      );
+    }
+    return user;
+  }
+
+  const user = await createUser({
+    email: params.email ?? null,
+    usernameBase: sanitizeUsernameBase(params.usernameBase),
+    usernameDiscriminator: String(Math.floor(Math.random() * 10_000)).padStart(
+      4,
+      "0",
+    ),
+    // "claimed", not "premium": a new account renders as "Name.1234" and does
+    // not get the verified badge — that is an entitlement, not a signup gift.
+    usernameStatus: "claimed",
+  });
+  await db.insert(identities).values({
+    userId: user.id,
+    provider: params.provider,
+    providerUserId: params.providerUserId,
+    profile: params.profile,
+  });
+  return user;
+}
+
+/**
+ * Makes a provider display name usable as a username base. A dot would make
+ * the name read as an already-discriminated one and silently grant the
+ * verified badge (isVerifiedUsername), so dots are stripped rather than
+ * passed through.
+ */
+function sanitizeUsernameBase(raw: string | null | undefined): string {
+  const cleaned = (raw ?? "").replace(/\./g, "").trim().slice(0, 24);
+  return cleaned.length >= 3 ? cleaned : "Player";
+}

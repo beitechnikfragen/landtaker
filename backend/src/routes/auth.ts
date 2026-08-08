@@ -2,14 +2,23 @@ import { and, eq, gt, isNull } from "drizzle-orm";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import {
+  generateLoginToken,
   generateRefreshToken,
   hashRefreshToken,
   issueAccessToken,
 } from "../auth/tokens.ts";
 import { config, isProduction } from "../config.ts";
 import { db } from "../db/index.ts";
-import { refreshTokens, users } from "../db/schema.ts";
-import { createUser } from "../services/users.ts";
+import { loginTokens, refreshTokens, users } from "../db/schema.ts";
+import { isEmailConfigured, sendMagicLinkEmail } from "../services/email.ts";
+import {
+  discordAuthorizeUrl,
+  fetchDiscordProfile,
+  isAllowedRedirect,
+  signState,
+  verifyState,
+} from "../services/oauth.ts";
+import { createUser, findOrCreateUserByIdentity } from "../services/users.ts";
 
 /** Name of the httpOnly cookie carrying the refresh token. */
 const REFRESH_COOKIE = "refresh_token";
@@ -32,7 +41,34 @@ function setRefreshCookie(reply: FastifyReply, token: string, expiresAt: Date) {
   });
 }
 
+/**
+ * Issues a refresh token + access token pair for a user and sets the cookie.
+ * Shared by every way of signing in (OAuth callbacks, dev-login) so they
+ * cannot drift apart on TTLs or cookie flags.
+ */
+async function startSession(
+  reply: FastifyReply,
+  user: { id: string; role: string | null },
+) {
+  const refresh = generateRefreshToken();
+  await db.insert(refreshTokens).values({
+    userId: user.id,
+    tokenHash: refresh.tokenHash,
+    expiresAt: refresh.expiresAt,
+  });
+  const access = await issueAccessToken({ userId: user.id, role: user.role });
+  setRefreshCookie(reply, refresh.token, refresh.expiresAt);
+  return { refresh, access };
+}
+
 const RefreshBodySchema = z.object({ refreshToken: z.string().min(1) });
+
+const MagicLinkBodySchema = z.object({
+  email: z.email().max(254),
+  // window.location.origin from the client (sendMagicLink); checked against
+  // the redirect allowlist before it is ever put in an email.
+  redirectDomain: z.string().min(1),
+});
 const DevLoginBodySchema = z.object({
   // Reuse an existing account across restarts, or omit to mint a new one.
   userId: z.uuid().optional(),
@@ -149,6 +185,215 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
   });
 
   /**
+   * Discord OAuth.
+   *
+   * Registered only when credentials are configured: a half-configured
+   * provider that renders a button leading to a Discord error page is worse
+   * than one that is plainly absent.
+   */
+  if (config.DISCORD_CLIENT_ID && config.DISCORD_CLIENT_SECRET) {
+    /**
+     * GET /auth/login/discord?redirect_uri=...
+     *
+     * Entry point the client links to (discordLogin in src/client/Auth.ts).
+     * Bounces the browser to Discord with a signed state carrying the return
+     * URL.
+     */
+    app.get("/auth/login/discord", async (request, reply) => {
+      const query = request.query as Record<string, string | undefined>;
+      const target = query.redirect_uri ?? config.CORS_ORIGIN.split(",")[0]!;
+      if (!isAllowedRedirect(target)) {
+        return reply.code(400).send({ error: "redirect_uri not allowed" });
+      }
+      return reply.redirect(discordAuthorizeUrl(signState(target)));
+    });
+
+    /**
+     * GET /auth/callback/discord
+     *
+     * Where Discord sends the browser back. Exchanges the code, links or
+     * creates the account, starts the session, and returns the player to the
+     * page they left. Failures redirect with an `auth_error` marker rather
+     * than rendering an API error page — the browser is a person here.
+     */
+    app.get("/auth/callback/discord", async (request, reply) => {
+      const query = request.query as Record<string, string | undefined>;
+      const target = verifyState(query.state);
+      if (!target || !isAllowedRedirect(target)) {
+        // Cannot trust the return URL, so this is the one case that must not
+        // redirect anywhere.
+        return reply.code(400).send({ error: "Invalid or expired state" });
+      }
+
+      const fail = (reason: string) => {
+        const url = new URL(target);
+        url.searchParams.set("auth_error", reason);
+        return reply.redirect(url.toString());
+      };
+
+      // The user pressed "Cancel" on Discord's consent screen.
+      if (query.error || !query.code) return fail(query.error ?? "no_code");
+
+      try {
+        const profile = await fetchDiscordProfile(query.code);
+        const user = await findOrCreateUserByIdentity({
+          provider: "discord",
+          providerUserId: profile.id,
+          // Exactly the fields DiscordUserSchema declares — the game parses
+          // this back out of /users/@me and rejects unknown shapes.
+          profile: {
+            id: profile.id,
+            username: profile.username,
+            global_name: profile.global_name,
+            avatar: profile.avatar,
+            discriminator: profile.discriminator,
+          },
+          email: profile.email,
+          usernameBase: profile.global_name ?? profile.username,
+        });
+        await startSession(reply, user);
+        return reply.redirect(target);
+      } catch (err) {
+        request.log.error({ err }, "discord oauth callback failed");
+        return fail("discord_failed");
+      }
+    });
+  } else {
+    app.log.warn(
+      "Discord login is disabled: set DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET to enable it.",
+    );
+  }
+
+  /**
+   * Magic-link sign-in. Registered only when email is configured, so the
+   * client's button reports a failure rather than accepting an address that
+   * silently receives nothing.
+   */
+  if (isEmailConfigured()) {
+    /**
+     * POST /auth/magic-link  { email, redirectDomain }
+     *
+     * Emails a single-use link. Always answers 202 regardless of whether the
+     * address belongs to an account: a different answer for known and unknown
+     * addresses turns this endpoint into an account-existence oracle.
+     */
+    app.post("/auth/magic-link", async (request, reply) => {
+      const parsed = MagicLinkBodySchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: z.prettifyError(parsed.error) });
+      }
+      const { email, redirectDomain } = parsed.data;
+
+      if (!isAllowedRedirect(redirectDomain)) {
+        return reply.code(400).send({ error: "redirectDomain not allowed" });
+      }
+
+      // Addresses are compared lowercased; mail domains are case-insensitive
+      // and treating "A@x.de" as a separate account would split someone's
+      // identity in two.
+      const normalized = email.trim().toLowerCase();
+
+      const existing = await db.query.users.findFirst({
+        where: eq(users.email, normalized),
+      });
+      // No account yet: signing in by email is also how one is created, which
+      // is what makes this a login rather than only a recovery flow.
+      const user = existing ?? (await createUser({ email: normalized }));
+
+      const login = generateLoginToken(config.MAGIC_LINK_TTL_MINUTES);
+      await db.insert(loginTokens).values({
+        userId: user.id,
+        tokenHash: login.tokenHash,
+        email: normalized,
+        expiresAt: login.expiresAt,
+      });
+
+      // The client routes this hash itself: Main.ts opens <token-login>, which
+      // polls /auth/login/token with the value.
+      const url = `${redirectDomain.replace(/\/$/, "")}/#token-login?token-login=${login.token}`;
+
+      try {
+        await sendMagicLinkEmail({
+          to: normalized,
+          url,
+          ttlMinutes: config.MAGIC_LINK_TTL_MINUTES,
+        });
+      } catch (err) {
+        // Swallowed on purpose: reporting a delivery failure would tell the
+        // caller their address is real, which is exactly what the uniform 202
+        // avoids. Both branches did identical work, so the timing does not
+        // leak it either. The log is where this surfaces.
+        request.log.error({ err }, "magic link delivery failed");
+      }
+
+      return reply.code(202).send({ ok: true });
+    });
+
+    /**
+     * GET /auth/login/token?login-token=...
+     *
+     * Redeems the emailed token and starts a session. Responds `{ email }`,
+     * which is what tempTokenLogin() in src/client/Auth.ts reads.
+     */
+    app.get("/auth/login/token", async (request, reply) => {
+      const query = request.query as Record<string, string | undefined>;
+      const presented = query["login-token"];
+      if (!presented) {
+        return reply.code(400).send({ error: "Missing login-token" });
+      }
+
+      const tokenHash = hashRefreshToken(presented);
+
+      // Claim the token inside a transaction: two clicks racing (the client
+      // polls every 3s) must not both mint a session.
+      const claimed = await db.transaction(async (tx) => {
+        const row = await tx.query.loginTokens.findFirst({
+          where: and(
+            eq(loginTokens.tokenHash, tokenHash),
+            isNull(loginTokens.consumedAt),
+            gt(loginTokens.expiresAt, new Date()),
+          ),
+        });
+        if (!row) return null;
+        const updated = await tx
+          .update(loginTokens)
+          .set({ consumedAt: new Date() })
+          .where(
+            and(eq(loginTokens.id, row.id), isNull(loginTokens.consumedAt)),
+          )
+          .returning();
+        // Lost the race — the other request consumed it first.
+        return updated.length > 0 ? row : null;
+      });
+
+      if (!claimed) {
+        return reply.code(401).send({ error: "Invalid or expired token" });
+      }
+
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, claimed.userId),
+      });
+      if (!user) return reply.code(401).send({ error: "Invalid token" });
+
+      // Proving control of the address is what verifies it, so an account that
+      // reached here without one now has it.
+      if (!user.email) {
+        await db
+          .update(users)
+          .set({ email: claimed.email })
+          .where(eq(users.id, user.id));
+      }
+
+      await startSession(reply, user);
+      return reply.send({ email: claimed.email });
+    });
+  } else {
+    app.log.warn(
+      "Magic-link sign-in is disabled: set RESEND_API_KEY to enable it.",
+    );
+  }
+
+  /**
    * POST /auth/dev-login — DEVELOPMENT ONLY.
    *
    * Mints a session without an OAuth provider so the game can be driven end to
@@ -204,20 +449,9 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
         if (updated) user = updated;
       }
 
-      const refresh = generateRefreshToken();
-      await db.insert(refreshTokens).values({
-        userId: user.id,
-        tokenHash: refresh.tokenHash,
-        expiresAt: refresh.expiresAt,
-      });
-      const access = await issueAccessToken({
-        userId: user.id,
-        role: user.role,
-      });
-
-      // Set the cookie too, so hitting this route in a browser leaves a real
+      // Sets the cookie too, so hitting this route in a browser leaves a real
       // session behind — that is how you sign in locally without OAuth.
-      setRefreshCookie(reply, refresh.token, refresh.expiresAt);
+      const { refresh, access } = await startSession(reply, user);
       return reply.send({
         jwt: access.token,
         expiresIn: config.ACCESS_TOKEN_TTL_SECONDS,
