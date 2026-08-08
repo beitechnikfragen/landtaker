@@ -101,7 +101,8 @@ export type ClientMessage =
   | ClientJoinMessage
   | ClientRejoinMessage
   | ClientLogMessage
-  | ClientHashMessage;
+  | ClientHashMessage
+  | ClientPhoneMessage;
 
 export type ServerMessage =
   | ServerTurnMessage
@@ -111,7 +112,8 @@ export type ServerMessage =
   | ServerPrestartMessage
   | ServerErrorMessage
   | ServerLobbyInfoMessage
-  | ServerNewLobbyMessage;
+  | ServerNewLobbyMessage
+  | ServerPhoneMessage;
 
 export type ServerTurnMessage = z.infer<typeof ServerTurnMessageSchema>;
 export type ServerStartGameMessage = z.infer<
@@ -814,6 +816,80 @@ export const ServerNewLobbyMessageSchema = z.object({
   gameID: ID,
 });
 
+//
+// Phone (out-of-band: never an Intent, never in a Turn)
+//
+
+// SDP-Offers/Answers sind die größten Nachrichten; ICE-Kandidaten sind winzig.
+// 20 KB ist großzügig für ein SDP und schließt Fluten mit Riesen-Payloads aus.
+const MAX_SIGNAL_BYTES = 20000;
+
+export const PhoneModeSchema = z.enum(["normal", "silent", "dnd"]);
+export type PhoneMode = z.infer<typeof PhoneModeSchema>;
+export type CallId = string;
+
+export const ClientPhonePayloadSchema = z.discriminatedUnion("kind", [
+  // Ruft ein Ziel an: eröffnet einen Call oder holt in den eigenen dazu.
+  z.object({ kind: z.literal("dial"), target: ID }),
+  z.object({ kind: z.literal("answer") }),
+  z.object({ kind: z.literal("hangup") }),
+  z.object({ kind: z.literal("setMode"), mode: PhoneModeSchema }),
+  z.object({ kind: z.literal("setAlliesOnly"), value: z.boolean() }),
+  z.object({ kind: z.literal("block"), target: ID }),
+  z.object({ kind: z.literal("unblock"), target: ID }),
+  // Undurchsichtige WebRTC-Nutzlast (SDP oder ICE), vom Server nur weitergereicht.
+  z.object({
+    kind: z.literal("signal"),
+    to: ID,
+    data: z.string().max(MAX_SIGNAL_BYTES),
+  }),
+]);
+
+export const ClientPhoneMessageSchema = z.object({
+  type: z.literal("phone"),
+  payload: ClientPhonePayloadSchema,
+});
+
+export const ServerPhonePayloadSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("ringing"),
+    callId: z.string(),
+    from: ID,
+    fromUsername: SafeString,
+  }),
+  // Der Anruf ist rausgegangen und klingelt beim Ziel.
+  z.object({ kind: z.literal("dialing"), callId: z.string() }),
+  // Einziger Ablehnungsgrund nach außen. Nie differenzieren.
+  z.object({ kind: z.literal("busy") }),
+  // Call verbunden bzw. Teilnehmerliste geändert. peers enthält NICHT den Empfänger.
+  z.object({
+    kind: z.literal("callState"),
+    callId: z.string(),
+    peers: ID.array(),
+  }),
+  z.object({ kind: z.literal("callEnded"), callId: z.string() }),
+  z.object({
+    kind: z.literal("missed"),
+    from: ID,
+    fromUsername: SafeString,
+  }),
+  z.object({
+    kind: z.literal("signal"),
+    from: ID,
+    data: z.string().max(MAX_SIGNAL_BYTES),
+  }),
+]);
+
+export const ServerPhoneMessageSchema = z.object({
+  type: z.literal("phone"),
+  payload: ServerPhonePayloadSchema,
+});
+
+export type ClientPhoneMessage = z.infer<typeof ClientPhoneMessageSchema>;
+export type ServerPhoneMessage = z.infer<typeof ServerPhoneMessageSchema>;
+export type ClientPhonePayload = z.infer<typeof ClientPhonePayloadSchema>;
+export type ServerPhonePayload = z.infer<typeof ServerPhonePayloadSchema>;
+
 export const ServerMessageSchema = z.discriminatedUnion("type", [
   ServerTurnMessageSchema,
   ServerPrestartMessageSchema,
@@ -823,6 +899,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
   ServerErrorSchema,
   ServerLobbyInfoMessageSchema,
   ServerNewLobbyMessageSchema,
+  ServerPhoneMessageSchema,
 ]);
 
 //
@@ -917,6 +994,7 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
   ClientRejoinMessageSchema,
   ClientLogMessageSchema,
   ClientHashSchema,
+  ClientPhoneMessageSchema,
 ]);
 
 //
