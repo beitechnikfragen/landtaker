@@ -15,6 +15,10 @@ const basePlayer: PlayerInfo = {
   atoms: 0,
   hydros: 0,
   mirv: 0,
+  finalTiles: 0,
+  buildingsBuilt: 0,
+  attacksSent: 0,
+  betrayals: 0,
 };
 
 type RowOptions = {
