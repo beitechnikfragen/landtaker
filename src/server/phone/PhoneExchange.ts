@@ -263,6 +263,15 @@ export class PhoneExchange {
   }
 
   private destroyCall(call: Call): void {
+    // Idempotent: only clear a callOf entry if it still points at this call —
+    // callers may have already been cleaned up (collapseIfEmpty) or moved on
+    // to a different call by the time this runs.
+    for (const p of call.participants) {
+      if (this.callOf.get(p) === call.id) this.callOf.delete(p);
+    }
+    for (const target of call.ringing.keys()) {
+      if (this.callOf.get(target) === call.id) this.callOf.delete(target);
+    }
     this.calls.delete(call.id);
   }
 

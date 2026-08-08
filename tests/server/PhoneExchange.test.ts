@@ -166,4 +166,33 @@ describe("PhoneExchange", () => {
     const out = ex.removePlayer(A);
     expect(kinds(out, B)).toContain("callEnded");
   });
+
+  it("leaves the caller reachable again after destroyCall runs on a fresh, uncleaned call", () => {
+    // Regression: destroyCall() must remove its own callOf entries, not rely
+    // on the caller (e.g. collapseIfEmpty) to have done it already. Today the
+    // only two call sites that invoke destroyCall() on a freshly-created call
+    // (capacity-exceeded, block-loop) are unreachable through the public API
+    // — Task 4 reworks that arithmetic and makes them reachable. Exercise
+    // destroyCall() directly here so a regression is caught now rather than
+    // discovered later as callers becoming permanently "busy" forever.
+    ex.handle(A, { kind: "dial", target: B });
+    const call = (ex as any).calls.get((ex as any).callOf.get(A));
+    expect(call).toBeDefined();
+
+    (ex as any).destroyCall(call);
+
+    expect((ex as any).callOf.has(A)).toBe(false);
+    expect((ex as any).callOf.has(B)).toBe(false);
+
+    // With the callOf entries gone, both former participants must be
+    // dialable again as targets — a stale entry would make
+    // `this.callOf.has(target)` wrongly return true forever and every
+    // future dial() at them would come back "busy".
+    const out = ex.handle(C, { kind: "dial", target: A });
+    expect(kinds(out, A)).toContain("ringing");
+    expect(kinds(out, C)).toContain("dialing");
+
+    const out2 = ex.handle(A, { kind: "dial", target: B });
+    expect(kinds(out2, B)).toContain("ringing");
+  });
 });
