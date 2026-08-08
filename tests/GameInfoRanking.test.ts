@@ -297,4 +297,83 @@ describe("Ranking class", () => {
       expect(RANK_TYPE_LABEL_KEYS[type]).toBeTruthy();
     }
   });
+
+  describe("recordedStats", () => {
+    it("marks all four new stats as recorded when present, including a genuine zero", () => {
+      const session = makeSession({
+        info: {
+          ...makeSession().info,
+          players: [
+            {
+              clientID: "p1",
+              username: "Alice",
+              clanTag: null,
+              stats: {
+                conquests: [1n],
+                finalTiles: 0n, // genuinely zero, but present
+                units: { city: [3n, 0n, 0n, 0n] },
+                attacks: [7n],
+                betrayals: 2n,
+              },
+            },
+          ],
+        },
+      } as Partial<AnalyticsRecord>);
+      const ranking = new Ranking(session);
+      const alice = ranking.allPlayers[0];
+
+      expect(alice.recordedStats).toStrictEqual({
+        finalTiles: true,
+        buildingsBuilt: true,
+        attacksSent: true,
+        betrayals: true,
+      });
+      expect(alice.finalTiles).toBe(0);
+    });
+
+    it("marks all four new stats as not recorded when absent from the record", () => {
+      const session = makeSession({
+        info: {
+          ...makeSession().info,
+          players: [
+            {
+              clientID: "p1",
+              username: "Alice",
+              clanTag: null,
+              stats: { conquests: [1n] },
+            },
+          ],
+        },
+      } as Partial<AnalyticsRecord>);
+      const ranking = new Ranking(session);
+      const alice = ranking.allPlayers[0];
+
+      expect(alice.recordedStats).toStrictEqual({
+        finalTiles: false,
+        buildingsBuilt: false,
+        attacksSent: false,
+        betrayals: false,
+      });
+    });
+
+    it("marks buildingsBuilt as not recorded when units is an empty object", () => {
+      const session = makeSession({
+        info: {
+          ...makeSession().info,
+          players: [
+            {
+              clientID: "p1",
+              username: "Alice",
+              clanTag: null,
+              stats: { conquests: [1n], units: {} },
+            },
+          ],
+        },
+      } as Partial<AnalyticsRecord>);
+      const ranking = new Ranking(session);
+      const alice = ranking.allPlayers[0];
+
+      expect(alice.recordedStats?.buildingsBuilt).toBe(false);
+    });
+  });
 });

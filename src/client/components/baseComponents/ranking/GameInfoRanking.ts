@@ -66,6 +66,18 @@ export interface PlayerInfo {
   buildingsBuilt: number;
   attacksSent: number;
   betrayals: number;
+  /**
+   * Which of the four new stats were actually present on the underlying
+   * record, as opposed to defaulted to 0. Used purely for display (to
+   * distinguish "never recorded" from "genuinely zero"); sorting/scoring
+   * always uses the plain numeric fields above.
+   */
+  recordedStats?: {
+    finalTiles: boolean;
+    buildingsBuilt: boolean;
+    attacksSent: boolean;
+    betrayals: boolean;
+  };
 }
 
 function hasPlayed(player: PlayerRecord): boolean {
@@ -131,6 +143,13 @@ export class Ranking {
         ),
         attacksSent: Number(stats.attacks?.[ATTACK_INDEX_SENT] ?? 0n),
         betrayals: Number(stats.betrayals ?? 0n),
+        recordedStats: {
+          finalTiles: stats.finalTiles !== undefined,
+          buildingsBuilt:
+            stats.units !== undefined && Object.keys(stats.units).length > 0,
+          attacksSent: stats.attacks?.[ATTACK_INDEX_SENT] !== undefined,
+          betrayals: stats.betrayals !== undefined,
+        },
         winner: false,
       };
     }
