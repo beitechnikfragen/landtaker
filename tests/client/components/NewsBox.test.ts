@@ -84,9 +84,30 @@ describe("NewsBox", () => {
       expect(new Set(ids).size).toBe(ids.length);
     });
 
-    it("contains a tournament entry", () => {
+    it("has at least one item to show", () => {
+      // The box renders nothing at all when the feed is empty, so an accidental
+      // clear-out would silently remove it from the home page.
+      expect(getVisibleNewsItems(allItems).length).toBeGreaterThan(0);
+    });
+
+    it("only uses types the box knows how to label", () => {
+      // An unknown type falls through typeLabelColors and renders an unstyled
+      // chip, so the feed must stay within the set NewsBox styles.
       const items = getVisibleNewsItems(allItems);
-      expect(items.some((i) => i.type === "tournament")).toBe(true);
+      for (const item of items) {
+        expect(["tournament", "tutorial", "announcement", "warning"]).toContain(
+          item.type,
+        );
+      }
+    });
+
+    it("links out over https only, never a bare or scriptable URL", () => {
+      // These go straight into href; a javascript: or http: entry would be a
+      // real hole, and the schema only guards the API-served feed.
+      for (const item of getVisibleNewsItems(allItems)) {
+        if (item.url === null || item.url === undefined) continue;
+        expect(item.url.startsWith("https://")).toBe(true);
+      }
     });
   });
 });

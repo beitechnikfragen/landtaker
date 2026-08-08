@@ -1,9 +1,30 @@
 [
   {
-    "id": "landtaker-0-1-0",
-    "title": "Landtaker enters alpha",
-    "description": "New identity, ranked standings, friends with realtime chat and parties. Build 0.1.0 - expect rough edges.",
+    "id": "landtaker-0-2-0-chat",
+    "title": "In-game chat, with tabs",
+    "description": "Type to anyone mid-match: **All**, **Team**, or a private whisper. Every conversation gets its own tab, so two people talking at once no longer turn into one unreadable stream. Press **Enter** to write, **Tab** to switch.",
     "url": null,
     "type": "announcement"
+  },
+  {
+    "id": "landtaker-0-2-0-social",
+    "title": "Friends and party stay with you in a match",
+    "description": "The social dock no longer disappears when a game starts — it moves to the bottom left, clear of the chat. Party members now show real online status instead of always reading as online.",
+    "url": null,
+    "type": "announcement"
+  },
+  {
+    "id": "landtaker-0-2-0-hud",
+    "title": "The HUD finishes its redesign",
+    "description": "The radial menu now matches the rest of the interface: dark plates, hairline seams, and one accent colour instead of six competing washes.",
+    "url": null,
+    "type": "announcement"
+  },
+  {
+    "id": "landtaker-discord",
+    "title": "Come say hello on Discord",
+    "description": "Find teammates, report bugs and hear about updates first. There is also a feedback button in the bottom-left corner — it works mid-match and carries the context we need.",
+    "url": "https://discord.gg/FztuCAcVGD",
+    "type": "tutorial"
   }
 ]
