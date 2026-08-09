@@ -28,4 +28,4 @@ Root cause found from a real production call: `coturn` had no `--external-ip`, s
 
 Fix: added `--external-ip=${TURN_EXTERNAL_IP:?...}` to the `coturn` command in `docker-compose.coolify.yml` (fails to start if unset — no silent fallback). Used the plain single-IP form, not `PUBLIC/PRIVATE`, because `network_mode: host` means coturn binds the host's real interface directly (no separate private-facing address to split out). Left `--listening-ip` unset (bind-all is correct under host networking). Updated `docs/PhoneTurn.md` and `docs/DEPLOY.md` accordingly.
 
-**Status:** done, not yet committed at time of writing this line — see top of file / commit history for final SHA once pushed.
+**Status:** done. Commit `5966880c3`.
