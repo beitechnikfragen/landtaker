@@ -45,10 +45,17 @@ class FakePeerConnection {
   signalingState: "stable" | "have-local-offer" | "have-remote-offer" =
     "stable";
   closed = false;
+  iceServers: RTCIceServer[] | undefined;
+  iceTransportPolicy: string | undefined;
 
   private senders: FakeSender[] = [];
 
-  constructor() {
+  constructor(config?: {
+    iceServers?: RTCIceServer[];
+    iceTransportPolicy?: string;
+  }) {
+    this.iceServers = config?.iceServers;
+    this.iceTransportPolicy = config?.iceTransportPolicy;
     allPeerConnections.push(this);
   }
 
@@ -160,13 +167,35 @@ function installFakes(): void {
 const A = "aaaa1111"; // lower id
 const B = "bbbb2222"; // higher id
 
+// PhoneTransport reads TURN config from process.env.PHONE_TURN_* (wired via
+// vite.config.ts's `define`, same mechanism as API_DOMAIN in Api.ts). Save
+// and restore around each test so tests don't leak config into each other.
+const ENV_KEYS = [
+  "PHONE_TURN_URLS",
+  "PHONE_TURN_USERNAME",
+  "PHONE_TURN_CREDENTIAL",
+  "PHONE_TURN_FORCE_RELAY",
+] as const;
+let savedEnv: Record<string, string | undefined> = {};
+
+function clearTurnEnv(): void {
+  for (const key of ENV_KEYS) delete process.env[key];
+}
+
 describe("PhoneTransport", () => {
   beforeEach(() => {
     installFakes();
+    savedEnv = {};
+    for (const key of ENV_KEYS) savedEnv[key] = process.env[key];
+    clearTurnEnv();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    for (const key of ENV_KEYS) {
+      if (savedEnv[key] === undefined) delete process.env[key];
+      else process.env[key] = savedEnv[key];
+    }
   });
 
   it("never creates a peer connection before the local track exists (offer carries audio)", async () => {
@@ -372,5 +401,60 @@ describe("PhoneTransport", () => {
     expect(allPeerConnections.length).toBe(1);
     const answers = sent.filter((m: any) => m.type === "answer");
     expect(answers.length).toBe(1);
+  });
+
+  describe("ICE server configuration", () => {
+    it("no TURN configured -> ICE list contains exactly the two STUN entries", async () => {
+      const transport = new PhoneTransport(A, () => {});
+      await transport.syncPeers([B]);
+
+      const pc = allPeerConnections[0];
+      const iceServers = pc.iceServers ?? [];
+      expect(iceServers).toEqual([
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+      ]);
+    });
+
+    it("TURN configured -> list contains STUN plus the TURN entry with the right username/credential", async () => {
+      process.env.PHONE_TURN_URLS = "turn:turn.example.com:3478";
+      process.env.PHONE_TURN_USERNAME = "turnuser";
+      process.env.PHONE_TURN_CREDENTIAL = "turnpass";
+
+      const transport = new PhoneTransport(A, () => {});
+      await transport.syncPeers([B]);
+
+      const pc = allPeerConnections[0];
+      const iceServers = pc.iceServers ?? [];
+      expect(iceServers).toEqual([
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        {
+          urls: ["turn:turn.example.com:3478"],
+          username: "turnuser",
+          credential: "turnpass",
+        },
+      ]);
+    });
+
+    it("blank/whitespace credential is treated as absent, no malformed entry", async () => {
+      process.env.PHONE_TURN_URLS = "turn:turn.example.com:3478";
+      process.env.PHONE_TURN_USERNAME = "turnuser";
+      process.env.PHONE_TURN_CREDENTIAL = "   ";
+
+      const transport = new PhoneTransport(A, () => {});
+      await transport.syncPeers([B]);
+
+      const pc = allPeerConnections[0];
+      const iceServers = pc.iceServers ?? [];
+      expect(iceServers).toEqual([
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+      ]);
+      for (const server of iceServers) {
+        expect(server.urls).not.toBe("");
+        expect(server.urls).not.toEqual([]);
+      }
+    });
   });
 });

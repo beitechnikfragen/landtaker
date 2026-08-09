@@ -111,6 +111,31 @@ export class ClientEnv {
   static serverHost(): string | undefined {
     return ClientEnv.get().serverHost;
   }
+  // TURN fallback for the WebRTC phone (see PhoneTransport.ts). Sourced from
+  // process.env via vite.config.ts's `define`, same mechanism as API_DOMAIN
+  // in Api.ts — not part of the BOOTSTRAP_CONFIG-hydrated ClientEnvValues
+  // above, since these are build-time-only constants with no server-runtime
+  // equivalent. Comma-separated so a provider's multiple TURN/TURNS URLs for
+  // one credential pair can all be offered to ICE.
+  static phoneTurnUrls(): string[] {
+    return (process.env.PHONE_TURN_URLS ?? "")
+      .split(",")
+      .map((u) => u.trim())
+      .filter((u) => u.length > 0);
+  }
+  static phoneTurnUsername(): string {
+    return (process.env.PHONE_TURN_USERNAME ?? "").trim();
+  }
+  static phoneTurnCredential(): string {
+    return (process.env.PHONE_TURN_CREDENTIAL ?? "").trim();
+  }
+  // Forces all phone media through the TURN relay (iceTransportPolicy:
+  // "relay") instead of using TURN only as an ICE fallback. Off by default —
+  // it routes 100% of audio through the paid relay — but also hides players'
+  // IPs from each other, so it's exposed as an explicit opt-in.
+  static phoneTurnForceRelay(): boolean {
+    return (process.env.PHONE_TURN_FORCE_RELAY ?? "").trim() === "true";
+  }
   // Origin (scheme + host, no trailing slash) of the game server that hosts the
   // public-lobby and in-game WebSockets. The lobby-list and game sockets append
   // their own worker path (e.g. `/w0/lobbies`, `/w0`).

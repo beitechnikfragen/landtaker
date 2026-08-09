@@ -1,10 +1,39 @@
 import type { ClientID } from "../../core/Schemas";
+import { ClientEnv } from "../ClientEnv";
 import { PhoneAudio } from "./PhoneAudio";
 
-const ICE_SERVERS: RTCIceServer[] = [
+const STUN_SERVERS: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
 ];
+
+// STUN alone leaves players behind strict/symmetric NATs with no working ICE
+// path (connectionState goes connecting -> failed on both sides, confirmed in
+// production logs even though signaling and ontrack both succeed). TURN is
+// the fallback for that ~10-15% of players. Built at call time, not as a
+// module-level constant, so it always reflects the current env config and
+// never emits a malformed RTCIceServer (an empty `urls` throws).
+let loggedIceConfig = false;
+function buildIceServers(): RTCIceServer[] {
+  const urls = ClientEnv.phoneTurnUrls();
+  const username = ClientEnv.phoneTurnUsername();
+  const credential = ClientEnv.phoneTurnCredential();
+  const servers = [...STUN_SERVERS];
+  const hasTurn =
+    urls.length > 0 && username.length > 0 && credential.length > 0;
+  if (hasTurn) {
+    servers.push({ urls, username, credential });
+  }
+  if (!loggedIceConfig) {
+    loggedIceConfig = true;
+    // Diagnostic: confirms a deploy picked up the TURN config. Never logs
+    // the credential (or username, out of caution).
+    console.log(
+      `[phone] ICE config: ${servers.length} server(s), TURN=${hasTurn ? "present" : "absent"}`,
+    );
+  }
+  return servers;
+}
 
 interface Peer {
   pc: RTCPeerConnection;
@@ -182,7 +211,12 @@ export class PhoneTransport {
     console.log(
       `[phone] createPeer constructing RTCPeerConnection for id=${id}`,
     );
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    const pc = new RTCPeerConnection({
+      iceServers: buildIceServers(),
+      ...(ClientEnv.phoneTurnForceRelay()
+        ? { iceTransportPolicy: "relay" as RTCIceTransportPolicy }
+        : {}),
+    });
     const audio = new PhoneAudio();
     audio.setVolume(this.volume);
 
@@ -205,10 +239,10 @@ export class PhoneTransport {
       if (e.streams[0]) audio.attach(e.streams[0]);
     };
     // "disconnected" is often a transient blip (brief ICE hiccup) that
-    // recovers on its own; only "failed" means STUN-only connectivity has
-    // genuinely broken down (see design spec: no TURN server in v1, so
-    // players behind strict NATs get an honest "no connection" instead of
-    // endless ringing).
+    // recovers on its own; only "failed" means ICE genuinely could not find
+    // a working path (STUN-only, and no TURN configured, or TURN itself is
+    // unreachable) — players get an honest "no connection" instead of
+    // endless ringing.
     pc.onconnectionstatechange = () => {
       // TEMP diagnostics: remove once the phone audio bug is found
       console.log(

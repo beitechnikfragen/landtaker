@@ -280,6 +280,23 @@ export default defineConfig(({ mode }) => {
       "process.env.API_DOMAIN": JSON.stringify(
         mode === "test" ? "" : (env.API_DOMAIN ?? ""),
       ),
+      // TURN fallback for the WebRTC phone (PhoneTransport.ts). STUN-only
+      // fails ICE for players behind strict/symmetric NATs; these are
+      // deliberately optional — absent/blank means STUN-only, exactly as
+      // before. Public by nature (they ship in the client bundle); see
+      // docs/PhoneTurn.md.
+      "process.env.PHONE_TURN_URLS": JSON.stringify(env.PHONE_TURN_URLS ?? ""),
+      "process.env.PHONE_TURN_USERNAME": JSON.stringify(
+        env.PHONE_TURN_USERNAME ?? "",
+      ),
+      "process.env.PHONE_TURN_CREDENTIAL": JSON.stringify(
+        env.PHONE_TURN_CREDENTIAL ?? "",
+      ),
+      // Off by default: routes all phone audio through the paid TURN relay
+      // instead of using it only as an ICE fallback. See docs/PhoneTurn.md.
+      "process.env.PHONE_TURN_FORCE_RELAY": JSON.stringify(
+        env.PHONE_TURN_FORCE_RELAY ?? "",
+      ),
       // Add other process.env variables if needed, OR migrate code to import.meta.env
     },
 
