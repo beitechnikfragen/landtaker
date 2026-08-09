@@ -154,7 +154,6 @@ services:
     restart: unless-stopped
     network_mode: host
     command:
-      - -n
       # Long-term credential mechanism with a shared static secret, NOT
       # lt-cred-mech with a fixed username/password. This is what lets the
       # backend mint short-lived, per-call credentials (coturn's REST API
