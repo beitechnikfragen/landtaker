@@ -28,26 +28,27 @@ fails with "invalid token".
      Coolify's traefik handles TLS for both.
 3. **Environment variables** (Coolify UI, applies to the whole stack):
 
-   | Variable                  | Value                                                                                                                                                                                                                |
-   | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `DOMAIN`                  | `yourdomain.tld` (no scheme, no `www`)                                                                                                                                                                               |
-   | `POSTGRES_PASSWORD`       | long random string                                                                                                                                                                                                   |
-   | `API_KEY`                 | long random string — shared game↔backend secret                                                                                                                                                                      |
-   | `ADMIN_BOT_API_KEY`       | long random string                                                                                                                                                                                                   |
-   | `JWT_PRIVATE_KEY`         | output of `cd backend && npm run keys:generate` (the JSON)                                                                                                                                                           |
-   | `NUM_WORKERS`             | `2` to start; one game worker process each                                                                                                                                                                           |
-   | `TURNSTILE_SITE_KEY`      | leave default (test key, always passes) until you register a real Cloudflare Turnstile site                                                                                                                          |
-   | `TURNSTILE_SECRET_KEY`    | the private half of the Turnstile pair, set on the **backend** (not the game server). Leave unset to skip verification entirely — guests can still submit feedback, and join verification behaves exactly as before. |
-   | `BACKEND_NODE_ENV`        | see **Sign-in** below                                                                                                                                                                                                |
-   | `GIT_COMMIT`              | optional; Coolify can inject the commit SHA                                                                                                                                                                          |
-   | `TURN_STATIC_AUTH_SECRET` | long random string — self-hosted TURN for the phone; optional, see docs/PhoneTurn.md. Leave unset and phone calls stay STUN-only.                                                                                    |
-   | `TURN_URLS`               | `turn:yourdomain.tld:3478` — must be set alongside `TURN_STATIC_AUTH_SECRET` for TURN to activate. See docs/PhoneTurn.md for the firewall ports this needs opened.                                                   |
+   | Variable                  | Value                                                                                                                                                                                                                                                  |
+   | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+   | `DOMAIN`                  | `yourdomain.tld` (no scheme, no `www`)                                                                                                                                                                                                                 |
+   | `POSTGRES_PASSWORD`       | long random string                                                                                                                                                                                                                                     |
+   | `API_KEY`                 | long random string — shared game↔backend secret                                                                                                                                                                                                        |
+   | `ADMIN_BOT_API_KEY`       | long random string                                                                                                                                                                                                                                     |
+   | `JWT_PRIVATE_KEY`         | output of `cd backend && npm run keys:generate` (the JSON)                                                                                                                                                                                             |
+   | `NUM_WORKERS`             | `2` to start; one game worker process each                                                                                                                                                                                                             |
+   | `TURNSTILE_SITE_KEY`      | leave default (test key, always passes) until you register a real Cloudflare Turnstile site                                                                                                                                                            |
+   | `TURNSTILE_SECRET_KEY`    | the private half of the Turnstile pair, set on the **backend** (not the game server). Leave unset to skip verification entirely — guests can still submit feedback, and join verification behaves exactly as before.                                   |
+   | `BACKEND_NODE_ENV`        | see **Sign-in** below                                                                                                                                                                                                                                  |
+   | `GIT_COMMIT`              | optional; Coolify can inject the commit SHA                                                                                                                                                                                                            |
+   | `TURN_STATIC_AUTH_SECRET` | long random string — self-hosted TURN for the phone; optional, see docs/PhoneTurn.md. Leave unset and phone calls stay STUN-only.                                                                                                                      |
+   | `TURN_URLS`               | `turn:yourdomain.tld:3478` — must be set alongside `TURN_STATIC_AUTH_SECRET` for TURN to activate. See docs/PhoneTurn.md for the firewall ports this needs opened.                                                                                     |
+   | `TURN_EXTERNAL_IP`        | **required if you set the two vars above.** This server's public IPv4 (e.g. `62.238.60.89`). Without it, `coturn` refuses to start — see docs/PhoneTurn.md; TURN relay is silently unreachable without this even though everything else looks healthy. |
 
 4. **Deploy.** First boot order is handled by compose: postgres → healthcheck →
    backend (runs migrations, then binds) → game. `coturn` starts independently
    (no dependency on the others) and only becomes useful once
-   `TURN_STATIC_AUTH_SECRET`/`TURN_URLS` are set and its firewall ports are
-   open — see docs/PhoneTurn.md.
+   `TURN_STATIC_AUTH_SECRET`/`TURN_URLS`/`TURN_EXTERNAL_IP` are set and its
+   firewall ports (UDP, not just TCP) are open — see docs/PhoneTurn.md.
 
 ## Sign-in (read before going public)
 

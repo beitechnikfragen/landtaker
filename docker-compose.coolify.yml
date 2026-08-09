@@ -106,9 +106,47 @@ services:
   # binding directly to the host's network stack — this is the standard
   # coturn deployment shape, not an OpenFront-specific hack.
   #
+  # ############################################################
+  # # TURN_EXTERNAL_IP IS REQUIRED — relay is silently useless #
+  # # without it. Do not deploy this service without setting   #
+  # # it in Coolify.                                           #
+  # ############################################################
+  #
+  # coturn advertises whatever address it *sees itself* as the relay
+  # (`typ relay`) candidate address it hands back to clients. Without
+  # --external-ip, that's whatever address the container's own network
+  # stack reports locally — which is fine on a host with exactly one
+  # public NIC and no NAT in front of it, but wrong the moment the box
+  # sits behind any cloud/provider NAT (nearly all VPS hosts, including
+  # Coolify's typical targets). The symptom is exactly the trap this var
+  # exists to prevent: signaling succeeds, STUN/host candidates flow, the
+  # backend happily reports `TURN=present` because it only checks that a
+  # credential was minted — but ICE never produces a single `relay`
+  # candidate, so any call that actually needs the relay (strict/symmetric
+  # NAT on both ends) goes `connecting -> failed` with no error anywhere
+  # that says why. There is no safe default here, so there is no fallback
+  # value — the var must be set explicitly to the box's real public IP.
+  #
+  # Set TURN_EXTERNAL_IP to this server's public IP in Coolify (example:
+  # 62.238.60.89 — replace with whatever `curl -4 ifconfig.me` on the host
+  # actually returns; do not copy this example value into a real deploy).
+  #
+  # Format: plain --external-ip=<public-ip> (no PUBLIC/PRIVATE pair) is
+  # correct here. The PUBLIC/PRIVATE form exists for boxes where coturn's
+  # listening interface sees a *different* private address than the one
+  # the internet uses to reach it (classic Docker bridge networking, or a
+  # cloud instance with a distinct internal IP coturn would otherwise
+  # report). With network_mode: host, coturn binds the host's real network
+  # stack directly — there is no separate private-facing address to
+  # split out, so the single-IP form is both correct and simpler.
+  #
   # Firewall: the host must have these open (UDP unless noted):
   #   3478       TURN listener (also TCP, for the rare TCP-relay fallback)
   #   49160-49200 relay ports (see min/max-port below)
+  # An open TCP 3478 alone is NOT sufficient — UDP is what actually
+  # carries relayed media; TCP 3478 only carries the rare TCP-relay
+  # fallback. See docs/PhoneTurn.md for the full firewall + verification
+  # story.
   # Coolify's own reverse proxy plays no role here — this service has no
   # domain attached and is reached directly by IP:port from players' browsers.
   coturn:
@@ -126,6 +164,22 @@ services:
       - --use-auth-secret
       - --static-auth-secret=${TURN_STATIC_AUTH_SECRET}
       - --realm=${DOMAIN}
+      # REQUIRED for relay to work at all — see the box comment above.
+      # Without this, coturn allocates relay candidates at whatever
+      # address it sees locally, which is unreachable from the public
+      # internet on almost any NAT'd/cloud host. No default: an empty
+      # value here is a broken deploy, not a degraded one, and should
+      # fail loudly (coturn refuses to start on a malformed --external-ip)
+      # rather than silently falling back to a useless local address.
+      - --external-ip=${TURN_EXTERNAL_IP:?TURN_EXTERNAL_IP must be set to this server's public IP — see comment above; relay will not work without it}
+      # --listening-ip is intentionally NOT set. With network_mode: host,
+      # coturn's default (listen on all interfaces) is correct: it needs
+      # to accept the STUN/TURN listener on whatever interface the box's
+      # public IP resolves to, and there's no second/internal interface
+      # here to disambiguate between (see the PUBLIC/PRIVATE note above —
+      # that split doesn't apply under host networking). Pin
+      # --listening-ip only if this host ever gains multiple NICs and
+      # coturn needs to be told which one to bind.
       # Relay port range kept deliberately narrow (41 ports) so the UDP
       # firewall rule above stays a single small range instead of the
       # 49152-65535 IANA default — widen only if you're routinely hitting

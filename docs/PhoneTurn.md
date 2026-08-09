@@ -41,13 +41,61 @@ Add to the stack's environment variables (Coolify UI, applies to the whole
 | ------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `TURN_STATIC_AUTH_SECRET` | long random string. Shared between `coturn` and `backend` — set it once, both services read the same var. |
 | `TURN_URLS`               | `turn:yourdomain.tld:3478` (comma-separated if you add more, e.g. a TLS variant on 5349)                  |
+| `TURN_EXTERNAL_IP`        | **REQUIRED.** This server's public IPv4 address, e.g. `62.238.60.89`. See below.                          |
 
-Both are optional. Leave them unset and the stack behaves exactly as before
-self-hosted TURN existed: `coturn`'s command line still requires
-`TURN_STATIC_AUTH_SECRET` to be non-empty to start meaningfully, and the
-backend answers `/phone/turn-credentials` with an empty/STUN-only shaped body
-whenever the secret or `TURN_URLS` is blank — no error, the client just falls
-back to STUN-only.
+`TURN_STATIC_AUTH_SECRET` and `TURN_URLS` are optional — leave them unset and
+the stack behaves exactly as before self-hosted TURN existed: `coturn`'s
+command line still requires `TURN_STATIC_AUTH_SECRET` to be non-empty to
+start meaningfully, and the backend answers `/phone/turn-credentials` with an
+empty/STUN-only shaped body whenever the secret or `TURN_URLS` is blank — no
+error, the client just falls back to STUN-only.
+
+`TURN_EXTERNAL_IP` is **not** optional in the same way — see the next
+section for why.
+
+### `TURN_EXTERNAL_IP` is required — relay does not work without it
+
+coturn tells each client which IP to send relayed media to via the `relay`
+ICE candidate it generates. Without `--external-ip`, coturn reports whatever
+address it sees on its own network interface. On a host sitting behind any
+NAT or cloud provider firewall (true for nearly every VPS, including typical
+Coolify targets) that self-reported address is not the address the internet
+actually uses to reach the box — so the relay candidate coturn hands out is
+unreachable, and the entire TURN relay is useless even though everything
+_looks_ healthy right up until the moment media needs to flow.
+
+This is exactly the trap that costs the most debugging time, because every
+signal you'd normally check says "fine":
+
+- the backend's `/phone/turn-credentials` returns 200 with a valid
+  `{urls, username, credential}` body,
+- the browser console logs `TURN=present`,
+- signaling completes (`signalingState` reaches `stable`, `ontrack` fires on
+  both sides),
+
+and then `connectionState` still goes `connecting -> failed`, because ICE
+never produced a single candidate of type `relay` — only `host`/`srflx` — so
+any call that actually needed the relay (either side behind a strict/
+symmetric NAT) has no usable path.
+
+Set `TURN_EXTERNAL_IP` in Coolify to the server's public IPv4 address (find
+it with `curl -4 ifconfig.me` on the host itself). The `coturn` service will
+refuse to start with a clear error if this var is unset or empty — that's
+intentional (see the comment in `docker-compose.coolify.yml`): a silently
+useless relay is worse than a service that won't boot.
+
+`--listening-ip` is deliberately left unset: `coturn` runs with
+`network_mode: host`, so binding all interfaces (coturn's default) is
+correct — there's no separate internal interface to disambiguate the way
+`--listening-ip` exists to handle. If this host ever gains multiple public
+NICs, pin `--listening-ip` explicitly then; not before.
+
+`--external-ip` also accepts an `PUBLIC/PRIVATE` form for setups where the
+address coturn sees locally differs from the address the internet uses to
+reach it (classic Docker bridge networking, or a cloud instance with a
+distinct private IP). That split doesn't apply here: `network_mode: host`
+means coturn binds the host's real network stack directly, so the plain
+single-IP form (`--external-ip=<public-ip>`) is both correct and simpler.
 
 ## Firewall
 
@@ -63,6 +111,17 @@ by Coolify/Traefik — open them directly on the host firewall:
 | `3478`        | TCP      | TURN listener, TCP fallback (rare, but coturn listens on both) |
 | `49160-49200` | UDP      | Relay ports — actual media flows through these                 |
 
+**UDP is what actually carries media.** A reachable TCP 3478 alone (which is
+easy to confirm — it's a plain TCP connect test — and is _not_ the same
+check as confirming UDP works) proves nothing about whether calls can
+relay: the TURN listener answers on TCP 3478 too, but the relay ports
+(`49160-49200`) are UDP-only, and the vast majority of real deployments use
+UDP for the listener as well. If only TCP 3478 is open, `TURN=present` will
+still show in the client log (the credential fetch has nothing to do with
+the firewall), but ICE will still fail to produce a `relay` candidate.
+Confirm UDP specifically — a TCP-only port check is not sufficient
+evidence that TURN will work.
+
 The relay range is deliberately narrow (41 ports = 41 concurrent
 relayed call-legs) so the firewall rule stays a single small range instead of
 the IANA default (49152-65535, ~16k ports). Widen `--min-port`/`--max-port`
@@ -71,28 +130,66 @@ matching firewall rule) only if you're routinely hitting that ceiling.
 
 ## Verifying it works
 
-1. Deploy with `TURN_STATIC_AUTH_SECRET` and `TURN_URLS` set, and the
-   firewall ports above open.
-2. Start a phone call in-game (two browsers/tabs, or two players).
+1. Deploy with `TURN_STATIC_AUTH_SECRET`, `TURN_URLS`, and `TURN_EXTERNAL_IP`
+   all set, and the firewall ports above open (UDP, not just TCP — see
+   above).
+2. Start a phone call in-game (two browsers/tabs, or two players — ideally
+   on different networks, since two peers on the same LAN can connect
+   directly and never touch TURN at all).
 3. Open the browser console and look for:
    ```
    [phone] ICE config: 3 server(s), TURN=present
    ```
    `3 server(s)` = 2 STUN + 1 TURN entry. `TURN=present` confirms a credential
    was either fetched from the backend or supplied via the build-time
-   override (see **Precedence** below) — it does not by itself prove the
-   relay is reachable, only that a credential was found.
-4. To confirm the relay is actually usable (not just configured), the
-   reliable test is forcing every call through it —
-   set `PHONE_TURN_FORCE_RELAY=true` (see below), redeploy, and confirm calls
-   still connect. If ICE now fails where it previously succeeded, the relay
-   itself (not just the credential) is unreachable — recheck the firewall
-   ports.
-5. If the log instead says `TURN=absent`: check that `TURN_STATIC_AUTH_SECRET`
+   override (see **Precedence** below) — **this alone does not prove the
+   relay is reachable**, only that a credential was found. This is the exact
+   log line that looked fine while the relay was still broken for lack of
+   `TURN_EXTERNAL_IP` — do not stop verifying here.
+4. **The concrete check: confirm a `relay` candidate actually appears.**
+   Open `chrome://webrtc-internals` in a tab that's on the call, find the
+   active `RTCPeerConnection` section, and look at the ICE candidate table
+   (or the `candidatePair`/`local-candidate` stats rows) for an entry with
+   `candidateType: relay` (equivalently, `typ relay` if you're reading the
+   raw SDP/candidate string). If every local candidate is `host` or `srflx`
+   and none is `relay`, the TURN relay is not producing usable candidates —
+   `TURN_EXTERNAL_IP` (or the firewall's UDP rule) is the first thing to
+   check. `[phone]` client-side logging does not currently print candidate
+   types itself, so `chrome://webrtc-internals` is the authoritative source
+   for this check.
+5. A second, stronger test: force every call through the relay by setting
+   `PHONE_TURN_FORCE_RELAY=true` (see below), redeploy, and confirm calls
+   still connect between two peers. If ICE now fails where it previously
+   succeeded, the relay itself (not just the credential) is unreachable —
+   recheck `TURN_EXTERNAL_IP` and the firewall's UDP rules.
+6. If the log instead says `TURN=absent`: check that `TURN_STATIC_AUTH_SECRET`
    and `TURN_URLS` are both set in Coolify, and check the `backend` container
    logs — `GET /phone/turn-credentials` responding but with empty
    `urls`/`username`/`credential` means the backend itself sees one of those
    vars as blank at boot.
+
+### Troubleshooting
+
+**"`TURN=present` but calls still fail behind strict NATs"** — almost always
+one of two causes, in order of likelihood:
+
+1. `TURN_EXTERNAL_IP` is unset, unset for this deploy, or wrong (e.g. copied
+   from a different box) — coturn is advertising an unreachable relay
+   address. Check step 4 above for a `relay` candidate; if there is none,
+   this is the cause. Fixed by setting `TURN_EXTERNAL_IP` correctly and
+   redeploying — `coturn` will actually refuse to start at all if the var is
+   completely unset (see `docker-compose.coolify.yml`), so this specific
+   failure mode implies it's set but incorrect, or the firewall is the real
+   problem (see next).
+2. UDP is blocked — 3478/UDP and/or `49160-49200`/UDP are not actually open
+   on the host firewall (a reachable TCP 3478 does **not** rule this out;
+   see the Firewall section above). Verify with a UDP-aware check from
+   outside the host's network, not just a TCP connect test.
+
+A `TURN=present` log with zero `relay` candidates in
+`chrome://webrtc-internals` is the fingerprint of both — the credential
+fetch succeeds regardless of whether the relay itself is reachable, so it
+tells you nothing about either cause.
 
 ## Traffic expectations
 
