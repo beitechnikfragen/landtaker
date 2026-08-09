@@ -110,10 +110,13 @@ Mikrofon-Warnung erscheint. Das Flag wird bei jedem neuen Anruf zurückgesetzt.
 
 - **Kein TURN-Server.** Spieler hinter strengen NATs/Firewalls kommen nicht zustande
   und sehen jetzt „keine Verbindung". Bewusste v1-Entscheidung.
-- **Die sechs Sounddateien in `resources/sounds/phone/` sind Platzhalter** — reine
-  Stille, mit ffmpeg erzeugt. Vor dem Release durch echte Aufnahmen ersetzen; die drei
-  Loops (`ring`, `dial-tone`, `busy-tone`) brauchen einen nahtlosen Schnitt im
-  Nulldurchgang.
+- **Nur noch drei der sechs Sounddateien sind Platzhalter.** `ring.mp3` ist jetzt ein
+  echter, nahtlos loopender Klingelton. `dial-tone` und `busy-tone` sind keine Dateien
+  mehr, sondern werden zur Laufzeit synthetisiert (425 Hz, 1s/4s bzw. 480ms/480ms
+  Kadenz, mit Fernsprechband-Filter und leisem Leitungsrauschen) — siehe
+  `src/client/phone/PhoneSounds.ts`. `dial-click`, `pick-up` und `hang-up` sind
+  weiterhin reine Stille, mit ffmpeg erzeugt; vor dem Release durch echte Aufnahmen
+  ersetzen.
 - **Der Verbündeten-Filter greift außerhalb gerankter Matchmaking-Spiele nicht**, weil
   der Server dort keine Team-Information hat (Bündnisse leben in der Client-Simulation).
   Er fällt dann sicher aus: „niemand darf anrufen" statt versehentlich zu öffnen.

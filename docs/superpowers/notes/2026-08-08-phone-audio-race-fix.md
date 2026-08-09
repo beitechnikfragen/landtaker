@@ -261,3 +261,42 @@ caller's side. If the answer line is now confirmed present/sent but
 `connected`/`ontrack` still never show up, the remaining bug is in ICE
 connectivity (or the callee-side application of the answer), not in
 signal ordering — the added diagnostics will show exactly where it stops.
+
+## Placeholder sound replacement — 2026-08-09 (this session, unrelated to the above)
+
+Status: done. Commit `<see git log>` touches `src/client/phone/PhoneSounds.ts`,
+`resources/sounds/phone/ring.mp3`,
+`docs/superpowers/plans/2026-08-08-telefonsystem-manual-test.md`.
+
+**Ring format:** mp3, mono, 44.1 kHz, 96 kbps (was stereo/24-bit WAV source,
+3.36s). Kept mp3 (not wav/ogg) because `silencedetect` showed the source has
+no leading silence and ~1.39s of genuine trailing silence baked into its own
+ring cadence (tone 0–0.82s, gap, tone 1.15–1.97s, silence to 3.36s) — the loop
+point falls inside that silence, so LAME's encoder priming/padding (~50ms) is
+fully absorbed and inaudible. Mono halves the size; this is a phone bell, not
+music.
+
+**Tone constants (`PhoneSounds.ts`):** `TONE_FREQUENCY_HZ=425`,
+`DIAL_TONE_ON_SECONDS=1`/`DIAL_TONE_OFF_SECONDS=4`,
+`BUSY_TONE_ON_SECONDS=0.48`/`BUSY_TONE_OFF_SECONDS=0.48`,
+`TONE_RAMP_SECONDS=0.008`, `TONE_NOISE_LEVEL=0.015`,
+`TONE_HIGHPASS_HZ=300`/`TONE_LOWPASS_HZ=3400`/`TONE_FILTER_Q=0.9`,
+`SCHEDULE_AHEAD_SECONDS=0.5`/`SCHEDULER_INTERVAL_MS=100`. Cadence built from
+exact `AudioParam` gain-envelope automation scheduled ahead on a running
+oscillator (lookahead-scheduler pattern); only the "plan the next window"
+decision uses `setInterval`, never the edges themselves.
+
+**Teardown confirmed by signal-graph trace:** every `ToneSynth` node
+(oscillator, toneGain, noiseSource, noiseGain, highpass, lowpass) is stopped
+and disconnected in `dispose()`, which also clears the scheduler
+`setInterval`; `PhoneSounds.stopAll()`/`dispose()` call this before touching
+the Howler ring loop; `dispose()` additionally closes the lazily-created
+`AudioContext`. Idempotent (`disposed` flag), wrapped in `safely()`, never
+throws.
+
+`npx tsc --noEmit` and `npx eslint`/`npx oxlint` on the changed file: clean.
+`npx prettier --write` run only on `PhoneSounds.ts`. Full phone test suite
+(`PhoneSettings`, `PhoneCallStateMachine`, `PhoneSchemas`, etc.) still
+238/238 passing — no test file needed changes since Web Audio synthesis
+isn't meaningfully unit-testable here, consistent with the rest of this
+feature.
