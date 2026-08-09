@@ -255,8 +255,6 @@ export class LangSelector extends LitElement {
       "effects-grid",
       "token-login",
       "tribes-panel",
-      "steam-wishlist",
-      "steam-wishlist-button",
       "streaming-now",
     ];
 
@@ -267,6 +265,11 @@ export class LangSelector extends LitElement {
     document.title = GAME_TITLE;
 
     document.querySelectorAll("[data-i18n]").forEach((element) => {
+      // <title> is excluded even if someone tags it again: this loop runs
+      // after the assignment above and would otherwise silently undo it,
+      // which is exactly how "OpenFront" stayed in the tab for every
+      // non-English locale.
+      if (element.tagName === "TITLE") return;
       const key = element.getAttribute("data-i18n");
       if (key === null) return;
       const text = this.translateText(key);
