@@ -6,7 +6,12 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <title data-i18n="main.title">Landtaker (ALPHA)</title>
+    <!-- Deliberately not a data-i18n target. Every language file still carries
+         the upstream product name, and the generic [data-i18n] pass runs after
+         LangSelector forces document.title, so tagging this put "OpenFront"
+         back in the tab for every non-English locale. A product name is not
+         translated anyway. -->
+    <title>Landtaker (ALPHA)</title>
     <link rel="manifest" href="<%- manifestHref %>" />
     <link rel="icon" type="image/svg+xml" href="<%- faviconHref %>" />
 
