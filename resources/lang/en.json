@@ -1773,12 +1773,6 @@
     "avatar_alt": "Steam avatar",
     "default_name": "Steam player"
   },
-  "steam_wishlist": {
-    "cta": "Wishlist now",
-    "on_steam": "OpenFront on Steam",
-    "release": "Available Q3 2026",
-    "title": "Wishlist OpenFront on Steam!"
-  },
   "store": {
     "already_subscribed": "Already subscribed.",
     "change_tier_failed": "Couldn't update your subscription. Please try again.",
@@ -2096,10 +2090,7 @@
   },
   "win_modal": {
     "died": "You died",
-    "discord_description": "Connect with players, discover new features, and win prizes!",
     "exit": "Exit Game",
-    "join_discord": "Join Our Discord Community!",
-    "join_server": "Join Server",
     "keep": "Keep Playing",
     "match_cancelled": "Match cancelled — not all players spawned",
     "nation_won": "Nation {nation} has won!",
@@ -2108,10 +2099,7 @@
     "other_won": "{player} has won!",
     "requeue": "Play Again",
     "spectate": "Spectate",
-    "support_openfront": "Support OpenFront!",
-    "territory_pattern": "Purchase a territory skin to go ad-free!",
     "you_won": "You Won!",
-    "your_team": "Your team won!",
-    "youtube_tutorial": "Need some help?"
+    "your_team": "Your team won!"
   }
 }

@@ -255,8 +255,6 @@ export class LangSelector extends LitElement {
       "effects-grid",
       "token-login",
       "tribes-panel",
-      "steam-wishlist",
-      "steam-wishlist-button",
       "streaming-now",
     ];
 

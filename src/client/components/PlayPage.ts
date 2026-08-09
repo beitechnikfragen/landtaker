@@ -4,7 +4,6 @@ import { assetUrl } from "../../core/AssetUrls";
 import { crazyGamesSDK } from "../CrazyGamesSDK";
 import "./HomeHero";
 import "./NewsBox";
-import "./SteamWishlist";
 import "./StreamingNow";
 
 @customElement("play-page")
