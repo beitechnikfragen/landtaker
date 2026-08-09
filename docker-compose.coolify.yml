@@ -1,6 +1,6 @@
 # Landtaker production stack for Coolify (Docker Compose resource).
 #
-# One stack, four services. Point a Coolify "Docker Compose" resource at this
+# One stack, five services. Point a Coolify "Docker Compose" resource at this
 # file; set the environment variables in Coolify's UI (they land in every
 # service below via ${...}); attach domains in Coolify:
 #
@@ -13,6 +13,10 @@
 #
 # postgres/redis stay internal — no domains, no published ports. The postgres
 # volume is what survives deploys; see docs/DEPLOY.md for the rollout story.
+#
+# coturn (the TURN relay for the in-game phone) also has no domain — it uses
+# network_mode: host and is reached directly by IP:port. See its own comment
+# below and docs/PhoneTurn.md.
 services:
   game:
     build:
@@ -51,6 +55,16 @@ services:
       JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
       API_KEY: ${API_KEY}
       CORS_ORIGIN: https://${DOMAIN}
+      # Shared secret with the coturn service below (same var, same value —
+      # see coturn's `static-auth-secret`). Lets the backend mint short-lived
+      # TURN credentials (coturn's REST API scheme) without ever handing the
+      # browser the long-lived secret. Absent => /phone/turn-credentials
+      # answers STUN-only (see backend/src/services/turnCredentials.ts).
+      TURN_STATIC_AUTH_SECRET: ${TURN_STATIC_AUTH_SECRET:-}
+      # Public turn: URL(s) the client dials with the minted credential, e.g.
+      # turn:yourdomain.tld:3478. Comma-separated if you expose more than one
+      # (e.g. add turns:yourdomain.tld:5349 once you terminate TLS on 5349).
+      TURN_URLS: ${TURN_URLS:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,6 +93,64 @@ services:
     # Presence, party fanout and matchmaking state are ephemeral by design —
     # a restart drops players to the lobby, which is recoverable. No disk.
     command: redis-server --save "" --appendonly no
+
+  # Self-hosted TURN relay for the in-game phone (WebRTC). Replaces a hosted
+  # TURN provider — see docs/PhoneTurn.md for the full story and how to
+  # verify it's working.
+  #
+  # network_mode: host, not Coolify/Traefik routing. TURN needs the caller to
+  # reach a large *UDP* port range (the relay ports below) plus the fixed
+  # listener port, and Docker's per-port NAT mapping does not forward that
+  # reliably (coturn also needs to see the real client source port to relay
+  # correctly). Host networking sidesteps both problems at the cost of
+  # binding directly to the host's network stack — this is the standard
+  # coturn deployment shape, not an OpenFront-specific hack.
+  #
+  # Firewall: the host must have these open (UDP unless noted):
+  #   3478       TURN listener (also TCP, for the rare TCP-relay fallback)
+  #   49160-49200 relay ports (see min/max-port below)
+  # Coolify's own reverse proxy plays no role here — this service has no
+  # domain attached and is reached directly by IP:port from players' browsers.
+  coturn:
+    image: coturn/coturn:latest
+    restart: unless-stopped
+    network_mode: host
+    command:
+      - -n
+      # Long-term credential mechanism with a shared static secret, NOT
+      # lt-cred-mech with a fixed username/password. This is what lets the
+      # backend mint short-lived, per-call credentials (coturn's REST API
+      # scheme: username is "<expiry>:<id>", password is
+      # HMAC-SHA1(username, secret)) instead of shipping one permanent
+      # credential to every browser forever.
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_STATIC_AUTH_SECRET}
+      - --realm=${DOMAIN}
+      # Relay port range kept deliberately narrow (41 ports) so the UDP
+      # firewall rule above stays a single small range instead of the
+      # 49152-65535 IANA default — widen only if you're routinely hitting
+      # concurrent-call limits.
+      - --min-port=49160
+      - --max-port=49200
+      # Lock the relay down: it must be usable only as a TURN relay for this
+      # game's players, never as a stepping stone into the host's own network
+      # or as a free open relay for anyone who finds the port. An
+      # unprotected/misconfigured TURN server gets discovered and abused
+      # within days of being exposed.
+      - --no-multicast-peers
+      - --no-cli
+      - --denied-peer-ip=0.0.0.0-0.255.255.255
+      - --denied-peer-ip=10.0.0.0-10.255.255.255
+      - --denied-peer-ip=100.64.0.0-100.127.255.255
+      - --denied-peer-ip=127.0.0.0-127.255.255.255
+      - --denied-peer-ip=169.254.0.0-169.254.255.255
+      - --denied-peer-ip=172.16.0.0-172.31.255.255
+      - --denied-peer-ip=192.0.0.0-192.0.0.255
+      - --denied-peer-ip=192.168.0.0-192.168.255.255
+      - --denied-peer-ip=198.18.0.0-198.19.255.255
+      - --denied-peer-ip=::1
+      - --denied-peer-ip=fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+      - --denied-peer-ip=fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 
 volumes:
   postgres-data:

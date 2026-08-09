@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PhoneTransport } from "../src/client/phone/PhoneTransport";
+import { ClientEnv } from "../src/client/ClientEnv";
+import {
+  PhoneTransport,
+  resetTurnConfigCacheForTests,
+} from "../src/client/phone/PhoneTransport";
 
 // ---- Fakes -----------------------------------------------------------
 //
@@ -110,6 +114,16 @@ function installFakes(): void {
   getUserMediaCalls = 0;
   getUserMediaImpl = async () => new FakeMediaStream();
 
+  // Default: no self-hosted TURN endpoint reachable, so the ICE-config tests
+  // that don't set a build-time override exercise the "fetch happened, came
+  // back empty/failed" path deterministically rather than racing a real
+  // network call to a closed localhost port. Individual tests override this
+  // with vi.stubGlobal("fetch", ...) to exercise the success path.
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => ({ ok: false, status: 503 }) as Response),
+  );
+
   // @ts-expect-error test fake, minimal shape
   global.RTCPeerConnection = FakePeerConnection;
 
@@ -188,14 +202,31 @@ describe("PhoneTransport", () => {
     savedEnv = {};
     for (const key of ENV_KEYS) savedEnv[key] = process.env[key];
     clearTurnEnv();
+    resetTurnConfigCacheForTests();
+    // getApiBase() (used by the fetched-credentials path) reads the audience
+    // from BOOTSTRAP_CONFIG. localhost -> http://localhost:8787, matching
+    // API_DOMAIN being forced empty under vitest (see vite.config.ts).
+    (window as any).BOOTSTRAP_CONFIG = {
+      gameEnv: "dev",
+      numWorkers: 1,
+      turnstileSiteKey: "x",
+      jwtAudience: "localhost",
+      instanceId: "test",
+      gitCommit: "test",
+    };
+    ClientEnv.reset();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     for (const key of ENV_KEYS) {
       if (savedEnv[key] === undefined) delete process.env[key];
       else process.env[key] = savedEnv[key];
     }
+    resetTurnConfigCacheForTests();
+    delete (window as any).BOOTSTRAP_CONFIG;
+    ClientEnv.reset();
   });
 
   it("never creates a peer connection before the local track exists (offer carries audio)", async () => {
@@ -455,6 +486,170 @@ describe("PhoneTransport", () => {
         expect(server.urls).not.toBe("");
         expect(server.urls).not.toEqual([]);
       }
+    });
+  });
+
+  describe("fetched TURN credentials (self-hosted, no build-time override)", () => {
+    it("uses the ephemeral credentials returned by /phone/turn-credentials", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (url: string) => {
+          expect(url).toContain("/phone/turn-credentials");
+          expect(url).toContain(`clientId=${encodeURIComponent(A)}`);
+          return {
+            ok: true,
+            json: async () => ({
+              urls: ["turn:coturn.example.com:3478"],
+              username: "1700000000:aaaa1111",
+              credential: "fetched-credential",
+            }),
+          } as Response;
+        }),
+      );
+
+      const transport = new PhoneTransport(A, () => {});
+      await transport.syncPeers([B]);
+
+      const pc = allPeerConnections[0];
+      const iceServers = pc.iceServers ?? [];
+      expect(iceServers).toEqual([
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        {
+          urls: ["turn:coturn.example.com:3478"],
+          username: "1700000000:aaaa1111",
+          credential: "fetched-credential",
+        },
+      ]);
+    });
+
+    it("fetch failure (non-2xx) falls back to STUN-only without throwing", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => ({ ok: false, status: 500 }) as Response),
+      );
+
+      const transport = new PhoneTransport(A, () => {});
+      await expect(transport.syncPeers([B])).resolves.toBeUndefined();
+
+      const pc = allPeerConnections[0];
+      expect(pc.iceServers ?? []).toEqual([
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+      ]);
+    });
+
+    it("fetch throwing (network error) falls back to STUN-only without throwing", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => {
+          throw new Error("network down");
+        }),
+      );
+
+      const transport = new PhoneTransport(A, () => {});
+      await expect(transport.syncPeers([B])).resolves.toBeUndefined();
+
+      const pc = allPeerConnections[0];
+      expect(pc.iceServers ?? []).toEqual([
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+      ]);
+    });
+
+    it("malformed response body falls back to STUN-only without throwing", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => ({
+          ok: true,
+          json: async () => ({ nonsense: true }),
+        })) as unknown as typeof fetch,
+      );
+
+      const transport = new PhoneTransport(A, () => {});
+      await expect(transport.syncPeers([B])).resolves.toBeUndefined();
+
+      const pc = allPeerConnections[0];
+      expect(pc.iceServers ?? []).toEqual([
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+      ]);
+    });
+
+    it("backend response with empty TURN fields is treated as STUN-only, not an extra entry", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => ({
+          ok: true,
+          json: async () => ({ urls: [], username: "", credential: "" }),
+        })) as unknown as typeof fetch,
+      );
+
+      const transport = new PhoneTransport(A, () => {});
+      await transport.syncPeers([B]);
+
+      const pc = allPeerConnections[0];
+      expect(pc.iceServers ?? []).toEqual([
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+      ]);
+    });
+
+    it("the fetch happens only once, cached across multiple peers/instances", async () => {
+      const fetchMock = vi.fn(async () => ({
+        ok: true,
+        json: async () => ({
+          urls: ["turn:coturn.example.com:3478"],
+          username: "1700000000:aaaa1111",
+          credential: "fetched-credential",
+        }),
+      })) as unknown as typeof fetch;
+      vi.stubGlobal("fetch", fetchMock);
+
+      const transport = new PhoneTransport(A, () => {});
+      await transport.syncPeers([B]);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      // A second peer connection (new transport, same process) reuses the
+      // cached credential rather than fetching again.
+      installFakes();
+      vi.stubGlobal("fetch", fetchMock);
+      const transport2 = new PhoneTransport(A, () => {});
+      await transport2.syncPeers([B]);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("build-time PHONE_TURN_* override precedence", () => {
+    it("build-time vars win over fetched credentials, and no fetch is made", async () => {
+      process.env.PHONE_TURN_URLS = "turn:hosted-provider.example.com:3478";
+      process.env.PHONE_TURN_USERNAME = "hosted-user";
+      process.env.PHONE_TURN_CREDENTIAL = "hosted-pass";
+
+      const fetchMock = vi.fn(async () => ({
+        ok: true,
+        json: async () => ({
+          urls: ["turn:coturn.example.com:3478"],
+          username: "1700000000:aaaa1111",
+          credential: "fetched-credential",
+        }),
+      })) as unknown as typeof fetch;
+      vi.stubGlobal("fetch", fetchMock);
+
+      const transport = new PhoneTransport(A, () => {});
+      await transport.syncPeers([B]);
+
+      const pc = allPeerConnections[0];
+      expect(pc.iceServers ?? []).toEqual([
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        {
+          urls: ["turn:hosted-provider.example.com:3478"],
+          username: "hosted-user",
+          credential: "hosted-pass",
+        },
+      ]);
+      expect(fetchMock).not.toHaveBeenCalled();
     });
   });
 });

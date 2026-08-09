@@ -78,6 +78,27 @@ const ConfigSchema = z.object({
   EMAIL_PRODUCT_NAME: z.string().default("Landtaker"),
   // Short by design: the link is a bearer credential sitting in an inbox.
   MAGIC_LINK_TTL_MINUTES: z.coerce.number().int().positive().default(15),
+
+  // Self-hosted TURN relay for the in-game phone (see
+  // docker-compose.coolify.yml's `coturn` service and
+  // services/turnCredentials.ts). Must be the exact same value as coturn's
+  // `--static-auth-secret` — this backend uses it to mint short-lived
+  // credentials via coturn's REST API scheme; it never reaches the browser.
+  // Absent => /phone/turn-credentials answers with no TURN entry and the
+  // client falls back to STUN-only (or its build-time PHONE_TURN_* override,
+  // if set — see docs/PhoneTurn.md).
+  TURN_STATIC_AUTH_SECRET: z.string().optional(),
+  // Public turn:/turns: URL(s) the minted credential is valid for, e.g.
+  // "turn:yourdomain.tld:3478". Comma-separated for more than one.
+  TURN_URLS: z.string().default(""),
+  // How long a minted credential remains valid. A few hours comfortably
+  // outlasts any single call; short enough that a leaked credential is
+  // useless well before anyone could act on it.
+  TURN_CREDENTIAL_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(6 * 3600),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

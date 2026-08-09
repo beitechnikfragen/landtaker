@@ -1,4 +1,6 @@
+import { TurnCredentialsResponseSchema } from "../../core/ApiSchemas";
 import type { ClientID } from "../../core/Schemas";
+import { getApiBase } from "../Api";
 import { ClientEnv } from "../ClientEnv";
 import { PhoneAudio } from "./PhoneAudio";
 
@@ -7,29 +9,116 @@ const STUN_SERVERS: RTCIceServer[] = [
   { urls: "stun:stun1.l.google.com:19302" },
 ];
 
-// STUN alone leaves players behind strict/symmetric NATs with no working ICE
-// path (connectionState goes connecting -> failed on both sides, confirmed in
-// production logs even though signaling and ontrack both succeed). TURN is
-// the fallback for that ~10-15% of players. Built at call time, not as a
-// module-level constant, so it always reflects the current env config and
-// never emits a malformed RTCIceServer (an empty `urls` throws).
-let loggedIceConfig = false;
-function buildIceServers(): RTCIceServer[] {
+/**
+ * TURN entry the client actually uses to build ICE server lists — either the
+ * build-time PHONE_TURN_* override or the shape returned by
+ * GET /phone/turn-credentials.
+ */
+interface TurnConfig {
+  urls: string[];
+  username: string;
+  credential: string;
+}
+
+// Build-time override / escape hatch for a hosted TURN provider (or a manual
+// pin), takes precedence over fetched self-hosted credentials whenever all
+// three vars are non-blank. See docs/PhoneTurn.md "Precedence".
+function buildTimeTurnConfig(): TurnConfig | null {
   const urls = ClientEnv.phoneTurnUrls();
   const username = ClientEnv.phoneTurnUsername();
   const credential = ClientEnv.phoneTurnCredential();
+  if (urls.length === 0 || username.length === 0 || credential.length === 0) {
+    return null;
+  }
+  return { urls, username, credential };
+}
+
+/**
+ * Fetches ephemeral TURN credentials from the backend (self-hosted coturn,
+ * see docs/PhoneTurn.md). Cached module-wide for the credential's lifetime —
+ * every PhoneTransport instance in this tab shares one fetch instead of
+ * hitting the endpoint per call.
+ *
+ * Never throws: a TURN outage must degrade the call to STUN-only, never break
+ * the client. Returns null on any failure (network error, non-2xx, malformed
+ * body, or a well-formed-but-empty response, which is what the backend sends
+ * when it has no TURN configured either).
+ */
+let fetchedTurnConfig: Promise<TurnConfig | null> | null = null;
+
+/** Test-only: clears the module-wide cached fetch between test cases. */
+export function resetTurnConfigCacheForTests(): void {
+  fetchedTurnConfig = null;
+}
+
+function fetchTurnConfig(myId: ClientID): Promise<TurnConfig | null> {
+  if (fetchedTurnConfig) return fetchedTurnConfig;
+  fetchedTurnConfig = (async () => {
+    try {
+      const url = `${getApiBase()}/phone/turn-credentials?clientId=${encodeURIComponent(myId)}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.log(
+          `[phone] TURN credential fetch failed: HTTP ${response.status} — falling back to STUN-only`,
+        );
+        return null;
+      }
+      const parsed = TurnCredentialsResponseSchema.safeParse(
+        await response.json(),
+      );
+      if (!parsed.success) {
+        console.log(
+          "[phone] TURN credential fetch returned an unparseable body — falling back to STUN-only",
+        );
+        return null;
+      }
+      const { urls, username, credential } = parsed.data;
+      if (
+        urls.length === 0 ||
+        username.length === 0 ||
+        credential.length === 0
+      ) {
+        // The backend has no self-hosted TURN configured either — not an
+        // error, just nothing to add.
+        return null;
+      }
+      return { urls, username, credential };
+    } catch (err) {
+      console.log(
+        `[phone] TURN credential fetch threw — falling back to STUN-only: ${err}`,
+      );
+      return null;
+    }
+  })();
+  return fetchedTurnConfig;
+}
+
+// STUN alone leaves players behind strict/symmetric NATs with no working ICE
+// path (connectionState goes connecting -> failed on both sides, confirmed in
+// production logs even though signaling and ontrack both succeed). TURN is
+// the fallback for that ~10-15% of players.
+//
+// Never emits a malformed RTCIceServer (an empty `urls` throws). The
+// build-time PHONE_TURN_* vars are checked first (manual override / hosted
+// provider escape hatch); only when none of those are set does this reach out
+// for the self-hosted, backend-issued ephemeral credential.
+let loggedIceConfig = false;
+async function buildIceServers(myId: ClientID): Promise<RTCIceServer[]> {
+  const turn = buildTimeTurnConfig() ?? (await fetchTurnConfig(myId));
   const servers = [...STUN_SERVERS];
-  const hasTurn =
-    urls.length > 0 && username.length > 0 && credential.length > 0;
-  if (hasTurn) {
-    servers.push({ urls, username, credential });
+  if (turn) {
+    servers.push({
+      urls: turn.urls,
+      username: turn.username,
+      credential: turn.credential,
+    });
   }
   if (!loggedIceConfig) {
     loggedIceConfig = true;
     // Diagnostic: confirms a deploy picked up the TURN config. Never logs
     // the credential (or username, out of caution).
     console.log(
-      `[phone] ICE config: ${servers.length} server(s), TURN=${hasTurn ? "present" : "absent"}`,
+      `[phone] ICE config: ${servers.length} server(s), TURN=${turn ? "present" : "absent"}`,
     );
   }
   return servers;
@@ -108,7 +197,7 @@ export class PhoneTransport {
     await this.ensureMic();
     for (const id of peers) {
       if (this.peers.has(id)) continue;
-      const peer = this.createPeer(id);
+      const peer = await this.createPeer(id);
       // Nur eine Seite stellt das Offer, sonst kollidieren die Aufbauten.
       // Die kleinere ClientID gewinnt.
       if (this.myId < id) {
@@ -151,7 +240,7 @@ export class PhoneTransport {
     // state on the first round, instead of answering silent and needing a
     // second negotiation to add the track.
     await this.ensureMic();
-    const peer = this.peers.get(from) ?? this.createPeer(from);
+    const peer = this.peers.get(from) ?? (await this.createPeer(from));
     // TEMP diagnostics: remove once the phone audio bug is found
     console.log(
       `[phone] handleSignal BEFORE type=${msg.type} from=${from} signalingState=${peer.pc.signalingState} connectionState=${peer.pc.connectionState}`,
@@ -206,13 +295,13 @@ export class PhoneTransport {
     this.stopMic();
   }
 
-  private createPeer(id: ClientID): Peer {
+  private async createPeer(id: ClientID): Promise<Peer> {
     // TEMP diagnostics: remove once the phone audio bug is found
     console.log(
       `[phone] createPeer constructing RTCPeerConnection for id=${id}`,
     );
     const pc = new RTCPeerConnection({
-      iceServers: buildIceServers(),
+      iceServers: await buildIceServers(this.myId),
       ...(ClientEnv.phoneTurnForceRelay()
         ? { iceTransportPolicy: "relay" as RTCIceTransportPolicy }
         : {}),

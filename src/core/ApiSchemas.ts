@@ -734,4 +734,19 @@ export const StreamsFeedSchema = z.object({
   featured: z.array(LiveStreamSchema).default([]),
   live: z.array(LiveStreamSchema).default([]),
 });
+
+// GET /phone/turn-credentials — ephemeral TURN credentials for the in-game
+// phone (see backend/src/services/turnCredentials.ts and
+// src/client/phone/PhoneTransport.ts). `urls` is whatever the operator
+// configured as TURN_URLS (comma-separated), so it can be empty when
+// self-hosted TURN is not configured — the client falls back to STUN-only in
+// that case, same as any other fetch failure.
+export const TurnCredentialsResponseSchema = z.object({
+  urls: z.array(z.string()),
+  username: z.string(),
+  credential: z.string(),
+});
+export type TurnCredentialsResponse = z.infer<
+  typeof TurnCredentialsResponseSchema
+>;
 export type StreamsFeed = z.infer<typeof StreamsFeedSchema>;
