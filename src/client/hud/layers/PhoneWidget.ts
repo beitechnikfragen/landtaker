@@ -46,8 +46,8 @@ import type { GameView, PlayerView } from "../../view";
 //                                     look like picking the handset back up,
 //                                     not putting it down.
 //
-// The sprite renders at PHONE_SPRITE_PX CSS px (smaller than the badge, see
-// below). background-position, in pixel units, operates in *rendered*
+// The sprite renders at PHONE_SPRITE_PX CSS px, which is *not* the source
+// frame's 128px. background-position, in pixel units, operates in *rendered*
 // space — i.e. after background-size scaling — not in the source image's own
 // pixel space. So both background-size and the per-frame step are expressed
 // in terms of the sprite's rendered size, not the source frame's 128px: at
@@ -55,12 +55,11 @@ import type { GameView, PlayerView } from "../../view";
 // `PHONE_SPRITE_PX * frameCount`px and each frame step is PHONE_SPRITE_PX,
 // even though each source frame is 128px wide. Getting this wrong (e.g.
 // stepping by the source frame size) would visibly skip every other frame.
+// The sprite *is* the badge — it carries its own red telephone artwork, so
+// there is no surrounding chrome to leave room for and nothing to inset it
+// against. It renders at full badge size.
 const PHONE_BADGE_PX = 64;
-// The sprite is an icon *inside* the red badge (like the old ☎️ emoji), not
-// a fill for it — inset it so the badge's background, border and rounding
-// stay visible all the way around.
-const PHONE_SPRITE_INSET_PX = 14;
-const PHONE_SPRITE_PX = PHONE_BADGE_PX - PHONE_SPRITE_INSET_PX * 2; // 36
+const PHONE_SPRITE_PX = PHONE_BADGE_PX;
 const PHONE_SPRITE_TOTAL_FRAMES = 19;
 const PHONE_SPRITE_URL = assetUrl("sprites/phone.png");
 
@@ -300,7 +299,7 @@ export class PhoneWidget extends LitElement {
         title=${translateText("phone.title")}
       >
         <div
-          class="relative w-16 h-16 rounded-lg bg-red-700 border-2 border-red-900 shadow-lg flex items-center justify-center overflow-hidden"
+          class="relative w-16 h-16 flex items-center justify-center drop-shadow-lg"
         >
           <div
             class="phone-sprite ${animClass}"
