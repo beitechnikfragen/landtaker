@@ -9,24 +9,44 @@ import type { GameView, PlayerView } from "../../view";
 
 // The mini badge's phone glyph is a 19-frame sprite sheet (see
 // resources/sprites/phone.png): frames are 128x128 source pixels each,
-// packed left-to-right in a single row (2432x128 total) — 2x the 64px CSS
-// badge, for HiDPI. Frame indices below are 0-based positions *within that
-// sheet* — sheet index 0 is source frame "Sprite-0002.png", so sheet index =
-// spriteNumber - 2. Confirmed by direct pixel inspection of the packed sheet:
-//   sheet index 0-5   (Sprite 2-7)   idle, handset on the hook
-//   sheet index 6-7   (Sprite 8-9)   ringing, motion lines by the handset
-//   sheet index 8-12  (Sprite 10-14) handset lifted off the hook
-//   sheet index 13-18 (Sprite 15-20) returning to rest; index 18 == index 0
+// packed left-to-right in a single row (2432x128 total). Frame indices below
+// are 0-based positions *within that sheet* — sheet index 0 is source frame
+// "Sprite-0002.png", so sheet index = spriteNumber - 2. Re-confirmed by
+// direct pixel inspection of the individual source frames (brand/Sprite-*.png,
+// 250x250 each — the sheet is a re-pack of the same artwork at 128x128):
+//   sheet index 0     (Sprite 2)     true rest: handset on the hook, no
+//                                     motion lines — the only static idle
+//                                     frame. Sheet index 1-5 (Sprite 3-7)
+//                                     already show ring-vibration lines, so
+//                                     the old "idle = 0-5 looping" range was
+//                                     actually looping most of the ring
+//                                     wind-up — that's the "ringing at rest"
+//                                     bug.
+//   sheet index 6-7   (Sprite 8-9)   ringing, motion lines by the handset —
+//                                     genuinely two distinct animated poses.
+//   sheet index 8-12  (Sprite 10-14) handset lifted off the hook — visually
+//                                     near-identical stills (no motion
+//                                     lines), so looping them just jitters
+//                                     the badge for no reason. Use a single
+//                                     static frame here too.
+//   sheet index 13-18 (Sprite 15-20) returning to rest; index 18 == index 0.
+//                                     Unused by any current state.
 //
-// The badge renders at 64 CSS px (w-16/h-16 below). background-position, in
-// pixel units, operates in *rendered* space — i.e. after background-size
-// scaling — not in the source image's own pixel space. So both
-// background-size and the per-frame step below are expressed in terms of the
-// badge's rendered size, not the source frame's 128px: at badge size 64px,
-// background-size is `64 * frameCount`px and each frame step is 64px, even
-// though each source frame is 128px wide. Getting this wrong (e.g. stepping
-// by the source frame size) would visibly skip every other frame.
+// The sprite renders at PHONE_SPRITE_PX CSS px (smaller than the badge, see
+// below). background-position, in pixel units, operates in *rendered*
+// space — i.e. after background-size scaling — not in the source image's own
+// pixel space. So both background-size and the per-frame step are expressed
+// in terms of the sprite's rendered size, not the source frame's 128px: at
+// sprite size PHONE_SPRITE_PX, background-size is
+// `PHONE_SPRITE_PX * frameCount`px and each frame step is PHONE_SPRITE_PX,
+// even though each source frame is 128px wide. Getting this wrong (e.g.
+// stepping by the source frame size) would visibly skip every other frame.
 const PHONE_BADGE_PX = 64;
+// The sprite is an icon *inside* the red badge (like the old ☎️ emoji), not
+// a fill for it — inset it so the badge's background, border and rounding
+// stay visible all the way around.
+const PHONE_SPRITE_INSET_PX = 14;
+const PHONE_SPRITE_PX = PHONE_BADGE_PX - PHONE_SPRITE_INSET_PX * 2; // 36
 const PHONE_SPRITE_TOTAL_FRAMES = 19;
 const PHONE_SPRITE_URL = assetUrl("sprites/phone.png");
 
@@ -36,14 +56,17 @@ interface SpriteRange {
   end: number;
 }
 
-// idle handset-on-hook frames, reused for "busy" (a refused call has nothing
+// True at-rest frame (handset on the hook, no motion lines) — a single
+// static frame, not a range. Reused for "busy" (a refused call has nothing
 // left to animate — it should just look like the phone is at rest again).
-const IDLE_RANGE: SpriteRange = { start: 0, end: 5 };
+const IDLE_FRAME = 0;
 const RINGING_RANGE: SpriteRange = { start: 6, end: 7 };
 // The user was explicit that outgoing "dialing" (ringing at the far end)
 // should use the same off-hook look as an active call: "für ich rufe an ist
-// einfach der open state".
-const OFF_HOOK_RANGE: SpriteRange = { start: 8, end: 12 };
+// einfach der open state". The five off-hook source frames are near-identical
+// stills (no motion lines), so this is a single static frame too, not a
+// looped range.
+const OFF_HOOK_FRAME = 8;
 
 const STYLE_ID = "phone-widget-sprite-styles";
 if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
@@ -64,8 +87,8 @@ if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
   // steps) and never actually holding the final frame.
   const css = (r: SpriteRange, name: string) => {
     const frames = r.end - r.start + 1;
-    const startPx = -(r.start * PHONE_BADGE_PX);
-    const endPx = -((r.end + 1) * PHONE_BADGE_PX);
+    const startPx = -(r.start * PHONE_SPRITE_PX);
+    const endPx = -((r.end + 1) * PHONE_SPRITE_PX);
     return `
       @keyframes ${name} {
         from { background-position-x: ${startPx}px; }
@@ -76,24 +99,33 @@ if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
       }
     `;
   };
+  // Static (non-animated) states just pin background-position-x to that
+  // single frame's offset — no keyframes, no animation, nothing to loop.
+  const staticFrame = (frame: number, name: string) => {
+    const px = -(frame * PHONE_SPRITE_PX);
+    return `
+      .phone-sprite-${name} {
+        animation: none;
+        background-position-x: ${px}px;
+      }
+    `;
+  };
   style.textContent = `
     .phone-sprite {
-      width: ${PHONE_BADGE_PX}px;
-      height: ${PHONE_BADGE_PX}px;
+      width: ${PHONE_SPRITE_PX}px;
+      height: ${PHONE_SPRITE_PX}px;
       background-image: url("${PHONE_SPRITE_URL}");
       background-repeat: no-repeat;
-      background-size: ${PHONE_SPRITE_TOTAL_FRAMES * PHONE_BADGE_PX}px ${PHONE_BADGE_PX}px;
+      background-size: ${PHONE_SPRITE_TOTAL_FRAMES * PHONE_SPRITE_PX}px ${PHONE_SPRITE_PX}px;
       image-rendering: pixelated;
     }
-    ${css(IDLE_RANGE, "phone-anim-idle")}
+    ${staticFrame(IDLE_FRAME, "phone-anim-idle")}
     ${css(RINGING_RANGE, "phone-anim-ringing")}
-    ${css(OFF_HOOK_RANGE, "phone-anim-offhook")}
+    ${staticFrame(OFF_HOOK_FRAME, "phone-anim-offhook")}
     @media (prefers-reduced-motion: reduce) {
-      .phone-sprite-phone-anim-idle,
-      .phone-sprite-phone-anim-ringing,
-      .phone-sprite-phone-anim-offhook {
+      .phone-sprite-phone-anim-ringing {
         animation: none;
-        background-position-x: 0px;
+        background-position-x: ${-(RINGING_RANGE.start * PHONE_SPRITE_PX)}px;
       }
     }
   `;
