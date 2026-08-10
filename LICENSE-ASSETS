@@ -1,5 +1,28 @@
 # Asset License
 
+Landtaker is a fork of OpenFront. This file inherits OpenFront's asset terms,
+which cover the assets carried over from that project. Assets created by the
+Landtaker team are ours and are covered by the section directly below, which
+takes precedence over the inherited terms that follow it.
+
+## Landtaker Assets - All Rights Reserved
+
+Assets created by the Landtaker team are:
+
+- Copyright © 2026 Landtaker
+- All Rights Reserved
+- NOT licensed under CC BY-SA 4.0, and NOT attributable to OpenFront Inc.
+
+This includes, but is not limited to:
+
+- The Landtaker brand marks, logos and social kit in `/brand`
+- The rotary phone sprite sheet (`/resources/sprites/phone.png`) and the phone
+  audio in `/resources/sounds/phone/`
+
+Where a directory below is described as CC BY-SA 4.0, that applies to the
+assets inherited from OpenFront in that directory — not to Landtaker-created
+assets living alongside them.
+
 ## Open Assets (/resources) - Creative Commons BY-SA 4.0
 
 Assets in the `/resources` directory are licensed under Creative Commons BY-SA 4.0, including but not limited to:
@@ -38,7 +61,9 @@ These external assets are proprietary property of OpenFront Inc.
 
 ## Important Legal Notice
 
-- The CC BY-SA 4.0 license applies ONLY to assets in the `/resources` directory
+- The CC BY-SA 4.0 license applies ONLY to OpenFront-inherited assets in the
+  `/resources` directory — Landtaker-created assets there are All Rights
+  Reserved (see "Landtaker Assets" above)
 - Assets in `/proprietary` are restricted use - see their specific LICENSE
 - External assets not in this repository remain fully proprietary
 - Accessing, downloading, extracting, or using proprietary assets without permission is prohibited
