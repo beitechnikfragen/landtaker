@@ -300,3 +300,48 @@ throws.
 238/238 passing — no test file needed changes since Web Audio synthesis
 isn't meaningfully unit-testable here, consistent with the rest of this
 feature.
+
+## Mini-badge sprite animation — 2026-08-10 (this session)
+
+Status: done. Commit `1b8aaa1bd9ff3a4ef7c3ab93b88a095ec20a7e17` on `main`
+(pushed). Touches `src/client/hud/layers/PhoneWidget.ts`,
+`resources/sprites/phone.png` (new), `brand/Sprite-0002..0020.png` (new).
+
+**Sheet:** 2432x128px, 19 frames of 128x128 each, indexed-palette PNG,
+39,958 bytes — vs 836 KB / 19 files original (~21x smaller). Built by
+chroma-keying each frame's near-black background to alpha, downscaling
+250x250 -> 128x128 (2x the 64px CSS badge, for HiDPI), packing into one
+horizontal strip, then quantizing to 64 colors (Pillow `FASTOCTREE` +
+Floyd-Steinberg dither) — verified visually, phone body stays legible.
+
+**Frame ranges assigned** (sheet index = source sprite number - 2):
+
+- `idle` and `busy` -> sheet 0-5 (Sprite 2-7), handset on hook
+- `ringing` -> sheet 6-7 (Sprite 8-9), motion lines
+- `dialing` and `in-call` -> sheet 8-12 (Sprite 10-14), off-hook — per the
+  user's explicit "für ich rufe an ist einfach der open state"
+
+**Bounce kept/removed:** removed. The ringing frames now carry their own
+motion-line animation, so the old `animate-bounce` whole-badge shake was
+redundant and doubled up on motion.
+
+**`brand/Sprite-*.png` originals:** kept and committed intentionally as the
+source-of-truth for future re-packing (same convention as other tracked
+`brand/` design sources); not referenced by any runtime code path.
+
+**CSS correctness bug caught before commit:** first draft stepped
+`background-position-x` in the source frame's 128px units, but
+`background-position` operates in _rendered_ space (after `background-size`
+scaling to the 64px badge), so it needed 64px steps instead — off by 2x,
+would have skipped every other frame. Also caught that `steps(N)` with a
+`from`/`to` spanning only `N-1` frame-widths never actually holds the last
+frame (zero-duration jump-end landing); fixed by animating to one frame past
+the range's end so `steps(N)` divides exactly `N` full frame-widths.
+Verified arithmetically for all three ranges (travel-px / badge-px == frame
+count) rather than eyeballed.
+
+`npx tsc --noEmit`, `npx eslint`, `npx oxlint` on the changed file: clean.
+`npx prettier --write` run only on `PhoneWidget.ts`. No existing test
+references `PhoneWidget` or the emoji, so none needed updating.
+`git fetch origin && git merge` — local `main` already had `origin/main`'s
+tip as an ancestor, no merge commit needed; pushed directly.
