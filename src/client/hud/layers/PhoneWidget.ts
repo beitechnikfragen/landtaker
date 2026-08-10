@@ -29,8 +29,22 @@ import type { GameView, PlayerView } from "../../view";
 //                                     lines), so looping them just jitters
 //                                     the badge for no reason. Use a single
 //                                     static frame here too.
-//   sheet index 13-18 (Sprite 15-20) returning to rest; index 18 == index 0.
-//                                     Unused by any current state.
+//   sheet index 13-14 (Sprite 15-16) handset lifting up off the cradle —
+//                                     this is the "raise", it plays before
+//                                     any settling starts.
+//   sheet index 15-18 (Sprite 17-20) handset descending back onto the
+//                                     cradle, ending fully seated; index 18
+//                                     is pixel-identical to index 0 (both are
+//                                     "PRESIDENT" plate, handset flush on the
+//                                     hook, no motion lines) — confirmed by
+//                                     direct visual comparison of
+//                                     brand/Sprite-0020.png and
+//                                     brand/Sprite-0002.png. Used below as a
+//                                     one-shot "hang up" animation: only the
+//                                     descending half reads as hanging up —
+//                                     including the 13-14 raise first would
+//                                     look like picking the handset back up,
+//                                     not putting it down.
 //
 // The sprite renders at PHONE_SPRITE_PX CSS px (smaller than the badge, see
 // below). background-position, in pixel units, operates in *rendered*
@@ -50,6 +64,20 @@ const PHONE_SPRITE_PX = PHONE_BADGE_PX - PHONE_SPRITE_INSET_PX * 2; // 36
 const PHONE_SPRITE_TOTAL_FRAMES = 19;
 const PHONE_SPRITE_URL = assetUrl("sprites/phone.png");
 
+// Mirrors the `@media (prefers-reduced-motion: reduce)` CSS override below,
+// but read from JS: the hang-up animation is one-shot and cleans itself up
+// via `animationend`, which never fires when `animation: none` — so the
+// reduced-motion case has to be steered around it *before* it starts
+// (skip straight to the static idle/busy frame), not just visually stubbed
+// out after the fact like the looping ringing animation is.
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
 interface SpriteRange {
   // Inclusive start/end sheet indices (0-based).
   start: number;
@@ -67,6 +95,9 @@ const RINGING_RANGE: SpriteRange = { start: 6, end: 7 };
 // stills (no motion lines), so this is a single static frame too, not a
 // looped range.
 const OFF_HOOK_FRAME = 8;
+// One-shot hang-up: handset descending back onto the cradle (see the sheet
+// index comment above for why this excludes the 13-14 raise).
+const HANGUP_RANGE: SpriteRange = { start: 15, end: 18 };
 
 const STYLE_ID = "phone-widget-sprite-styles";
 if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
@@ -110,6 +141,28 @@ if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
       }
     `;
   };
+  // Same steps() math as `css()` above (same reasoning for why "to" is
+  // end+1), but `1` iteration instead of `infinite` and `forwards` fill so
+  // it plays exactly once and then holds on the last frame's position
+  // (verified above: the final steps() interval displays *that* frame, not
+  // one past it) instead of snapping back to the range's start. The caller
+  // is responsible for swapping this class back out (via `animationend`)
+  // once it completes, since `forwards` alone would otherwise freeze the
+  // badge on the last hang-up frame forever.
+  const cssOnce = (r: SpriteRange, name: string) => {
+    const frames = r.end - r.start + 1;
+    const startPx = -(r.start * PHONE_SPRITE_PX);
+    const endPx = -((r.end + 1) * PHONE_SPRITE_PX);
+    return `
+      @keyframes ${name} {
+        from { background-position-x: ${startPx}px; }
+        to   { background-position-x: ${endPx}px; }
+      }
+      .phone-sprite-${name} {
+        animation: ${name} ${frames * 120}ms steps(${frames}) 1 forwards;
+      }
+    `;
+  };
   style.textContent = `
     .phone-sprite {
       width: ${PHONE_SPRITE_PX}px;
@@ -122,10 +175,16 @@ if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
     ${staticFrame(IDLE_FRAME, "phone-anim-idle")}
     ${css(RINGING_RANGE, "phone-anim-ringing")}
     ${staticFrame(OFF_HOOK_FRAME, "phone-anim-offhook")}
+    ${cssOnce(HANGUP_RANGE, "phone-anim-hangup")}
     @media (prefers-reduced-motion: reduce) {
       .phone-sprite-phone-anim-ringing {
         animation: none;
         background-position-x: ${-(RINGING_RANGE.start * PHONE_SPRITE_PX)}px;
+      }
+      .phone-sprite-phone-anim-hangup {
+        /* Skip straight to the settled frame — no motion at all. */
+        animation: none;
+        background-position-x: ${-(HANGUP_RANGE.end * PHONE_SPRITE_PX)}px;
       }
     }
   `;
@@ -151,6 +210,14 @@ export class PhoneWidget extends LitElement {
 
   @state() private expanded = false;
   @state() private tick = 0;
+  // Set for exactly one render pass following a call ending (in-call/dialing
+  // -> idle/busy), cleared by the sprite's own `animationend` once the
+  // one-shot hang-up animation finishes. This is a transition, not a state
+  // the machine itself has — ANIM_CLASS_BY_STATE is keyed on current state
+  // alone and has no way to say "just left a call", so it's tracked here
+  // instead, next to the previous-state bookkeeping it depends on.
+  @state() private hangingUp = false;
+  private prevMachineState: PhoneUiState = "idle";
 
   private unsubscribe: (() => void) | null = null;
   private blocked = new Set<string>();
@@ -162,10 +229,26 @@ export class PhoneWidget extends LitElement {
   init(controller: PhoneController, game: GameView) {
     this.controller = controller;
     this.game = game;
+    this.prevMachineState = controller.machine.state;
     this.unsubscribe?.();
     this.unsubscribe = controller.machine.onChange(() => {
+      const next = controller.machine.state;
+      const prev = this.prevMachineState;
+      // A call just ended: play the hang-up animation once. Re-renders from
+      // unrelated state changes (tick, volume, etc.) don't re-run this
+      // listener, so this can't retrigger or restart mid-animation — it only
+      // fires on an actual machine state transition, and this specific
+      // transition only happens once per call.
+      if (
+        (prev === "in-call" || prev === "dialing") &&
+        (next === "idle" || next === "busy") &&
+        !prefersReducedMotion()
+      ) {
+        this.hangingUp = true;
+      }
+      this.prevMachineState = next;
       // An incoming call flips the apparatus open by itself.
-      if (controller.machine.state === "ringing") this.expanded = true;
+      if (next === "ringing") this.expanded = true;
       this.tick++;
     });
     // controller/game are plain fields (not @state/@property), so assigning
@@ -202,6 +285,14 @@ export class PhoneWidget extends LitElement {
     // The sprite's own ringing frames already carry motion lines, which made
     // the old animate-bounce shake on the whole badge redundant (and the two
     // together looked like double motion) — kept only the sprite animation.
+    //
+    // `hangingUp` overrides the plain per-state class for exactly one
+    // animation: the div is the same element across re-renders (Lit patches
+    // in place, it isn't recreated), so `@animationend` is attached once and
+    // simply fires again next call rather than accumulating listeners.
+    const animClass = this.hangingUp
+      ? "phone-sprite-phone-anim-hangup"
+      : ANIM_CLASS_BY_STATE[state];
     return html`
       <div
         class="fixed bottom-24 right-4 z-50 cursor-pointer select-none"
@@ -212,9 +303,12 @@ export class PhoneWidget extends LitElement {
           class="relative w-16 h-16 rounded-lg bg-red-700 border-2 border-red-900 shadow-lg flex items-center justify-center overflow-hidden"
         >
           <div
-            class="phone-sprite ${ANIM_CLASS_BY_STATE[state]}"
+            class="phone-sprite ${animClass}"
             role="img"
             aria-label=${translateText("phone.title")}
+            @animationend=${() => {
+              this.hangingUp = false;
+            }}
           ></div>
           ${missed > 0
             ? html`<span
