@@ -62,7 +62,7 @@ import type { GameView, PlayerView } from "../../view";
 // This constant is the single source of truth for the badge's size: the
 // wrapper is sized from it inline rather than with a Tailwind `w-*`/`h-*`
 // class, so the box and the sprite inside it can never drift apart.
-const PHONE_BADGE_PX = 96;
+const PHONE_BADGE_PX = 144;
 const PHONE_SPRITE_PX = PHONE_BADGE_PX;
 const PHONE_SPRITE_TOTAL_FRAMES = 19;
 const PHONE_SPRITE_URL = assetUrl("sprites/phone.png");
@@ -206,6 +206,13 @@ const ANIM_CLASS_BY_STATE: Record<PhoneUiState, string> = {
 // screen, never traps focus, and never blocks pointer events on the map
 // behind it. Two sizes — a small badge at the edge, and the full apparatus
 // which an incoming call expands to automatically.
+//
+// Placement: the mini badge is *flow content*, not a fixed overlay — it is
+// mounted in index.html as the first child of the bottom HUD's right-hand
+// column, so the event/chat stack (which grows upward without bound) can no
+// longer paint over it the way a fixed `bottom-24 z-50` badge could. The
+// expanded apparatus is far larger than that column, so it stays a fixed
+// overlay, but at z-[300] to clear the bottom HUD's z-[200].
 @customElement("phone-widget")
 export class PhoneWidget extends LitElement {
   public controller: PhoneController | null = null;
@@ -298,7 +305,7 @@ export class PhoneWidget extends LitElement {
       : ANIM_CLASS_BY_STATE[state];
     return html`
       <div
-        class="fixed bottom-24 right-4 z-50 cursor-pointer select-none"
+        class="cursor-pointer select-none"
         @click=${() => (this.expanded = true)}
         title=${translateText("phone.title")}
       >
@@ -316,7 +323,7 @@ export class PhoneWidget extends LitElement {
           ></div>
           ${missed > 0
             ? html`<span
-                class="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
+                class="lt-num absolute -top-1 -right-1 bg-lt-bad text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
                 >${missed}</span
               >`
             : ""}
@@ -329,12 +336,14 @@ export class PhoneWidget extends LitElement {
     const m = this.controller!.machine;
     return html`
       <div
-        class="fixed bottom-24 right-4 z-50 w-[min(28rem,90vw)] max-h-[60vh] overflow-y-auto rounded-xl bg-red-800 border-4 border-red-950 shadow-2xl text-white p-3"
+        class="fixed bottom-24 right-4 z-[300] w-[min(28rem,90vw)] max-h-[60vh] overflow-y-auto bg-[rgb(11_14_17/0.94)] border border-lt-700 backdrop-blur-md shadow-lg text-lt-100 p-3"
       >
-        <div class="flex items-center justify-between mb-2">
-          <span class="font-bold">${translateText("phone.title")}</span>
+        <div class="flex items-center justify-between mb-2 relative">
+          <span class="lt-display text-sm"
+            >${translateText("phone.title")}</span
+          >
           <button
-            class="px-2 py-1 rounded bg-red-950 hover:bg-black"
+            class="absolute -top-3 -right-3 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-700 text-white shadow-sm hover:bg-lt-bad transition-colors focus-visible:ring-2 focus-visible:ring-white/30 focus:outline-hidden"
             @click=${() => (this.expanded = false)}
           >
             ✕
@@ -359,12 +368,14 @@ export class PhoneWidget extends LitElement {
     }[m.state];
     return html`
       ${label
-        ? html`<div class="mb-2 p-2 rounded bg-red-950 flex items-center gap-2">
-            <span class="font-semibold">${label}</span>
+        ? html`<div
+            class="mb-2 p-2 bg-lt-800/50 border border-lt-700 flex items-center gap-2"
+          >
+            <span class="lt-label !text-lt-100">${label}</span>
             ${m.state === "ringing" && m.incoming
-              ? html`<span>${m.incoming.username}</span>
+              ? html`<span class="truncate">${m.incoming.username}</span>
                   <button
-                    class="ml-auto px-3 py-1 rounded bg-green-600 hover:bg-green-500"
+                    class="lt-display ml-auto shrink-0 px-3 py-1 text-xs bg-lt-800/50 hover:bg-lt-750 border border-lt-ok text-lt-ok transition-colors"
                     @click=${() => this.controller!.answer()}
                   >
                     ${translateText("phone.call")}
@@ -372,7 +383,7 @@ export class PhoneWidget extends LitElement {
               : ""}
             ${m.state === "dialing" || m.state === "in-call"
               ? html`<button
-                  class="ml-auto px-3 py-1 rounded bg-black hover:bg-gray-800"
+                  class="lt-display ml-auto shrink-0 px-3 py-1 text-xs bg-lt-800/50 hover:bg-lt-750 border border-lt-bad text-lt-bad transition-colors"
                   @click=${() => this.controller!.hangup()}
                 >
                   ${translateText("phone.hang_up")}
@@ -381,12 +392,12 @@ export class PhoneWidget extends LitElement {
           </div>`
         : ""}
       ${this.controller!.micDenied
-        ? html`<div class="mb-2 text-xs text-yellow-300">
+        ? html`<div class="mb-2 text-xs text-lt-bad">
             ${translateText("phone.mic_blocked")}
           </div>`
         : ""}
       ${this.controller!.connectionFailed
-        ? html`<div class="mb-2 text-xs text-yellow-300">
+        ? html`<div class="mb-2 text-xs text-lt-bad">
             ${translateText("phone.no_connection")}
           </div>`
         : ""}
@@ -405,9 +416,10 @@ export class PhoneWidget extends LitElement {
         ${modes.map(
           ([value, label]) => html`
             <button
-              class="flex-1 px-2 py-1 rounded text-xs ${current === value
-                ? "bg-yellow-400 text-black font-bold"
-                : "bg-red-950 hover:bg-black"}"
+              class="lt-display flex-1 px-2 py-1 text-xs border transition-colors ${current ===
+              value
+                ? "bg-lt-accent text-lt-accent-ink border-lt-accent"
+                : "bg-lt-800/50 hover:bg-lt-750 border-lt-600 hover:border-lt-accent"}"
               @click=${() => {
                 this.controller!.setMode(value);
                 this.tick++;
@@ -431,16 +443,16 @@ export class PhoneWidget extends LitElement {
           return html`
             <div class="flex items-center gap-1">
               <button
-                class="flex-1 flex items-center gap-2 px-2 py-1 rounded bg-red-950 hover:bg-black text-left disabled:opacity-40"
+                class="flex-1 flex items-center gap-2 px-2 py-1 bg-lt-800/50 hover:bg-lt-750 border border-lt-600 hover:border-lt-accent transition-colors text-left disabled:opacity-40 disabled:hover:border-lt-600"
                 ?disabled=${isBlocked}
                 @click=${() => this.controller!.dial(id)}
               >
                 <span class="truncate">${p.displayName()}</span>
               </button>
               <button
-                class="px-2 py-1 rounded text-xs ${isBlocked
-                  ? "bg-yellow-400 text-black"
-                  : "bg-red-950 hover:bg-black"}"
+                class="px-2 py-1 text-xs border transition-colors ${isBlocked
+                  ? "bg-lt-800/50 border-lt-bad text-lt-bad"
+                  : "bg-lt-800/50 hover:bg-lt-750 border-lt-600 hover:border-lt-accent"}"
                 title=${isBlocked
                   ? translateText("phone.unblock")
                   : translateText("phone.block")}
@@ -472,17 +484,18 @@ export class PhoneWidget extends LitElement {
     const peers = this.controller!.machine.peers;
     return html`
       <div class="mb-2">
-        <div class="text-xs opacity-80 mb-1">
-          ${translateText("phone.in_call")}
-        </div>
+        <div class="lt-label mb-1">${translateText("phone.in_call")}</div>
         ${peers.map(
           (id) =>
-            html`<div class="px-2 py-1 rounded bg-red-950 mb-1">
+            html`<div class="px-2 py-1 bg-lt-800/50 border border-lt-700 mb-1">
               ${this.nameOf(id)}
             </div>`,
         )}
         <button
-          class="w-full mt-1 px-2 py-1 rounded bg-red-950 hover:bg-black text-xs"
+          class="lt-display w-full mt-1 px-2 py-1 text-xs bg-lt-800/50 hover:bg-lt-750 border transition-colors ${this
+            .controller!.muted
+            ? "border-lt-bad text-lt-bad"
+            : "border-lt-600 hover:border-lt-accent"}"
           @click=${() => this.controller!.toggleMute()}
         >
           ${this.controller!.muted
@@ -490,7 +503,7 @@ export class PhoneWidget extends LitElement {
             : translateText("phone.mute")}
         </button>
       </div>
-      <div class="text-xs opacity-80 mb-1">${translateText("phone.call")}</div>
+      <div class="lt-label mb-1">${translateText("phone.call")}</div>
       ${this.renderDirectory()}
     `;
   }
@@ -499,20 +512,18 @@ export class PhoneWidget extends LitElement {
     const missed = this.controller!.machine.missed;
     if (missed.length === 0) return html``;
     return html`
-      <div class="mt-2 pt-2 border-t border-red-950">
+      <div class="mt-2 pt-2 border-t border-lt-700">
         <div class="flex items-center justify-between mb-1">
-          <span class="text-xs opacity-80"
-            >${translateText("phone.missed_calls")}</span
-          >
+          <span class="lt-label">${translateText("phone.missed_calls")}</span>
           <button
-            class="text-xs px-2 py-0.5 rounded bg-red-950 hover:bg-black"
+            class="text-xs px-2 py-0.5 bg-lt-800/50 hover:bg-lt-750 border border-lt-600 hover:border-lt-accent transition-colors"
             @click=${() => this.controller!.machine.clearMissed()}
           >
             ✕
           </button>
         </div>
         ${missed.map(
-          (mc) => html`<div class="text-xs opacity-90">${mc.username}</div>`,
+          (mc) => html`<div class="text-xs text-lt-400">${mc.username}</div>`,
         )}
       </div>
     `;
@@ -522,8 +533,8 @@ export class PhoneWidget extends LitElement {
   // rest of the game's sound along with it.
   private renderVolume() {
     return html`
-      <div class="mt-2 pt-2 border-t border-red-950 flex items-center gap-2">
-        <span class="text-xs opacity-80">${translateText("phone.volume")}</span>
+      <div class="mt-2 pt-2 border-t border-lt-700 flex items-center gap-2">
+        <span class="lt-label">${translateText("phone.volume")}</span>
         <input
           class="flex-1"
           type="range"

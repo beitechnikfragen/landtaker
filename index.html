@@ -401,6 +401,14 @@
       <div
         class="flex flex-col pointer-events-none items-end order-2 sm:order-none sm:flex-1 lg:col-start-3 lg:self-end lg:justify-end"
       >
+        <!-- The phone sits at the top of this column: the column stacks
+             bottom-first and grows upward as events accumulate, so the phone
+             has to be the first child to stay clear of the feed instead of
+             being painted over by it. Its own z/fixed anchoring is gone — it
+             is flow content here, right-aligned by the parent's items-end.
+             (The expanded apparatus is still a fixed overlay; see
+             PhoneWidget.renderApparatus.) -->
+        <phone-widget class="pointer-events-auto"></phone-widget>
         <text-chat-panel
           class="w-full sm:w-auto pointer-events-none"
         ></text-chat-panel>
@@ -424,7 +432,6 @@
 
     <!-- Game modals and overlays -->
     <emoji-table></emoji-table>
-    <phone-widget></phone-widget>
     <!-- Renders nothing unless the account holds an admin role. The server
          refuses the cheats regardless, so this is not a security boundary. -->
     <admin-cheat-menu></admin-cheat-menu>
