@@ -1,9 +1,112 @@
 import { html, LitElement } from "lit";
 import { customElement, state } from "lit/decorators.js";
+import { assetUrl } from "../../../core/AssetUrls";
 import type { PhoneMode } from "../../../core/Schemas";
+import type { PhoneUiState } from "../../phone/CallStateMachine";
 import type { PhoneController } from "../../phone/PhoneController";
 import { translateText } from "../../Utils";
 import type { GameView, PlayerView } from "../../view";
+
+// The mini badge's phone glyph is a 19-frame sprite sheet (see
+// resources/sprites/phone.png): frames are 128x128 source pixels each,
+// packed left-to-right in a single row (2432x128 total) — 2x the 64px CSS
+// badge, for HiDPI. Frame indices below are 0-based positions *within that
+// sheet* — sheet index 0 is source frame "Sprite-0002.png", so sheet index =
+// spriteNumber - 2. Confirmed by direct pixel inspection of the packed sheet:
+//   sheet index 0-5   (Sprite 2-7)   idle, handset on the hook
+//   sheet index 6-7   (Sprite 8-9)   ringing, motion lines by the handset
+//   sheet index 8-12  (Sprite 10-14) handset lifted off the hook
+//   sheet index 13-18 (Sprite 15-20) returning to rest; index 18 == index 0
+//
+// The badge renders at 64 CSS px (w-16/h-16 below). background-position, in
+// pixel units, operates in *rendered* space — i.e. after background-size
+// scaling — not in the source image's own pixel space. So both
+// background-size and the per-frame step below are expressed in terms of the
+// badge's rendered size, not the source frame's 128px: at badge size 64px,
+// background-size is `64 * frameCount`px and each frame step is 64px, even
+// though each source frame is 128px wide. Getting this wrong (e.g. stepping
+// by the source frame size) would visibly skip every other frame.
+const PHONE_BADGE_PX = 64;
+const PHONE_SPRITE_TOTAL_FRAMES = 19;
+const PHONE_SPRITE_URL = assetUrl("sprites/phone.png");
+
+interface SpriteRange {
+  // Inclusive start/end sheet indices (0-based).
+  start: number;
+  end: number;
+}
+
+// idle handset-on-hook frames, reused for "busy" (a refused call has nothing
+// left to animate — it should just look like the phone is at rest again).
+const IDLE_RANGE: SpriteRange = { start: 0, end: 5 };
+const RINGING_RANGE: SpriteRange = { start: 6, end: 7 };
+// The user was explicit that outgoing "dialing" (ringing at the far end)
+// should use the same off-hook look as an active call: "für ich rufe an ist
+// einfach der open state".
+const OFF_HOOK_RANGE: SpriteRange = { start: 8, end: 12 };
+
+const STYLE_ID = "phone-widget-sprite-styles";
+if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
+  const style = document.createElement("style");
+  style.id = STYLE_ID;
+  // One steps() keyframe animation per state range, driven entirely by CSS
+  // (background-position on the compositor-cheap background shorthand) so
+  // there is no JS timer to manage or leak.
+  //
+  // steps(N) (default jump-end) divides the keyframe's travel distance into
+  // N equal intervals and holds frame i for the whole of interval i, landing
+  // on the *last* interval's end value only for a zero-duration instant. So
+  // to give every one of F frames an equal, non-zero hold, the keyframe must
+  // travel F full frame-widths (start frame through one frame *past* the
+  // last frame), not F-1: "to" below is deliberately end+1, not end — using
+  // "end" would make steps(F) divide F-1 frame-widths of travel into F
+  // intervals, landing mid-frame on non-integer boundaries (visibly blurred
+  // steps) and never actually holding the final frame.
+  const css = (r: SpriteRange, name: string) => {
+    const frames = r.end - r.start + 1;
+    const startPx = -(r.start * PHONE_BADGE_PX);
+    const endPx = -((r.end + 1) * PHONE_BADGE_PX);
+    return `
+      @keyframes ${name} {
+        from { background-position-x: ${startPx}px; }
+        to   { background-position-x: ${endPx}px; }
+      }
+      .phone-sprite-${name} {
+        animation: ${name} ${frames * 120}ms steps(${frames}) infinite;
+      }
+    `;
+  };
+  style.textContent = `
+    .phone-sprite {
+      width: ${PHONE_BADGE_PX}px;
+      height: ${PHONE_BADGE_PX}px;
+      background-image: url("${PHONE_SPRITE_URL}");
+      background-repeat: no-repeat;
+      background-size: ${PHONE_SPRITE_TOTAL_FRAMES * PHONE_BADGE_PX}px ${PHONE_BADGE_PX}px;
+      image-rendering: pixelated;
+    }
+    ${css(IDLE_RANGE, "phone-anim-idle")}
+    ${css(RINGING_RANGE, "phone-anim-ringing")}
+    ${css(OFF_HOOK_RANGE, "phone-anim-offhook")}
+    @media (prefers-reduced-motion: reduce) {
+      .phone-sprite-phone-anim-idle,
+      .phone-sprite-phone-anim-ringing,
+      .phone-sprite-phone-anim-offhook {
+        animation: none;
+        background-position-x: 0px;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+const ANIM_CLASS_BY_STATE: Record<PhoneUiState, string> = {
+  idle: "phone-sprite-phone-anim-idle",
+  ringing: "phone-sprite-phone-anim-ringing",
+  dialing: "phone-sprite-phone-anim-offhook",
+  "in-call": "phone-sprite-phone-anim-offhook",
+  busy: "phone-sprite-phone-anim-idle",
+};
 
 // Red rotary telephone overlay. Never a modal: it never covers the whole
 // screen, never traps focus, and never blocks pointer events on the map
@@ -64,7 +167,9 @@ export class PhoneWidget extends LitElement {
   private renderMini() {
     const missed = this.controller!.machine.missed.length;
     const state = this.controller!.machine.state;
-    const shaking = state === "ringing";
+    // The sprite's own ringing frames already carry motion lines, which made
+    // the old animate-bounce shake on the whole badge redundant (and the two
+    // together looked like double motion) — kept only the sprite animation.
     return html`
       <div
         class="fixed bottom-24 right-4 z-50 cursor-pointer select-none"
@@ -72,11 +177,13 @@ export class PhoneWidget extends LitElement {
         title=${translateText("phone.title")}
       >
         <div
-          class="relative w-16 h-16 rounded-lg bg-red-700 border-2 border-red-900 shadow-lg flex items-center justify-center ${shaking
-            ? "animate-bounce"
-            : ""}"
+          class="relative w-16 h-16 rounded-lg bg-red-700 border-2 border-red-900 shadow-lg flex items-center justify-center overflow-hidden"
         >
-          <span class="text-3xl">☎️</span>
+          <div
+            class="phone-sprite ${ANIM_CLASS_BY_STATE[state]}"
+            role="img"
+            aria-label=${translateText("phone.title")}
+          ></div>
           ${missed > 0
             ? html`<span
                 class="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
