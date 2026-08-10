@@ -58,7 +58,11 @@ import type { GameView, PlayerView } from "../../view";
 // The sprite *is* the badge — it carries its own red telephone artwork, so
 // there is no surrounding chrome to leave room for and nothing to inset it
 // against. It renders at full badge size.
-const PHONE_BADGE_PX = 64;
+//
+// This constant is the single source of truth for the badge's size: the
+// wrapper is sized from it inline rather than with a Tailwind `w-*`/`h-*`
+// class, so the box and the sprite inside it can never drift apart.
+const PHONE_BADGE_PX = 96;
 const PHONE_SPRITE_PX = PHONE_BADGE_PX;
 const PHONE_SPRITE_TOTAL_FRAMES = 19;
 const PHONE_SPRITE_URL = assetUrl("sprites/phone.png");
@@ -299,7 +303,8 @@ export class PhoneWidget extends LitElement {
         title=${translateText("phone.title")}
       >
         <div
-          class="relative w-16 h-16 flex items-center justify-center drop-shadow-lg"
+          class="relative flex items-center justify-center drop-shadow-lg"
+          style="width:${PHONE_BADGE_PX}px;height:${PHONE_BADGE_PX}px"
         >
           <div
             class="phone-sprite ${animClass}"
