@@ -171,6 +171,9 @@ export function buildUserUpdate(
   if (patch.flares !== undefined) {
     update.flares = normalizeFlares(patch.flares);
   }
+  if (patch.usernameStatus !== undefined) {
+    update.usernameStatus = patch.usernameStatus;
+  }
   return update;
 }
 
