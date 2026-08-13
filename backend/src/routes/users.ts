@@ -3,6 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.ts";
 import { users } from "../db/schema.ts";
 import { requireAuth } from "../plugins/auth.ts";
+import { changeUsername } from "../services/username.ts";
 import {
   buildUserMeResponse,
   resolveDisplayUsername,
@@ -61,4 +62,49 @@ export async function registerUserRoutes(app: FastifyInstance): Promise<void> {
 
     return reply.send(response);
   });
+
+  /**
+   * PUT /users/@me/username
+   *
+   * Changes the account name — the handle shown in the friends list, party
+   * roster and social chat. Not the in-game name, which is per-browser and
+   * needs no account.
+   *
+   * The status codes are the contract the client already speaks (see
+   * updateUsername in src/client/Api.ts): 400 invalid with a reason, 400
+   * USERNAME_PROFANE, 409 taken, 429 with Retry-After. Anything else is
+   * reported to the player as a generic failure, so the specific ones are
+   * worth getting right.
+   */
+  app.put<{ Body: { username?: unknown } }>(
+    "/users/@me/username",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const raw = request.body?.username;
+      if (typeof raw !== "string") {
+        return reply
+          .code(400)
+          .send({ code: "USERNAME_INVALID", reason: "Name is required" });
+      }
+
+      const result = await changeUsername(request.userId!, raw);
+      if (result.ok) return reply.send(result.value);
+
+      switch (result.error.code) {
+        case "profane":
+          return reply.code(400).send({ code: "USERNAME_PROFANE" });
+        case "invalid":
+          return reply
+            .code(400)
+            .send({ code: "USERNAME_INVALID", reason: result.error.reason });
+        case "taken":
+          return reply.code(409).send({ code: "USERNAME_TAKEN" });
+        case "cooldown":
+          return reply
+            .code(429)
+            .header("Retry-After", String(result.error.retryAfterSeconds))
+            .send({ code: "USERNAME_COOLDOWN" });
+      }
+    },
+  );
 }

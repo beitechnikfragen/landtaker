@@ -126,6 +126,12 @@ export const AdminUserPatchSchema = z
     unlimitedRanked: z.boolean().optional(),
     canCreatePublicLobbies: z.boolean().optional(),
     flares: z.string().max(200).array().max(1000).optional(),
+    // Grants or removes the bare-name entitlement, which is what the client
+    // renders as the verified check (a display name with no dot). Deliberately
+    // an admin-only field: picking a name never earns it.
+    // "unclaimed" is not offered — it means "no name chosen yet", which is a
+    // signup state, not something to demote a named account into.
+    usernameStatus: z.enum(["claimed", "premium", "indefinite"]).optional(),
   })
   // A patch that changes nothing is far more likely to be a client bug than an
   // intent, and answering 200 to it hides that bug.
