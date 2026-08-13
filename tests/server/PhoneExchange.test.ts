@@ -221,4 +221,183 @@ describe("PhoneExchange", () => {
     const out = ex.handle(A, { kind: "dial", target: B });
     expect(kinds(out, A)).toEqual(["busy"]);
   });
+
+  describe("reject", () => {
+    it("gives the caller the plain busy signal and stops the ring", () => {
+      ex.handle(A, { kind: "dial", target: B });
+      const out = ex.handle(B, { kind: "reject" });
+      expect(kinds(out, A)).toContain("busy");
+      // Rejecting is an active refusal: the rejecter does not log it as a
+      // call they missed.
+      expect(to(out, B).find((p) => p.kind === "missed")).toBeUndefined();
+    });
+
+    it("is indistinguishable from DND, a block, and being busy", () => {
+      // The whole point: a caller must not be able to tell WHY they were
+      // refused, or blocking becomes probeable.
+      const rejected = (() => {
+        ex.handle(A, { kind: "dial", target: B });
+        return to(ex.handle(B, { kind: "reject" }), A).filter(
+          (p) => p.kind !== "callEnded",
+        );
+      })();
+
+      const viaDnd = (() => {
+        ex.handle(C, { kind: "setMode", mode: "dnd" });
+        return to(ex.handle(A, { kind: "dial", target: C }), A);
+      })();
+
+      const viaBlock = (() => {
+        ex.handle(D, { kind: "block", target: A });
+        return to(ex.handle(A, { kind: "dial", target: D }), A);
+      })();
+
+      expect(rejected).toEqual([{ kind: "busy" }]);
+      expect(viaDnd).toEqual([{ kind: "busy" }]);
+      expect(viaBlock).toEqual([{ kind: "busy" }]);
+    });
+
+    it("frees the rejecter to be called again", () => {
+      ex.handle(A, { kind: "dial", target: B });
+      ex.handle(B, { kind: "reject" });
+      const out = ex.handle(C, { kind: "dial", target: B });
+      expect(kinds(out, B)).toContain("ringing");
+    });
+
+    it("does nothing when there is no incoming call", () => {
+      expect(ex.handle(B, { kind: "reject" })).toEqual([]);
+    });
+
+    it("does not let a connected participant reject their way out silently", () => {
+      // reject is for an unanswered ring. Someone already connected who
+      // sends it must simply leave, exactly like hangup — never eject
+      // anyone else.
+      ex.handle(A, { kind: "dial", target: B });
+      ex.handle(B, { kind: "answer" });
+      const out = ex.handle(B, { kind: "reject" });
+      expect(kinds(out, A)).toContain("callEnded");
+      expect(kinds(out, B)).toContain("callEnded");
+    });
+  });
+
+  describe("death", () => {
+    it("ends a dead player's live call for both sides", () => {
+      ex.handle(A, { kind: "dial", target: B });
+      ex.handle(B, { kind: "answer" });
+      const out = ex.handle(A, { kind: "died" });
+      expect(kinds(out, B)).toContain("callEnded");
+      expect(kinds(out, A)).toContain("callEnded");
+    });
+
+    it("stops a ring that is already going out to the player who died", () => {
+      ex.handle(A, { kind: "dial", target: B });
+      // B dies while their phone is ringing. The ring must stop, and A must
+      // not be left listening to a dial tone forever.
+      const out = ex.handle(B, { kind: "died" });
+      expect(kinds(out, A)).toContain("busy");
+      const stillRinging = ex.handle(C, { kind: "dial", target: B });
+      expect(kinds(stillRinging, B)).toEqual([]);
+    });
+
+    it("makes a dead player uncallable, with the same busy signal as any other refusal", () => {
+      ex.handle(B, { kind: "died" });
+      const out = ex.handle(A, { kind: "dial", target: B });
+      expect(kinds(out, A)).toEqual(["busy"]);
+      expect(kinds(out, B)).toEqual([]);
+    });
+
+    it("stops a dead player from dialing anyone", () => {
+      ex.handle(A, { kind: "died" });
+      const out = ex.handle(A, { kind: "dial", target: B });
+      expect(kinds(out, A)).toEqual(["busy"]);
+      expect(kinds(out, B)).toEqual([]);
+    });
+
+    it("is permanent for the match: a reconnect does not resurrect the phone", () => {
+      // Unlike removePlayer (a socket blip that a reconnect undoes), death is
+      // final in the simulation. addPlayer must not make a dead player
+      // callable again.
+      ex.handle(B, { kind: "died" });
+      ex.removePlayer(B);
+      ex.addPlayer(player(B, "Bob"));
+      const out = ex.handle(A, { kind: "dial", target: B });
+      expect(kinds(out, A)).toEqual(["busy"]);
+    });
+
+    it("keeps prefs intact, exactly as a disconnect does", () => {
+      // Death must not regress the fix that keeps DND/blocks alive across a
+      // drop — prefs still belong to the client, not to their liveness.
+      ex.handle(B, { kind: "block", target: A });
+      ex.handle(B, { kind: "setMode", mode: "dnd" });
+      ex.handle(B, { kind: "died" });
+      expect((ex as any).prefsOf(B).blocked.has(A)).toBe(true);
+      expect((ex as any).prefsOf(B).mode).toBe("dnd");
+    });
+
+    // SECURITY. Liveness lives in the client-side simulation, so the server
+    // can never verify it. It therefore must only ever accept a death report
+    // about the REPORTING client itself, keyed off the connection's own
+    // clientID. If a payload could name a victim, a modified client could
+    // hang up on arbitrary players or eject rivals from a conference.
+    it("does not let a client end another player's call by reporting a death", () => {
+      // B and C are talking. A — an outsider — reports a death.
+      ex.handle(B, { kind: "dial", target: C });
+      ex.handle(C, { kind: "answer" });
+
+      const out = ex.handle(A, { kind: "died" } as any);
+
+      // B and C's call is untouched: no one was ejected.
+      expect(kinds(out, B)).toEqual([]);
+      expect(kinds(out, C)).toEqual([]);
+      // And they are still connected to each other.
+      const sig = ex.handle(B, { kind: "signal", to: C, data: "still-here" });
+      expect(to(sig, C).find((p) => p.kind === "signal")).toBeDefined();
+    });
+
+    it("ignores any victim smuggled into the death payload", () => {
+      // Even if a modified client adds a `target`/`clientID` field, the
+      // server must key the death to the sender and nothing else.
+      ex.handle(B, { kind: "dial", target: C });
+      ex.handle(C, { kind: "answer" });
+
+      const out = ex.handle(A, {
+        kind: "died",
+        target: B,
+        clientID: C,
+      } as any);
+
+      expect(kinds(out, B)).toEqual([]);
+      expect(kinds(out, C)).toEqual([]);
+      // B is still in their call, so a fresh dial at B comes back busy —
+      // proof the call survived rather than having been torn down.
+      expect(kinds(ex.handle(D, { kind: "dial", target: B }), D)).toEqual([
+        "busy",
+      ]);
+    });
+
+    it("is idempotent when the report is retried", () => {
+      // The client re-announces its death for a few ticks, because a single
+      // phone message can be dropped by the rate limiter. Repeats must be
+      // silent no-ops, not a second teardown.
+      ex.handle(A, { kind: "dial", target: B });
+      ex.handle(B, { kind: "answer" });
+      const first = ex.handle(A, { kind: "died" });
+      expect(kinds(first, B)).toContain("callEnded");
+      expect(ex.handle(A, { kind: "died" })).toEqual([]);
+      expect(ex.handle(A, { kind: "died" })).toEqual([]);
+    });
+
+    it("does not eject a dead player's conference partners from each other", () => {
+      // A, B, C in a conference; A dies. B and C keep talking.
+      ex.handle(A, { kind: "dial", target: B });
+      ex.handle(B, { kind: "answer" });
+      ex.handle(A, { kind: "dial", target: C });
+      ex.handle(C, { kind: "answer" });
+
+      const out = ex.handle(A, { kind: "died" });
+      const bState = to(out, B).find((p) => p.kind === "callState") as any;
+      expect(bState.peers).toEqual([C]);
+      expect(kinds(out, B)).not.toContain("callEnded");
+    });
+  });
 });

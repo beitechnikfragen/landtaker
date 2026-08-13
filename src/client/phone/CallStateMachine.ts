@@ -13,6 +13,7 @@ export const BUSY_TONE_MS = 3000;
 export class CallStateMachine {
   private _state: PhoneUiState = "idle";
   private _peers: ClientID[] = [];
+  private _pending: ClientID[] = [];
   private _missed: MissedCall[] = [];
   private _incoming: { from: ClientID; username: string } | null = null;
   private _callId: string | null = null;
@@ -25,6 +26,19 @@ export class CallStateMachine {
 
   get peers(): ClientID[] {
     return [...this._peers];
+  }
+
+  // Angeklingelte, noch nicht verbundene Teilnehmer desselben Calls.
+  get pending(): ClientID[] {
+    return [...this._pending];
+  }
+
+  // Sitzt der Nutzer tatsächlich mit jemandem im Gespräch? Das ist die
+  // Frage, an der die Auflegen-Taste hängt — und der Grund, warum sie nicht
+  // an `state === "in-call"` hängen darf: der fünfstellige Zustand kann
+  // "im Gespräch UND ein neuer Ruf geht raus" nicht ausdrücken.
+  get connected(): boolean {
+    return this._peers.length > 0;
   }
 
   get missed(): MissedCall[] {
@@ -55,7 +69,12 @@ export class CallStateMachine {
       case "dialing":
         this.cancelBusy();
         this._callId = payload.callId;
-        this.set("dialing");
+        // Wählt man aus einem laufenden Gespräch heraus jemanden dazu, bleibt
+        // man verbunden. Früher überschrieb "dialing" hier das "in-call" —
+        // und mit ihm verschwand die Auflegen-Taste, obwohl der Nutzer noch
+        // mit anderen im Gespräch saß. Der ausstehende Ruf steht in
+        // `pending`, gespeist aus dem callState des Servers.
+        this.set(this.connected ? "in-call" : "dialing");
         break;
       case "ringing":
         this.cancelBusy();
@@ -67,6 +86,7 @@ export class CallStateMachine {
         this.cancelBusy();
         this._callId = payload.callId;
         this._peers = payload.peers;
+        this._pending = payload.ringing ?? [];
         this._incoming = null;
         this.set("in-call");
         break;
@@ -75,6 +95,16 @@ export class CallStateMachine {
         this.set("idle");
         break;
       case "busy":
+        // Ein Besetztzeichen für einen dazugewählten Dritten darf das
+        // laufende Gespräch nicht abräumen — genau daran ging die
+        // Auflegen-Taste mitten in der Konferenz verloren. Der Server
+        // schickt dazu ohnehin ein frisches callState ohne den Ruf; hier
+        // reicht es, den Zustand nicht anzufassen.
+        if (this.connected) {
+          this.cancelBusy();
+          this.emit();
+          break;
+        }
         this.reset();
         this._state = "busy";
         this.busyTimer = setTimeout(() => {
@@ -99,6 +129,7 @@ export class CallStateMachine {
   private reset(): void {
     this.cancelBusy();
     this._peers = [];
+    this._pending = [];
     this._incoming = null;
     this._callId = null;
   }

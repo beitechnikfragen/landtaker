@@ -88,6 +88,12 @@ import { SoundManager } from "./sound/SoundManager";
 import { themeProvider } from "./theme/ThemeProvider";
 import { GameView, PlayerView } from "./view";
 
+// How many ticks in a row the client will re-announce its own death to the
+// phone exchange before giving up. Phone messages are rate-limited, so one
+// send can be dropped; a handful of retries covers that without letting a
+// client that never confirms sit here re-sending for the whole match.
+const MAX_DEATH_REPORT_ATTEMPTS = 10;
+
 export interface LobbyConfig {
   cosmetics: PlayerCosmeticRefs;
   playerName: string;
@@ -739,6 +745,7 @@ async function createClientGame(
 
 export class ClientGameRunner {
   private myPlayer: PlayerView | null = null;
+  private deathReportAttempts = 0;
   private isActive = false;
 
   private turnsSeen = 0;
@@ -806,6 +813,29 @@ export class ClientGameRunner {
    * (when the player is alive in the game), `false` otherwise
    * (when the player is not alive or doesn't exist)
    */
+  // Liveness only exists in the deterministic simulation, which runs here on
+  // the client — the server has no way to read it. So the client tells the
+  // exchange when it dies, and the exchange accepts that claim *only* about
+  // the reporting connection (the message carries no player field at all).
+  // A dead player keeps spectating, so nothing else would ever end their
+  // calls: without this their phone rings on forever.
+  private reportOwnDeathToPhone(): void {
+    const phone = this._phoneController;
+    if (phone === null || phone.reportedDeath) return;
+    if (this.deathReportAttempts >= MAX_DEATH_REPORT_ATTEMPTS) return;
+    const me = this.gameView.myPlayer();
+    // Before spawning, `isAlive()` is legitimately false — only report a
+    // death for a player who actually got into the game and then lost it.
+    if (me === null || !me.hasSpawned() || me.isAlive()) return;
+    // Retried across a few ticks rather than fired once: phone messages are
+    // rate-limited, so a single send can be dropped in a signalling burst and
+    // would leave a dead player callable for the rest of the match. The
+    // controller reports back once the apparatus is actually clear. Bounded
+    // so a client that never reaches that state cannot sit here re-sending.
+    this.deathReportAttempts++;
+    phone.reportOwnDeath();
+  }
+
   public shouldPreventWindowClose(): boolean {
     // Show confirmation dialog if player is alive in the game
     return !!this.myPlayer?.isAlive();
@@ -917,6 +947,7 @@ export class ClientGameRunner {
         this.eventBus.emit(new SendHashEvent(hu.tick, hu.hash));
       });
       this.gameView.update(gu);
+      this.reportOwnDeathToPhone();
       this.webglBuilder?.update(this.gameView);
       this.renderer.tick();
 

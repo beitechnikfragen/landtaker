@@ -16,6 +16,8 @@ export class PhoneController {
   private sounds: PhoneSounds;
   private _muted = false;
   private _connectionFailed = false;
+  // Der Tod wird genau einmal gemeldet: der Aufrufer pollt pro Tick.
+  private _reportedDeath = false;
   private unsubscribe: () => void;
 
   constructor(
@@ -122,11 +124,43 @@ export class PhoneController {
     this.send({ kind: "answer" });
   }
 
+  reject(): void {
+    // TEMP diagnostics: remove once the phone audio bug is found
+    console.log(`[phone] PhoneController.reject`);
+    this.sounds.playHangUp();
+    this.send({ kind: "reject" });
+  }
+
   hangup(): void {
     // TEMP diagnostics: remove once the phone audio bug is found
     console.log(`[phone] PhoneController.hangup`);
     this.sounds.playHangUp();
     this.send({ kind: "hangup" });
+  }
+
+  // Meldet den eigenen Tod. Die Lebendigkeit steht nur in der Simulation, die
+  // hier auf dem Client läuft — der Server kann sie nicht selbst lesen. Er
+  // nimmt diese Meldung deshalb ausschließlich für den Absender an; über
+  // andere Spieler kann von hier aus nichts behauptet werden, und genau
+  // deshalb trägt die Nachricht auch kein Spielerfeld.
+  //
+  // Der Aufrufer pollt pro Tick, solange dies `false` liefert. Grund: Phone-
+  // Nachrichten unterliegen einem Rate-Limit, und mitten in einem WebRTC-
+  // Signalisierungs-Schwall kann die Meldung verworfen werden. Ein einmaliges
+  // "abgeschickt, Haken dran" würde den Toten dann für den Rest des Matches
+  // erreichbar lassen — genau der Zustand, den dieser Fix beseitigt. Deshalb
+  // gilt die Meldung erst als angekommen, wenn der Apparat auch tatsächlich
+  // frei ist (der Server beendet bei Tod jeden laufenden Ruf).
+  reportOwnDeath(): boolean {
+    console.log(`[phone] PhoneController.reportOwnDeath`);
+    this.sounds.stopAll();
+    this.send({ kind: "died" });
+    this._reportedDeath = this.machine.state === "idle";
+    return this._reportedDeath;
+  }
+
+  get reportedDeath(): boolean {
+    return this._reportedDeath;
   }
 
   setMode(mode: PhoneMode): void {

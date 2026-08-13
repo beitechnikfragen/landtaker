@@ -257,6 +257,56 @@ describe("PhoneExchange conferences", () => {
     expect(peersOf(C)).toEqual([A, B].sort());
   });
 
+  it("tells every participant who is still ringing, not just who is connected", () => {
+    // The client cannot render "connected vs. pending" — or know it is still
+    // in a call while a new dial is out — unless the server says so. It
+    // already tracks the two sets separately; broadcast both.
+    connectAB();
+    const out = ex.handle(A, { kind: "dial", target: C });
+    const aState = to(out, A).find((p) => p.kind === "callState") as any;
+    const bState = to(out, B).find((p) => p.kind === "callState") as any;
+    expect(aState.peers).toEqual([B]);
+    expect(aState.ringing).toEqual([C]);
+    // B learns about the pending third party too — it is the call's ring,
+    // not A's private one.
+    expect(bState.peers).toEqual([A]);
+    expect(bState.ringing).toEqual([C]);
+  });
+
+  it("clears the pending list once the third party answers", () => {
+    connectAB();
+    ex.handle(A, { kind: "dial", target: C });
+    const out = ex.handle(C, { kind: "answer" });
+    for (const who of [A, B, C]) {
+      const st = to(out, who).find((p) => p.kind === "callState") as any;
+      expect(st.ringing).toEqual([]);
+    }
+  });
+
+  it("clears the pending list when the pulled-in party never picks up", () => {
+    connectAB();
+    ex.handle(A, { kind: "dial", target: C });
+    clock = 12000;
+    const out = ex.tick();
+    // A and B are still talking, and both are told the ring is over.
+    const aState = to(out, A).find((p) => p.kind === "callState") as any;
+    expect(aState.peers).toEqual([B]);
+    expect(aState.ringing).toEqual([]);
+    expect(kinds(out, A)).not.toContain("callEnded");
+  });
+
+  it("clears the pending list when the pulled-in party rejects", () => {
+    connectAB();
+    ex.handle(A, { kind: "dial", target: C });
+    const out = ex.handle(C, { kind: "reject" });
+    const aState = to(out, A).find((p) => p.kind === "callState") as any;
+    expect(aState.peers).toEqual([B]);
+    expect(aState.ringing).toEqual([]);
+    // The conference survives a refusal — only the ring goes away.
+    expect(kinds(out, A)).not.toContain("callEnded");
+    expect(kinds(out, B)).not.toContain("callEnded");
+  });
+
   it("does not eject anyone when a block is added after both parties are already connected", () => {
     connectAB();
     // A and B are connected. B blocks A after the fact.

@@ -951,7 +951,18 @@ export const ClientPhonePayloadSchema = z.discriminatedUnion("kind", [
   // Ruft ein Ziel an: eröffnet einen Call oder holt in den eigenen dazu.
   z.object({ kind: z.literal("dial"), target: ID }),
   z.object({ kind: z.literal("answer") }),
+  // Weist einen eingehenden Ruf aktiv ab. Nach außen ununterscheidbar von
+  // DND/Block/Besetzt — der Anrufer hört immer nur das Besetztzeichen.
+  z.object({ kind: z.literal("reject") }).strict(),
   z.object({ kind: z.literal("hangup") }),
+  // Der Client meldet den EIGENEN Tod. Die Lebendigkeit steckt in der
+  // deterministischen Simulation, die auf jedem Client läuft — der Server
+  // kann sie nicht selbst lesen und darf deshalb NIE die Behauptung eines
+  // Clients über einen ANDEREN Spieler annehmen. Darum trägt diese Nachricht
+  // bewusst kein Feld für "wer" ist gestorben: der Server leitet die Identität
+  // ausschließlich aus der Verbindung ab (wie setMode/block). `.strict()`
+  // weist ein untergeschobenes Opfer-Feld ab, statt es still zu ignorieren.
+  z.object({ kind: z.literal("died") }).strict(),
   z.object({ kind: z.literal("setMode"), mode: PhoneModeSchema }),
   z.object({ kind: z.literal("setAlliesOnly"), value: z.boolean() }),
   z.object({ kind: z.literal("block"), target: ID }),
@@ -980,11 +991,16 @@ export const ServerPhonePayloadSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("dialing"), callId: z.string() }),
   // Einziger Ablehnungsgrund nach außen. Nie differenzieren.
   z.object({ kind: z.literal("busy") }),
-  // Call verbunden bzw. Teilnehmerliste geändert. peers enthält NICHT den Empfänger.
+  // Call verbunden bzw. Teilnehmerliste geändert. peers enthält NICHT den
+  // Empfänger. `ringing` sind die bereits angeklingelten, aber noch nicht
+  // verbundenen Ziele desselben Calls — der Server führt beide Mengen ohnehin
+  // getrennt, und ohne sie könnte der Client "verbunden" nicht von "klingelt
+  // noch" unterscheiden. Optional, damit ältere Clients weiterlaufen.
   z.object({
     kind: z.literal("callState"),
     callId: z.string(),
     peers: ID.array(),
+    ringing: ID.array().optional(),
   }),
   z.object({ kind: z.literal("callEnded"), callId: z.string() }),
   z.object({

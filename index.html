@@ -411,8 +411,21 @@
         <!-- mr-4/mb-4 matches the apparatus's own `right-4`, so the badge and
              the panel that opens above it share one right edge. The bottom HUD
              container has no padding of its own at this breakpoint, so without
-             this the badge sits flush in the screen corner. -->
-        <phone-widget class="pointer-events-auto mr-4 mb-4"></phone-widget>
+             this the badge sits flush in the screen corner.
+
+             `relative z-[901]` raises the badge *within this column* so a
+             busy events feed cannot paint over it. It stays flow content here
+             (the deliberate fix for the earlier bug where a `fixed` sibling
+             collided with the feed) — this only orders it against its own
+             siblings. 901 specifically: from `lg` up the feed detaches into a
+             `lg:fixed lg:z-[900]` wrapper that grows down over this corner,
+             and that wrapper is a sibling in this same column, so anything
+             below 900 loses to it. Nothing escapes the HUD either way — the
+             whole column sits inside the bottom HUD's own `z-[200]` stacking
+             context, which clamps both numbers against the rest of the page. -->
+        <phone-widget
+          class="pointer-events-auto mr-4 mb-4 relative z-[901]"
+        ></phone-widget>
         <text-chat-panel
           class="w-full sm:w-auto pointer-events-none"
         ></text-chat-panel>

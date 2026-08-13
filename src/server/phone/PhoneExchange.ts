@@ -22,6 +22,10 @@ export class PhoneExchange {
   private calls = new Map<string, Call>();
   // Wo steckt ein Spieler gerade: verbunden ODER klingelnd.
   private callOf = new Map<ClientID, string>();
+  // Wer im Match gestorben ist. Anders als removePlayer ist das endgültig:
+  // ein Toter bleibt tot, auch wenn seine Socket neu verbindet (er schaut ja
+  // weiter zu). Deshalb überlebt dieser Eintrag addPlayer.
+  private dead = new Set<ClientID>();
   private nextCallId = 1;
 
   constructor(private readonly now: () => number) {}
@@ -65,8 +69,20 @@ export class PhoneExchange {
         return this.dial(from, payload.target);
       case "answer":
         return this.answer(from);
+      case "reject":
+        // Aktives Abweisen. Für einen noch klingelnden Ruf ist das exakt der
+        // Ablehnungs-Zweig von leaveCall: der Anrufer hört Besetzt, beim
+        // Abweisenden landet kein verpasster Anruf. Sitzt der Absender schon
+        // verbunden im Call, ist "reject" bedeutungslos und verhält sich wie
+        // hangup — er verlässt nur sich selbst, wirft nie jemanden raus.
+        return this.leaveCall(from, { missedForCaller: false });
       case "hangup":
         return this.leaveCall(from, { missedForCaller: true });
+      case "died":
+        // NUR über den Absender. `from` kommt aus der Verbindung, niemals aus
+        // der Nutzlast — sonst könnte ein manipulierter Client fremde Calls
+        // beenden oder Rivalen aus einer Konferenz werfen.
+        return this.markDead(from);
       case "signal":
         return this.forwardSignal(from, payload.to, payload.data);
     }
@@ -82,9 +98,29 @@ export class PhoneExchange {
         this.callOf.delete(target);
         out.push(...this.missedFor(target, ring.from));
         out.push(...this.collapseIfEmpty(call));
+        // Überlebt der Call (Konferenz), erfahren die Verbliebenen, dass der
+        // ausstehende Ruf weg ist — sonst bliebe er ewig als "klingelt" stehen.
+        if (this.calls.has(call.id)) out.push(...this.broadcastState(call));
       }
     }
     return out;
+  }
+
+  // Der Tod beendet die Teilnahme am Telefonnetz — aber nur die eigene.
+  //
+  // Bewusst anders als removePlayer: dort ist der Spieler nur weg vom Draht
+  // und kommt womöglich gleich wieder (deshalb überleben dort die Prefs, und
+  // deshalb ist der Zustand dort umkehrbar). Der Tod ist im Match endgültig:
+  // der Spieler bleibt verbunden und schaut zu, ist aber nie wieder
+  // anrufbar. Was beide teilen: Prefs (DND/Block) bleiben unangetastet — sie
+  // gehören dem Client, nicht seiner Lebendigkeit. Sie zu löschen wäre
+  // derselbe Fehler wie damals beim Verbindungsabbruch.
+  private markDead(who: ClientID): PhoneOutbox[] {
+    if (this.dead.has(who)) return [];
+    this.dead.add(who);
+    // Laufender Ruf oder laufendes Gespräch endet — wie ein Auflegen, damit
+    // ein noch klingelndes Ziel nicht ewig weiterklingelt.
+    return this.leaveCall(who, { missedForCaller: true });
   }
 
   private dial(from: ClientID, target: ClientID): PhoneOutbox[] {
@@ -94,6 +130,10 @@ export class PhoneExchange {
     const targetPlayer = this.players.get(target);
     if (!targetPlayer) return busy;
     if (!this.players.has(from)) return busy;
+    // Tote telefonieren nicht — weder raus noch rein. Nach außen dasselbe
+    // Besetztzeichen wie jede andere Ablehnung, damit sich daran nichts
+    // ablesen lässt.
+    if (this.dead.has(from) || this.dead.has(target)) return busy;
     // Das Ziel darf nirgends stecken — weder verbunden noch angeklingelt.
     if (this.callOf.has(target)) return busy;
 
@@ -158,7 +198,7 @@ export class PhoneExchange {
     this.callOf.set(target, call.id);
 
     const caller = this.players.get(from)!;
-    return [
+    const out: PhoneOutbox[] = [
       {
         to: target,
         payload: {
@@ -170,6 +210,11 @@ export class PhoneExchange {
       },
       { to: from, payload: { kind: "dialing", callId: call.id } },
     ];
+    // Beim Dazuwählen sitzen schon Leute im Call: die müssen den neuen
+    // ausstehenden Ruf sehen. Beim ersten Anruf ist der Anrufer allein, dann
+    // sagt "dialing" allein schon alles.
+    if (existing) out.push(...this.broadcastState(call));
+    return out;
   }
 
   private answer(who: ClientID): PhoneOutbox[] {
@@ -207,6 +252,9 @@ export class PhoneExchange {
         out.push({ to: ring.from, payload: { kind: "busy" } });
       }
       out.push(...this.collapseIfEmpty(call));
+      // War es eine Konferenz, bleibt sie bestehen — nur der ausstehende Ruf
+      // fällt weg, und das müssen die Verbliebenen sehen.
+      if (this.calls.has(call.id)) out.push(...this.broadcastState(call));
       return out;
     }
 
@@ -273,12 +321,19 @@ export class PhoneExchange {
   }
 
   private broadcastState(call: Call): PhoneOutbox[] {
+    // Klingelnde Ziele gehören dem Call, nicht dem Anwählenden — deshalb
+    // sehen sie alle Verbundenen. Der Client braucht das doppelt: um
+    // "verbunden" von "klingelt noch" zu unterscheiden, und um zu wissen,
+    // dass er weiterhin in einem Gespräch sitzt, während ein neuer Ruf
+    // rausgeht (sonst verschwindet dort die Auflegen-Taste).
+    const ringing = [...call.ringing.keys()];
     return [...call.participants].map((p) => ({
       to: p,
       payload: {
         kind: "callState" as const,
         callId: call.id,
         peers: [...call.participants].filter((x) => x !== p),
+        ringing,
       },
     }));
   }

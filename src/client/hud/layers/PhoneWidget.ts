@@ -450,7 +450,7 @@ export class PhoneWidget extends LitElement {
         </div>
 
         ${this.renderStatus()} ${this.renderModeSwitch()}
-        ${m.state === "in-call" ? this.renderInCall() : this.renderDirectory()}
+        ${m.connected ? this.renderInCall() : this.renderDirectory()}
         ${this.renderMissed()} ${this.renderVolume()}
       </div>
     `;
@@ -458,13 +458,18 @@ export class PhoneWidget extends LitElement {
 
   private renderStatus() {
     const m = this.controller!.machine;
-    const label = {
-      idle: "",
-      dialing: translateText("phone.calling"),
-      ringing: translateText("phone.incoming_call"),
-      "in-call": translateText("phone.in_call"),
-      busy: translateText("phone.busy"),
-    }[m.state];
+    const label =
+      // "In a call AND ringing someone new" is a real situation the five
+      // states cannot name on their own; say so rather than picking one.
+      m.state === "in-call" && m.pending.length > 0
+        ? translateText("phone.in_call_calling")
+        : {
+            idle: "",
+            dialing: translateText("phone.calling"),
+            ringing: translateText("phone.incoming_call"),
+            "in-call": translateText("phone.in_call"),
+            busy: translateText("phone.busy"),
+          }[m.state];
     return html`
       ${label
         ? html`<div
@@ -485,9 +490,22 @@ export class PhoneWidget extends LitElement {
                     @click=${() => this.controller!.answer()}
                   >
                     ${translateText("phone.call")}
+                  </button>
+                  <!-- Declining has to be possible. Without it the callee
+                       just sits through the ring with no way out (and if the
+                       caller dies mid-ring, it used to never stop at all).
+                       The caller only ever hears the plain busy signal, the
+                       same as DND or a block, so this cannot be used to probe
+                       who refused and why. -->
+                  <button
+                    class="lt-display shrink-0 px-3 py-1 text-xs border-2 border-lt-bad text-lt-bad hover:bg-lt-bad hover:text-white transition-colors"
+                    style="background:${PHONE_WELL}"
+                    @click=${() => this.controller!.reject()}
+                  >
+                    ${translateText("phone.reject")}
                   </button>`
               : ""}
-            ${m.state === "dialing" || m.state === "in-call"
+            ${m.state === "dialing" || m.connected
               ? html`<!-- Hang up keeps danger-red, which cannot simply sit on
                           the red housing. Same treatment: dark well behind it,
                           a heavier 2px danger border and danger text, so it
@@ -608,19 +626,57 @@ export class PhoneWidget extends LitElement {
   }
 
   private renderInCall() {
-    const peers = this.controller!.machine.peers;
+    const m = this.controller!.machine;
+    const peers = m.peers;
+    const pending = m.pending;
+    // With up to six people on the line a flat list of names says nothing.
+    // Two things actually matter and both are already known here: how many
+    // are on the call, and which of them are connected versus still being
+    // rung. Everything below is derived from state the machine already
+    // holds — no extra plumbing, no per-frame work.
     return html`
       <div class="mb-2">
         <div class="lt-label mb-1 !text-white">
           ${translateText("phone.in_call")}
+          <span style="color:${PHONE_GOLD}">${peers.length + 1}</span>
         </div>
         ${peers.map(
           (id) =>
             html`<div
-              class="px-2 py-1 border mb-1"
+              class="px-2 py-1 border mb-1 flex items-center gap-2"
               style="background:${PHONE_WELL};border-color:${PHONE_RED_DEEP}"
             >
-              ${this.nameOf(id)}
+              <!-- A steady dot: connected. The colour carries the meaning,
+                   the text label carries it for anyone who cannot see the
+                   colour. -->
+              <span
+                class="shrink-0 rounded-full w-2 h-2 bg-lt-ok"
+                aria-hidden="true"
+              ></span>
+              <span class="truncate">${this.nameOf(id)}</span>
+              <span class="ml-auto shrink-0 text-xs text-lt-ok"
+                >${translateText("phone.connected")}</span
+              >
+            </div>`,
+        )}
+        ${pending.map(
+          (id) =>
+            html`<div
+              class="px-2 py-1 border mb-1 flex items-center gap-2 opacity-70"
+              style="background:${PHONE_WELL};border-color:${PHONE_RED_DEEP}"
+            >
+              <!-- Pulsing gold: still ringing, nobody there yet. -->
+              <span
+                class="shrink-0 rounded-full w-2 h-2 ${prefersReducedMotion()
+                  ? ""
+                  : "animate-pulse"}"
+                style="background:${PHONE_GOLD}"
+                aria-hidden="true"
+              ></span>
+              <span class="truncate">${this.nameOf(id)}</span>
+              <span class="ml-auto shrink-0 text-xs" style="color:${PHONE_GOLD}"
+                >${translateText("phone.ringing")}</span
+              >
             </div>`,
         )}
         <button

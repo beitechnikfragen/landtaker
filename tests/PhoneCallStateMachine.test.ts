@@ -237,4 +237,112 @@ describe("CallStateMachine", () => {
     vi.advanceTimersByTime(2000);
     expect(m.state).toBe("in-call");
   });
+
+  describe("staying connected while a new ring is pending", () => {
+    it("stays in-call when a dial goes out from inside a conference", () => {
+      // The bug: `dialing` used to clobber `in-call`, so the user looked
+      // idle-ish to the view and the hang-up button vanished — while they
+      // were still very much connected to someone.
+      m.receive({ kind: "callState", callId: "c1", peers: [A] });
+      m.receive({ kind: "dialing", callId: "c1" });
+      expect(m.state).toBe("in-call");
+      expect(m.peers).toEqual([A]);
+    });
+
+    it("still goes to dialing for a first call from idle", () => {
+      m.receive({ kind: "dialing", callId: "c1" });
+      expect(m.state).toBe("dialing");
+    });
+
+    it("exposes who is still ringing separately from who is connected", () => {
+      m.receive({
+        kind: "callState",
+        callId: "c1",
+        peers: [A],
+        ringing: [B],
+      });
+      expect(m.peers).toEqual([A]);
+      expect(m.pending).toEqual([B]);
+    });
+
+    it("treats a callState with no ringing field as nobody pending", () => {
+      m.receive({ kind: "callState", callId: "c1", peers: [A] });
+      expect(m.pending).toEqual([]);
+    });
+
+    it("drops the pending entry once that party connects", () => {
+      m.receive({
+        kind: "callState",
+        callId: "c1",
+        peers: [A],
+        ringing: [B],
+      });
+      m.receive({
+        kind: "callState",
+        callId: "c1",
+        peers: [A, B],
+        ringing: [],
+      });
+      expect(m.peers).toEqual([A, B]);
+      expect(m.pending).toEqual([]);
+    });
+
+    it("returns a defensive copy of pending", () => {
+      m.receive({
+        kind: "callState",
+        callId: "c1",
+        peers: [A],
+        ringing: [B],
+      });
+      m.pending.push("HACKED");
+      expect(m.pending).toEqual([B]);
+    });
+
+    it("clears pending when the call ends", () => {
+      m.receive({
+        kind: "callState",
+        callId: "c1",
+        peers: [A],
+        ringing: [B],
+      });
+      m.receive({ kind: "callEnded", callId: "c1" });
+      expect(m.pending).toEqual([]);
+      expect(m.state).toBe("idle");
+    });
+
+    it("does not let a busy for the refused third party tear down the live call", () => {
+      // A conference is up and a pulled-in party refuses. `busy` must not
+      // reset a call the user is still connected to — that is precisely how
+      // the user got stranded with no hang-up button.
+      m.receive({
+        kind: "callState",
+        callId: "c1",
+        peers: [A],
+        ringing: [B],
+      });
+      m.receive({ kind: "busy" });
+      expect(m.state).toBe("in-call");
+      expect(m.peers).toEqual([A]);
+    });
+
+    it("still shows busy when a first call from idle is refused", () => {
+      m.receive({ kind: "dialing", callId: "c1" });
+      m.receive({ kind: "busy" });
+      expect(m.state).toBe("busy");
+    });
+
+    // The invariant the whole fix exists to guarantee.
+    it("reports connected whenever the user has any live peer", () => {
+      expect(m.connected).toBe(false);
+      m.receive({ kind: "dialing", callId: "c1" });
+      expect(m.connected).toBe(false);
+      m.receive({ kind: "callState", callId: "c1", peers: [A] });
+      expect(m.connected).toBe(true);
+      // ...and it survives a fresh outgoing ring, which is the bug case.
+      m.receive({ kind: "dialing", callId: "c1" });
+      expect(m.connected).toBe(true);
+      m.receive({ kind: "callEnded", callId: "c1" });
+      expect(m.connected).toBe(false);
+    });
+  });
 });
