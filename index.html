@@ -408,7 +408,11 @@
              is flow content here, right-aligned by the parent's items-end.
              (The expanded apparatus is still a fixed overlay; see
              PhoneWidget.renderApparatus.) -->
-        <phone-widget class="pointer-events-auto"></phone-widget>
+        <!-- mr-4/mb-4 matches the apparatus's own `right-4`, so the badge and
+             the panel that opens above it share one right edge. The bottom HUD
+             container has no padding of its own at this breakpoint, so without
+             this the badge sits flush in the screen corner. -->
+        <phone-widget class="pointer-events-auto mr-4 mb-4"></phone-widget>
         <text-chat-panel
           class="w-full sm:w-auto pointer-events-none"
         ></text-chat-panel>
