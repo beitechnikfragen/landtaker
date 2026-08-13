@@ -194,6 +194,33 @@ if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
   document.head.appendChild(style);
 }
 
+// Palette lifted directly off the artwork (brand/Sprite-0002.png, sampled by
+// clustering the actual pixels per region rather than eyeballing it) so the
+// apparatus reads as the same object as the icon above it:
+//   housing body      rgb(100 1 0)   — the dominant lit red of the phone's
+//                                      lower shell; the most common non-dark
+//                                      red in the body region by a wide margin
+//   housing highlight rgb(170 1 2)   — the specular band along the shell's top
+//                                      edge and the handset's crown
+//   housing deep      rgb(35 3 1)    — the shadowed red behind the dial, used
+//                                      here as the recessed/bezel tone
+//   nameplate gold    rgb(250 216 130) / rgb(254 220 156) — the "PRESIDENT"
+//                                      lettering and the dial's lit face
+// Kept as literals in one place (rather than scattered through the template)
+// so the housing has a single source of truth, the same way PHONE_BADGE_PX is
+// the single source of truth for the badge's size.
+const PHONE_RED_BODY = "rgb(100 1 0)";
+const PHONE_RED_HIGHLIGHT = "rgb(170 1 2)";
+const PHONE_RED_DEEP = "rgb(35 3 1)";
+const PHONE_GOLD = "rgb(250 216 130)";
+
+// Buttons sit on the red housing, so a plain red "danger" fill would vanish
+// into the panel. Every control is therefore recessed onto the near-black
+// bezel tone first, and the semantic colour carries on the *border and text*
+// against that dark ground — which keeps answer-green and hang-up-red both
+// clearly semantic and clearly legible without repainting the housing.
+const PHONE_WELL = "rgb(24 4 3 / 0.88)";
+
 const ANIM_CLASS_BY_STATE: Record<PhoneUiState, string> = {
   idle: "phone-sprite-phone-anim-idle",
   ringing: "phone-sprite-phone-anim-ringing",
@@ -257,8 +284,14 @@ export class PhoneWidget extends LitElement {
         this.hangingUp = true;
       }
       this.prevMachineState = next;
-      // An incoming call flips the apparatus open by itself.
-      if (next === "ringing") this.expanded = true;
+      // An incoming call flips the apparatus open by itself. Measure first,
+      // for the same reason as the badge click: the badge is already mounted
+      // (it renders in every state), so its box is readable right now and the
+      // apparatus can be anchored correctly on its first frame.
+      if (next === "ringing") {
+        if (!this.expanded) this.measureAnchor();
+        this.expanded = true;
+      }
       this.tick++;
     });
     // controller/game are plain fields (not @state/@property), so assigning
@@ -284,9 +317,50 @@ export class PhoneWidget extends LitElement {
     );
   }
 
+  // Distance from the viewport bottom to the badge's top edge, measured from
+  // the live DOM. The apparatus is a fixed overlay anchored with this as its
+  // `bottom`, so its bottom edge lands exactly on the badge's top edge: the
+  // two touch and never overlap, and the apparatus grows upward from there.
+  //
+  // This has to be *measured* rather than computed: the badge is flow content
+  // at the top of a bottom-anchored HUD column that also holds the chat panel
+  // and chat display, so its distance from the viewport bottom is
+  // PHONE_BADGE_PX plus however tall those siblings currently are — a number
+  // that changes as chat messages arrive. A hardcoded offset would drift away
+  // from the badge the moment anything below it grew.
+  //
+  // PHONE_BADGE_PX is only the pre-measurement fallback (first paint, or a
+  // detached/zero-size element), and it is derived from the constant rather
+  // than restated, so there is still exactly one source of truth for the
+  // badge's size.
+  @state() private apparatusBottomPx = PHONE_BADGE_PX;
+
+  private measureAnchor(): void {
+    const badge = this.querySelector<HTMLElement>("[data-phone-badge]");
+    if (!badge) return;
+    const rect = badge.getBoundingClientRect();
+    if (rect.height === 0) return;
+    const bottom = Math.max(0, Math.round(window.innerHeight - rect.top));
+    if (bottom !== this.apparatusBottomPx) this.apparatusBottomPx = bottom;
+  }
+
+  // Re-measure after every paint: the badge's offset moves whenever a sibling
+  // in the HUD column (chat panel, chat display) changes height, and those are
+  // not changes this component is notified about. Reading it in `updated()`
+  // keeps the anchor correct without a resize observer, and the equality guard
+  // in measureAnchor() stops the resulting state write from looping.
+  protected updated(): void {
+    if (this.expanded) this.measureAnchor();
+  }
+
   render() {
     if (!this.controller || !this.game) return html``;
-    return this.expanded ? this.renderApparatus() : this.renderMini();
+    // Both, always: the animated telephone stays visible at all times and the
+    // apparatus opens *above* it, with the badge sitting below like a plinth.
+    // This is deliberately not an either/or — the icon disappearing when the
+    // menu opened was the bug.
+    return html`${this.expanded ? this.renderApparatus() : ""}
+    ${this.renderMini()}`;
   }
 
   private renderMini() {
@@ -306,7 +380,14 @@ export class PhoneWidget extends LitElement {
     return html`
       <div
         class="cursor-pointer select-none"
-        @click=${() => (this.expanded = true)}
+        data-phone-badge
+        @click=${() => {
+          // Measure *before* flipping open, so the very first painted frame of
+          // the apparatus is already correctly anchored rather than using a
+          // stale offset for one frame and then snapping into place.
+          if (!this.expanded) this.measureAnchor();
+          this.expanded = !this.expanded;
+        }}
         title=${translateText("phone.title")}
       >
         <div
@@ -334,16 +415,34 @@ export class PhoneWidget extends LitElement {
 
   private renderApparatus() {
     const m = this.controller!.machine;
+    // The housing: body red with the sprite's specular red as a top highlight,
+    // seated in the deep shadowed red as a bezel — the same three tones, in
+    // the same order, that the artwork uses down the phone's shell. Still a
+    // non-modal overlay: it is width-capped and height-capped (never
+    // full-screen), takes no focus trap, and only the panel itself is
+    // pointer-interactive, so the map behind it stays live.
+    const housing = [
+      `background:linear-gradient(${PHONE_RED_HIGHLIGHT} 0, ${PHONE_RED_BODY} 10px, ${PHONE_RED_BODY} 100%)`,
+      `border:3px solid ${PHONE_RED_DEEP}`,
+      `box-shadow:inset 0 1px 0 rgb(255 219 215 / 0.35),inset 0 -14px 26px rgb(0 0 0 / 0.55),0 10px 28px rgb(0 0 0 / 0.6)`,
+      `bottom:${this.apparatusBottomPx}px`,
+    ].join(";");
     return html`
       <div
-        class="fixed bottom-24 right-4 z-[300] w-[min(28rem,90vw)] max-h-[60vh] overflow-y-auto bg-[rgb(11_14_17/0.94)] border border-lt-700 backdrop-blur-md shadow-lg text-lt-100 p-3"
+        class="fixed right-4 z-[300] w-[min(28rem,90vw)] max-h-[60vh] overflow-y-auto text-white p-3"
+        style=${housing}
       >
-        <div class="flex items-center justify-between mb-2 relative">
-          <span class="lt-display text-sm"
+        <div class="flex items-center justify-between mb-2 relative gap-2">
+          <!-- The title bar is the "PRESIDENT" nameplate: gold lettering,
+               recessed into the dark bezel, exactly as on the apparatus. -->
+          <span
+            class="lt-display text-sm tracking-[0.2em] uppercase px-3 py-1 border"
+            style="color:${PHONE_GOLD};background:${PHONE_WELL};border-color:${PHONE_GOLD};text-shadow:0 1px 0 rgb(0 0 0 / 0.8)"
             >${translateText("phone.title")}</span
           >
           <button
-            class="absolute -top-3 -right-3 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-700 text-white shadow-sm hover:bg-lt-bad transition-colors focus-visible:ring-2 focus-visible:ring-white/30 focus:outline-hidden"
+            class="shrink-0 flex h-7 w-7 items-center justify-center rounded-full border text-white shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-white/40 focus:outline-hidden"
+            style="background:${PHONE_WELL};border-color:${PHONE_GOLD}"
             @click=${() => (this.expanded = false)}
           >
             ✕
@@ -369,35 +468,54 @@ export class PhoneWidget extends LitElement {
     return html`
       ${label
         ? html`<div
-            class="mb-2 p-2 bg-lt-800/50 border border-lt-700 flex items-center gap-2"
+            class="mb-2 p-2 border flex items-center gap-2"
+            style="background:${PHONE_WELL};border-color:${PHONE_RED_DEEP}"
           >
-            <span class="lt-label !text-lt-100">${label}</span>
+            <span class="lt-label !text-white">${label}</span>
             ${m.state === "ringing" && m.incoming
               ? html`<span class="truncate">${m.incoming.username}</span>
+                  <!-- Answer stays semantically green. On a red housing a
+                       green fill would fight the panel, so it is recessed onto
+                       the near-black well and the green carries on the border
+                       and label — high contrast against the dark ground, and
+                       unmistakably not the red of the housing. -->
                   <button
-                    class="lt-display ml-auto shrink-0 px-3 py-1 text-xs bg-lt-800/50 hover:bg-lt-750 border border-lt-ok text-lt-ok transition-colors"
+                    class="lt-display ml-auto shrink-0 px-3 py-1 text-xs border-2 border-lt-ok text-lt-ok hover:bg-lt-ok hover:text-black transition-colors"
+                    style="background:${PHONE_WELL}"
                     @click=${() => this.controller!.answer()}
                   >
                     ${translateText("phone.call")}
                   </button>`
               : ""}
             ${m.state === "dialing" || m.state === "in-call"
-              ? html`<button
-                  class="lt-display ml-auto shrink-0 px-3 py-1 text-xs bg-lt-800/50 hover:bg-lt-750 border border-lt-bad text-lt-bad transition-colors"
-                  @click=${() => this.controller!.hangup()}
-                >
-                  ${translateText("phone.hang_up")}
-                </button>`
+              ? html`<!-- Hang up keeps danger-red, which cannot simply sit on
+                          the red housing. Same treatment: dark well behind it,
+                          a heavier 2px danger border and danger text, so it
+                          reads as destructive without dissolving into the
+                          panel. -->
+                  <button
+                    class="lt-display ml-auto shrink-0 px-3 py-1 text-xs border-2 border-lt-bad text-lt-bad hover:bg-lt-bad hover:text-white transition-colors"
+                    style="background:${PHONE_WELL}"
+                    @click=${() => this.controller!.hangup()}
+                  >
+                    ${translateText("phone.hang_up")}
+                  </button>`
               : ""}
           </div>`
         : ""}
       ${this.controller!.micDenied
-        ? html`<div class="mb-2 text-xs text-lt-bad">
+        ? html`<div
+            class="mb-2 px-2 py-1 text-xs text-lt-bad border border-lt-bad"
+            style="background:${PHONE_WELL}"
+          >
             ${translateText("phone.mic_blocked")}
           </div>`
         : ""}
       ${this.controller!.connectionFailed
-        ? html`<div class="mb-2 text-xs text-lt-bad">
+        ? html`<div
+            class="mb-2 px-2 py-1 text-xs text-lt-bad border border-lt-bad"
+            style="background:${PHONE_WELL}"
+          >
             ${translateText("phone.no_connection")}
           </div>`
         : ""}
@@ -415,11 +533,14 @@ export class PhoneWidget extends LitElement {
       <div class="flex gap-1 mb-2">
         ${modes.map(
           ([value, label]) => html`
+            <!-- Active mode is the lit gold of the nameplate/dial face, the
+                 apparatus's own "this is switched on" colour, rather than the
+                 HUD accent which would look borrowed here. -->
             <button
-              class="lt-display flex-1 px-2 py-1 text-xs border transition-colors ${current ===
-              value
-                ? "bg-lt-accent text-lt-accent-ink border-lt-accent"
-                : "bg-lt-800/50 hover:bg-lt-750 border-lt-600 hover:border-lt-accent"}"
+              class="lt-display flex-1 px-2 py-1 text-xs border transition-colors"
+              style=${current === value
+                ? `background:${PHONE_GOLD};color:${PHONE_RED_DEEP};border-color:${PHONE_GOLD}`
+                : `background:${PHONE_WELL};color:white;border-color:${PHONE_RED_DEEP}`}
               @click=${() => {
                 this.controller!.setMode(value);
                 this.tick++;
@@ -443,16 +564,22 @@ export class PhoneWidget extends LitElement {
           return html`
             <div class="flex items-center gap-1">
               <button
-                class="flex-1 flex items-center gap-2 px-2 py-1 bg-lt-800/50 hover:bg-lt-750 border border-lt-600 hover:border-lt-accent transition-colors text-left disabled:opacity-40 disabled:hover:border-lt-600"
+                class="flex-1 flex items-center gap-2 px-2 py-1 border text-white transition-colors text-left disabled:opacity-40 hover:border-[rgb(250_216_130)]"
+                style="background:${PHONE_WELL};border-color:${PHONE_RED_DEEP}"
                 ?disabled=${isBlocked}
                 @click=${() => this.controller!.dial(id)}
               >
                 <span class="truncate">${p.displayName()}</span>
               </button>
+              <!-- Block is a danger action: same recessed-well + danger-border
+                   treatment as hang up, so it stays readable on the red. -->
               <button
                 class="px-2 py-1 text-xs border transition-colors ${isBlocked
-                  ? "bg-lt-800/50 border-lt-bad text-lt-bad"
-                  : "bg-lt-800/50 hover:bg-lt-750 border-lt-600 hover:border-lt-accent"}"
+                  ? "border-lt-bad text-lt-bad"
+                  : "text-white hover:border-lt-bad"}"
+                style="background:${PHONE_WELL};${isBlocked
+                  ? ""
+                  : `border-color:${PHONE_RED_DEEP}`}"
                 title=${isBlocked
                   ? translateText("phone.unblock")
                   : translateText("phone.block")}
@@ -484,18 +611,26 @@ export class PhoneWidget extends LitElement {
     const peers = this.controller!.machine.peers;
     return html`
       <div class="mb-2">
-        <div class="lt-label mb-1">${translateText("phone.in_call")}</div>
+        <div class="lt-label mb-1 !text-white">
+          ${translateText("phone.in_call")}
+        </div>
         ${peers.map(
           (id) =>
-            html`<div class="px-2 py-1 bg-lt-800/50 border border-lt-700 mb-1">
+            html`<div
+              class="px-2 py-1 border mb-1"
+              style="background:${PHONE_WELL};border-color:${PHONE_RED_DEEP}"
+            >
               ${this.nameOf(id)}
             </div>`,
         )}
         <button
-          class="lt-display w-full mt-1 px-2 py-1 text-xs bg-lt-800/50 hover:bg-lt-750 border transition-colors ${this
+          class="lt-display w-full mt-1 px-2 py-1 text-xs border transition-colors ${this
             .controller!.muted
             ? "border-lt-bad text-lt-bad"
-            : "border-lt-600 hover:border-lt-accent"}"
+            : "text-white hover:border-[rgb(250_216_130)]"}"
+          style="background:${PHONE_WELL};${this.controller!.muted
+            ? ""
+            : `border-color:${PHONE_RED_DEEP}`}"
           @click=${() => this.controller!.toggleMute()}
         >
           ${this.controller!.muted
@@ -503,7 +638,9 @@ export class PhoneWidget extends LitElement {
             : translateText("phone.mute")}
         </button>
       </div>
-      <div class="lt-label mb-1">${translateText("phone.call")}</div>
+      <div class="lt-label mb-1 !text-white">
+        ${translateText("phone.call")}
+      </div>
       ${this.renderDirectory()}
     `;
   }
@@ -512,18 +649,26 @@ export class PhoneWidget extends LitElement {
     const missed = this.controller!.machine.missed;
     if (missed.length === 0) return html``;
     return html`
-      <div class="mt-2 pt-2 border-t border-lt-700">
+      <!-- Missed calls must stay obvious: the counter is gold-on-dark in its
+           own recessed well, which is the highest-contrast pairing available
+           on this housing and matches the lit nameplate. -->
+      <div class="mt-2 pt-2 border-t" style="border-color:${PHONE_RED_DEEP}">
         <div class="flex items-center justify-between mb-1">
-          <span class="lt-label">${translateText("phone.missed_calls")}</span>
+          <span
+            class="lt-label px-2 py-0.5 border"
+            style="color:${PHONE_GOLD};background:${PHONE_WELL};border-color:${PHONE_GOLD}"
+            >${translateText("phone.missed_calls")} ${missed.length}</span
+          >
           <button
-            class="text-xs px-2 py-0.5 bg-lt-800/50 hover:bg-lt-750 border border-lt-600 hover:border-lt-accent transition-colors"
+            class="text-xs px-2 py-0.5 border text-white transition-colors hover:border-[rgb(250_216_130)]"
+            style="background:${PHONE_WELL};border-color:${PHONE_RED_DEEP}"
             @click=${() => this.controller!.machine.clearMissed()}
           >
             ✕
           </button>
         </div>
         ${missed.map(
-          (mc) => html`<div class="text-xs text-lt-400">${mc.username}</div>`,
+          (mc) => html`<div class="text-xs text-white/80">${mc.username}</div>`,
         )}
       </div>
     `;
@@ -533,10 +678,16 @@ export class PhoneWidget extends LitElement {
   // rest of the game's sound along with it.
   private renderVolume() {
     return html`
-      <div class="mt-2 pt-2 border-t border-lt-700 flex items-center gap-2">
-        <span class="lt-label">${translateText("phone.volume")}</span>
+      <div
+        class="mt-2 pt-2 border-t flex items-center gap-2"
+        style="border-color:${PHONE_RED_DEEP}"
+      >
+        <span class="lt-label !text-white"
+          >${translateText("phone.volume")}</span
+        >
         <input
           class="flex-1"
+          style="accent-color:${PHONE_GOLD}"
           type="range"
           min="0"
           max="1"
@@ -550,9 +701,10 @@ export class PhoneWidget extends LitElement {
           }}
         />
       </div>
-      <label class="mt-2 flex items-center gap-2 text-xs">
+      <label class="mt-2 flex items-center gap-2 text-xs text-white">
         <input
           type="checkbox"
+          style="accent-color:${PHONE_GOLD}"
           .checked=${this.controller!.alliesOnly}
           @change=${(e: Event) => {
             this.controller!.setAlliesOnly(
