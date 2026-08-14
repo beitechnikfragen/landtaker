@@ -7,6 +7,16 @@ import { type Call, defaultPrefs, type PhonePrefs } from "./PhoneTypes";
 
 export const MAX_CALL_PARTICIPANTS = 6;
 export const RING_TIMEOUT_MS = 12000;
+// Harte Obergrenze für die GESPRÄCHSZEIT eines Calls. Läuft serverseitig,
+// getrieben von derselben tick()-Sweep wie die Klingel-Timeouts — kein
+// setTimeout, keine Client-Uhr. Ein Countdown, der dem Client gehört, ist mit
+// einem veränderten Client einfach abgeschaltet; diese Frist nicht.
+export const MAX_CALL_MS = 120000;
+// Wie lange dasselbe PAAR nach einem abgelaufenen Gespräch warten muss, bevor
+// es sich erneut anrufen darf. Bewusst paarweise und nicht pro Spieler: eine
+// Sperre am Spieler wäre eine Waffe — man ruft einen Rivalen an, lässt die
+// Zeit auslaufen und hat ihm sein Telefon für alle abgedreht.
+export const REDIAL_COOLDOWN_MS = 30000;
 
 export interface PhoneParticipant {
   clientID: ClientID;
@@ -15,6 +25,13 @@ export interface PhoneParticipant {
 }
 
 export type PhoneOutbox = { to: ClientID; payload: ServerPhonePayload };
+
+// Ungeordneter Schlüssel für ein Spielerpaar: A|B und B|A müssen denselben
+// Eintrag treffen, sonst wäre die Sperre einseitig und der Zurückruf ginge
+// durch.
+function pairKey(a: ClientID, b: ClientID): string {
+  return a < b ? `${a}|${b}` : `${b}|${a}`;
+}
 
 export class PhoneExchange {
   private players = new Map<ClientID, PhoneParticipant>();
@@ -26,6 +43,18 @@ export class PhoneExchange {
   // ein Toter bleibt tot, auch wenn seine Socket neu verbindet (er schaut ja
   // weiter zu). Deshalb überlebt dieser Eintrag addPlayer.
   private dead = new Set<ClientID>();
+  // Paare, die gerade nicht miteinander telefonieren dürfen, weil ihr
+  // gemeinsames Gespräch am Zeitlimit gestorben ist. Schlüssel ist das
+  // ungeordnete Paar (siehe pairKey), der Wert der Ablaufzeitpunkt.
+  //
+  // Warum am PAAR und nicht am Spieler: eine Sperre pro Spieler ließe sich
+  // gegen ihn verwenden — anrufen, auslaufen lassen, fertig, der andere ist
+  // 30 Sekunden für jeden unerreichbar. So trifft die Wartezeit nur genau die
+  // Verbindung, die eben schon zwei Minuten hatte; beide bleiben für alle
+  // anderen sofort erreichbar. Wie prefs überlebt das absichtlich
+  // removePlayer: eine Sperre, die man durch Socket-Wackeln loswird, ist
+  // keine.
+  private cooldowns = new Map<string, number>();
   private nextCallId = 1;
 
   constructor(private readonly now: () => number) {}
@@ -102,7 +131,51 @@ export class PhoneExchange {
         // ausstehende Ruf weg ist — sonst bliebe er ewig als "klingelt" stehen.
         if (this.calls.has(call.id)) out.push(...this.broadcastState(call));
       }
+      // Zeitlimit. Erst NACH den Klingel-Timeouts geprüft, und nur für Calls,
+      // die es noch gibt: ein Ruf, der oben schon zusammengefallen ist, darf
+      // nicht ein zweites Mal abgeräumt werden.
+      if (!this.calls.has(call.id)) continue;
+      if (call.expiresAt === null || t < call.expiresAt) continue;
+      out.push(...this.expireCall(call));
     }
+    // Abgelaufene Sperren aufräumen, damit die Map nicht über ein langes Match
+    // mitwächst. Rein hygienisch — geprüft wird in dial() ohnehin gegen die
+    // Uhr, ein noch nicht weggeräumter Eintrag sperrt also nichts mehr.
+    for (const [key, until] of this.cooldowns) {
+      if (t >= until) this.cooldowns.delete(key);
+    }
+    return out;
+  }
+
+  // Der Call hat seine zwei Minuten aufgebraucht. Anders als ein Auflegen
+  // trifft das ALLE gleichzeitig, und nur hier entstehen Sperren.
+  private expireCall(call: Call): PhoneOutbox[] {
+    const out: PhoneOutbox[] = [];
+    // Alle Paare, die in DIESEM Moment tatsächlich miteinander verbunden
+    // waren, müssen warten. Nur A|B zu sperren würde nichts bringen: die
+    // beiden formten dieselbe Runde sofort über C neu, und das Limit wäre
+    // eine Formalie. Wer vorher aufgelegt hat, ist hier nicht mehr in
+    // `participants` — der wurde nicht abgeschnitten, sondern ist gegangen,
+    // und schleppt darum auch keine Sperre mit.
+    const connected = [...call.participants];
+    const until = this.now() + REDIAL_COOLDOWN_MS;
+    for (let i = 0; i < connected.length; i++) {
+      for (let j = i + 1; j < connected.length; j++) {
+        this.cooldowns.set(pairKey(connected[i], connected[j]), until);
+      }
+    }
+
+    for (const p of connected) {
+      this.callOf.delete(p);
+      out.push({ to: p, payload: { kind: "callEnded", callId: call.id } });
+    }
+    // Wer beim Ablauf noch klingelte, hat nie mit jemandem gesprochen: der
+    // bekommt einen verpassten Anruf und bleibt ohne Sperre erreichbar.
+    for (const [target, r] of call.ringing) {
+      this.callOf.delete(target);
+      out.push(...this.missedFor(target, r.from));
+    }
+    this.destroyCall(call);
     return out;
   }
 
@@ -136,6 +209,11 @@ export class PhoneExchange {
     if (this.dead.has(from) || this.dead.has(target)) return busy;
     // Das Ziel darf nirgends stecken — weder verbunden noch angeklingelt.
     if (this.callOf.has(target)) return busy;
+    // Frisch abgelaufenes Gespräch mit genau diesem Gegenüber: Wartezeit.
+    // Dasselbe nackte Besetztzeichen wie DND/Block/Abweisen — der Anrufer
+    // darf den Grund nicht unterscheiden können (Design-Spec: "Bei jedem
+    // Nein bekommt der Anrufer dasselbe Besetztzeichen").
+    if (this.onCooldown(from, target)) return busy;
 
     const targetPrefs = this.prefsOf(target);
     if (targetPrefs.mode === "dnd") return busy;
@@ -183,6 +261,10 @@ export class PhoneExchange {
       if (peer === from) continue;
       if (targetPrefs.blocked.has(peer)) return busy;
       if (this.prefsOf(peer).blocked.has(target)) return busy;
+      // Genau wie ein Block gilt die Wartezeit gegenüber JEDEM im Call, sonst
+      // wäre sie über den Umweg Konferenz umgangen: A holt C dazu, C holt B
+      // dazu, und A sitzt wieder mit B in derselben Leitung.
+      if (this.onCooldown(target, peer)) return busy;
     }
 
     const projected = call.participants.size + call.ringing.size + 1;
@@ -225,7 +307,29 @@ export class PhoneExchange {
 
     call.ringing.delete(who);
     call.participants.add(who);
+    // Hier — und nur hier — startet die Gesprächsuhr: beim ERSTEN Annehmen,
+    // wenn aus dem Klingeln ein Gespräch wird. Nicht beim Anlegen des Calls,
+    // sonst zöge ein Ziel, das zehn Sekunden klingeln lässt, dem Gespräch
+    // fast ein Zehntel seiner Zeit ab, bevor jemand ein Wort gesagt hat — und
+    // ein Anrufer könnte die Redezeit eines anderen allein durch frühes
+    // Wählen verkürzen. Das `??=` macht es zum Einmal-Ereignis: der Zweite und
+    // Dritte einer Konferenz erben die schon laufende Frist, das Limit gehört
+    // dem Call und nicht der Person.
+    call.expiresAt ??= this.now() + MAX_CALL_MS;
     return this.broadcastState(call);
+  }
+
+  // Steht dieses Paar gerade unter Wartezeit? Gegen die Uhr geprüft, nicht
+  // gegen bloßes Vorhandensein: der Aufräumer in tick() darf für die
+  // Korrektheit nicht zuständig sein.
+  private onCooldown(a: ClientID, b: ClientID): boolean {
+    const until = this.cooldowns.get(pairKey(a, b));
+    if (until === undefined) return false;
+    if (this.now() >= until) {
+      this.cooldowns.delete(pairKey(a, b));
+      return false;
+    }
+    return true;
   }
 
   private leaveCall(
@@ -327,6 +431,16 @@ export class PhoneExchange {
     // dass er weiterhin in einem Gespräch sitzt, während ein neuer Ruf
     // rausgeht (sonst verschwindet dort die Auflegen-Taste).
     const ringing = [...call.ringing.keys()];
+    // Restzeit als DAUER, nicht als Zeitstempel: die Uhren von Server und
+    // Client sind nicht synchron, ein roher Deadline stünde beim Empfänger
+    // daneben. Der Client heftet die Dauer einmal an seine eigene Uhr. Sie
+    // reist mit jedem callState mit, damit ein später Dazugekommener
+    // dieselbe Zahl sieht und kein Countdown auseinanderläuft. Vor dem ersten
+    // Annehmen läuft noch keine Frist — dann bleibt das Feld weg.
+    const remainingMs =
+      call.expiresAt === null
+        ? undefined
+        : Math.max(0, call.expiresAt - this.now());
     return [...call.participants].map((p) => ({
       to: p,
       payload: {
@@ -334,6 +448,7 @@ export class PhoneExchange {
         callId: call.id,
         peers: [...call.participants].filter((x) => x !== p),
         ringing,
+        remainingMs,
       },
     }));
   }
@@ -343,6 +458,9 @@ export class PhoneExchange {
       id: `call-${this.nextCallId++}`,
       participants: new Set([initiator]),
       ringing: new Map(),
+      // Noch keine Frist: es klingelt erst. Gesetzt wird sie beim ersten
+      // answer(), damit Klingelzeit keine Gesprächszeit frisst.
+      expiresAt: null,
     };
     this.calls.set(call.id, call);
     this.callOf.set(initiator, call.id);

@@ -17,6 +17,13 @@ export class CallStateMachine {
   private _missed: MissedCall[] = [];
   private _incoming: { from: ClientID; username: string } | null = null;
   private _callId: string | null = null;
+  // Lokaler Zeitpunkt, an dem dem Gespräch die Zeit ausgeht. Der Server
+  // schickt eine Restdauer; die wird bei Ankunft EINMAL an die eigene Uhr
+  // geheftet, weil beide Uhren auseinanderlaufen. Danach ist der Countdown
+  // reine lokale Rechnung — und bleibt trotzdem ehrlich, weil jedes neue
+  // callState ihn frisch setzt. Anzeige, keine Steuerung: das Gespräch
+  // beendet der Server, nicht diese Zahl.
+  private _deadlineAt: number | null = null;
   private busyTimer: ReturnType<typeof setTimeout> | null = null;
   private listeners = new Set<() => void>();
 
@@ -51,6 +58,15 @@ export class CallStateMachine {
 
   get callId(): string | null {
     return this._callId;
+  }
+
+  // Verbleibende Gesprächszeit in Millisekunden, oder null wenn gerade keine
+  // Frist läuft (kein Gespräch, oder ein Server ohne Limit). Absichtlich eine
+  // Methode und kein Getter-Snapshot: der Wert hängt an der Uhr, nicht am
+  // letzten Ereignis, und der Aufrufer soll ihn beim Zeichnen frisch holen.
+  remainingMs(): number | null {
+    if (this._deadlineAt === null) return null;
+    return Math.max(0, this._deadlineAt - Date.now());
   }
 
   onChange(listener: () => void): () => void {
@@ -88,6 +104,13 @@ export class CallStateMachine {
         this._peers = payload.peers;
         this._pending = payload.ringing ?? [];
         this._incoming = null;
+        // Bei JEDEM callState neu ankern, nicht nur beim ersten: so kann der
+        // Countdown nicht wegdriften, und wer mitten in eine Konferenz kommt,
+        // sieht sofort die geteilte Restzeit statt zwei frischer Minuten.
+        this._deadlineAt =
+          payload.remainingMs === undefined
+            ? null
+            : Date.now() + payload.remainingMs;
         this.set("in-call");
         break;
       case "callEnded":
@@ -132,6 +155,8 @@ export class CallStateMachine {
     this._pending = [];
     this._incoming = null;
     this._callId = null;
+    // Sonst zählte das nächste Gespräch von der Restzeit des vorigen herunter.
+    this._deadlineAt = null;
   }
 
   private cancelBusy(): void {

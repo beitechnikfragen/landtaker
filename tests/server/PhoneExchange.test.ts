@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  MAX_CALL_MS,
   PhoneExchange,
   type PhoneOutbox,
   type PhoneParticipant,
+  REDIAL_COOLDOWN_MS,
 } from "../../src/server/phone/PhoneExchange";
 
 const A = "aaaa1111";
@@ -398,6 +400,189 @@ describe("PhoneExchange", () => {
       const bState = to(out, B).find((p) => p.kind === "callState") as any;
       expect(bState.peers).toEqual([C]);
       expect(kinds(out, B)).not.toContain("callEnded");
+    });
+  });
+
+  // A call is capped at two minutes of TALK time, swept by the same tick()
+  // that already expires rings. The clock has to live here, on the server: a
+  // countdown owned by the client is turned off by editing the client.
+  describe("call time limit", () => {
+    it("caps talk time at two minutes", () => {
+      expect(MAX_CALL_MS).toBe(120000);
+    });
+
+    it("ends the call for both sides once the limit is reached", () => {
+      ex.handle(A, { kind: "dial", target: B });
+      ex.handle(B, { kind: "answer" });
+
+      clock = MAX_CALL_MS - 1;
+      expect(ex.tick()).toEqual([]);
+
+      clock = MAX_CALL_MS;
+      const out = ex.tick();
+      expect(kinds(out, A)).toContain("callEnded");
+      expect(kinds(out, B)).toContain("callEnded");
+    });
+
+    // The budget starts when the call CONNECTS, not when it is created.
+    // Otherwise a target who lets it ring for the full 12s ring timeout
+    // silently spends a tenth of the talk time before saying hello, and a
+    // caller could shrink a callee's talk time just by dialing early.
+    it("starts the budget at the first answer, not at dial time", () => {
+      ex.handle(A, { kind: "dial", target: B });
+      clock = 11000; // rang almost to the ring timeout
+      ex.handle(B, { kind: "answer" });
+
+      // Two minutes after the DIAL the call must still be alive...
+      clock = MAX_CALL_MS;
+      expect(ex.tick()).toEqual([]);
+
+      // ...and it ends two minutes after the ANSWER.
+      clock = 11000 + MAX_CALL_MS;
+      const out = ex.tick();
+      expect(kinds(out, A)).toContain("callEnded");
+      expect(kinds(out, B)).toContain("callEnded");
+    });
+
+    it("does not expire a call that is only ringing", () => {
+      // A dial that is never answered is governed by the ring timeout alone.
+      // Reaching MAX_CALL_MS must not produce a second, different teardown.
+      ex.handle(A, { kind: "dial", target: B });
+      clock = 12000;
+      ex.tick(); // ring timeout fires, call collapses
+      clock = MAX_CALL_MS + 12000;
+      expect(ex.tick()).toEqual([]);
+    });
+
+    it("reports the remaining time in every callState", () => {
+      ex.handle(A, { kind: "dial", target: B });
+      const answered = ex.handle(B, { kind: "answer" });
+      const first = to(answered, A).find((p) => p.kind === "callState") as any;
+      expect(first.remainingMs).toBe(MAX_CALL_MS);
+
+      // 30s in, C is pulled into the call: the fresh state carries the
+      // shrunken budget, so nobody's countdown drifts or restarts.
+      clock = 30000;
+      ex.handle(A, { kind: "dial", target: C });
+      const joined = ex.handle(C, { kind: "answer" });
+      const later = to(joined, C).find((p) => p.kind === "callState") as any;
+      expect(later.remainingMs).toBe(MAX_CALL_MS - 30000);
+    });
+
+    it("never reports a negative remaining time", () => {
+      ex.handle(A, { kind: "dial", target: B });
+      ex.handle(B, { kind: "answer" });
+      clock = MAX_CALL_MS + 5000;
+      const out = ex.tick();
+      const states = out
+        .map((o) => o.payload)
+        .filter((p) => p.kind === "callState") as any[];
+      for (const s of states) expect(s.remainingMs).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  // After a call dies on the clock, the same PAIR cannot immediately redial.
+  // Pairwise is the whole point: a global "this player's phone is locked"
+  // would let anyone silence a rival by calling them and letting it run out.
+  describe("redial cooldown", () => {
+    function timeOutAB() {
+      ex.handle(A, { kind: "dial", target: B });
+      ex.handle(B, { kind: "answer" });
+      clock = MAX_CALL_MS;
+      ex.tick();
+    }
+
+    it("refuses a redial between the same pair, in both directions", () => {
+      timeOutAB();
+      expect(kinds(ex.handle(A, { kind: "dial", target: B }), A)).toEqual([
+        "busy",
+      ]);
+      expect(kinds(ex.handle(B, { kind: "dial", target: A }), B)).toEqual([
+        "busy",
+      ]);
+    });
+
+    it("is indistinguishable from any other refusal", () => {
+      // Exactly the bare busy of DND/block/reject — no extra field, no
+      // second message, nothing to probe a reason from.
+      timeOutAB();
+      expect(to(ex.handle(A, { kind: "dial", target: B }), A)).toEqual([
+        { kind: "busy" },
+      ]);
+      expect(to(ex.handle(A, { kind: "dial", target: B }), B)).toEqual([]);
+    });
+
+    it("expires after thirty seconds", () => {
+      expect(REDIAL_COOLDOWN_MS).toBe(30000);
+      timeOutAB();
+      clock = MAX_CALL_MS + REDIAL_COOLDOWN_MS - 1;
+      expect(kinds(ex.handle(A, { kind: "dial", target: B }), A)).toEqual([
+        "busy",
+      ]);
+      clock = MAX_CALL_MS + REDIAL_COOLDOWN_MS;
+      const out = ex.handle(A, { kind: "dial", target: B });
+      expect(kinds(out, B)).toContain("ringing");
+      expect(kinds(out, A)).toContain("dialing");
+    });
+
+    // THE point of pairwise. If the cooldown were a per-player lock, C could
+    // not reach either of them — and A could weaponise the timer to take B's
+    // phone away from everyone for 30 seconds.
+    it("leaves both participants reachable by a third party", () => {
+      timeOutAB();
+      const toB = ex.handle(C, { kind: "dial", target: B });
+      expect(kinds(toB, B)).toContain("ringing");
+      ex.handle(C, { kind: "hangup" });
+
+      const toA = ex.handle(D, { kind: "dial", target: A });
+      expect(kinds(toA, A)).toContain("ringing");
+    });
+
+    it("leaves both participants free to dial out to a third party", () => {
+      timeOutAB();
+      expect(kinds(ex.handle(A, { kind: "dial", target: C }), C)).toContain(
+        "ringing",
+      );
+      expect(kinds(ex.handle(B, { kind: "dial", target: D }), D)).toContain(
+        "ringing",
+      );
+    });
+
+    // The user asked for a cooldown in the context of the time LIMIT. A
+    // cooldown after every ordinary hang-up would punish normal use (say
+    // one sentence, hang up, call back) and was never requested.
+    it("does not apply after a normal hang-up", () => {
+      ex.handle(A, { kind: "dial", target: B });
+      ex.handle(B, { kind: "answer" });
+      ex.handle(A, { kind: "hangup" });
+      const out = ex.handle(A, { kind: "dial", target: B });
+      expect(kinds(out, B)).toContain("ringing");
+    });
+
+    it("does not apply after an unanswered call rings out", () => {
+      ex.handle(A, { kind: "dial", target: B });
+      clock = 12000;
+      ex.tick();
+      const out = ex.handle(A, { kind: "dial", target: B });
+      expect(kinds(out, B)).toContain("ringing");
+    });
+
+    it("does not apply after a rejection", () => {
+      ex.handle(A, { kind: "dial", target: B });
+      ex.handle(B, { kind: "reject" });
+      const out = ex.handle(A, { kind: "dial", target: B });
+      expect(kinds(out, B)).toContain("ringing");
+    });
+
+    it("survives a disconnect, like the other prefs", () => {
+      // A cooldown a player can clear by bouncing their socket is no cap
+      // at all.
+      timeOutAB();
+      ex.removePlayer(B);
+      ex.addPlayer(player(B, "Bob"));
+      expect(kinds(ex.handle(A, { kind: "dial", target: B }), A)).toEqual([
+        "busy",
+      ]);
     });
   });
 });

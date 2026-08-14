@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  MAX_CALL_MS,
   MAX_CALL_PARTICIPANTS,
   PhoneExchange,
   type PhoneOutbox,
   type PhoneParticipant,
+  REDIAL_COOLDOWN_MS,
 } from "../../src/server/phone/PhoneExchange";
 
 const NAMES = ["A", "B", "C", "D", "E", "F", "G"];
@@ -324,5 +326,137 @@ describe("PhoneExchange conferences", () => {
     });
     const sig = to(signal, B).find((p) => p.kind === "signal") as any;
     expect(sig.from).toBe(A);
+  });
+
+  // The two minutes belong to the CALL, not to each person in it. Per-person
+  // budgets would make a conference immortal: keep swapping a fresh member in
+  // and the line never has to close. Per-call is also the simpler contract —
+  // one deadline, one number on everyone's display, all counting down
+  // together.
+  describe("time limit in a conference", () => {
+    it("bills the limit against the call, not each participant", () => {
+      connectAB();
+      // C joins 90 seconds in and gets the REMAINING 30 seconds, not a
+      // fresh two minutes.
+      clock = 90000;
+      ex.handle(A, { kind: "dial", target: C });
+      const joined = ex.handle(C, { kind: "answer" });
+      const st = to(joined, C).find((p) => p.kind === "callState") as any;
+      expect(st.remainingMs).toBe(MAX_CALL_MS - 90000);
+
+      clock = MAX_CALL_MS;
+      const out = ex.tick();
+      for (const who of [A, B, C]) {
+        expect(kinds(out, who)).toContain("callEnded");
+      }
+    });
+
+    it("shows every participant the same deadline", () => {
+      connectAB();
+      clock = 40000;
+      ex.handle(A, { kind: "dial", target: C });
+      const joined = ex.handle(C, { kind: "answer" });
+      const remaining = [A, B, C].map(
+        (who) =>
+          (to(joined, who).find((p) => p.kind === "callState") as any)
+            ?.remainingMs,
+      );
+      expect(remaining).toEqual([
+        MAX_CALL_MS - 40000,
+        MAX_CALL_MS - 40000,
+        MAX_CALL_MS - 40000,
+      ]);
+    });
+
+    // A conference that runs out puts EVERY pair that was actually connected
+    // on cooldown — otherwise A and B just re-form the same conversation
+    // through C and the cap means nothing. Still pairwise: the lock is on
+    // the pairs, never on the players.
+    it("cools down every pair that was connected when the timer ran out", () => {
+      connectAB();
+      ex.handle(A, { kind: "dial", target: C });
+      ex.handle(C, { kind: "answer" });
+      clock = MAX_CALL_MS;
+      ex.tick();
+
+      for (const [x, y] of [
+        [A, B],
+        [B, A],
+        [A, C],
+        [C, A],
+        [B, C],
+        [C, B],
+      ]) {
+        expect(kinds(ex.handle(x, { kind: "dial", target: y }), x)).toEqual([
+          "busy",
+        ]);
+      }
+    });
+
+    it("leaves an uninvolved fourth player able to call all three", () => {
+      connectAB();
+      ex.handle(A, { kind: "dial", target: C });
+      ex.handle(C, { kind: "answer" });
+      clock = MAX_CALL_MS;
+      ex.tick();
+
+      for (const who of [A, B, C]) {
+        const out = ex.handle(D, { kind: "dial", target: who });
+        expect(kinds(out, who)).toContain("ringing");
+        ex.handle(D, { kind: "hangup" });
+      }
+    });
+
+    // Someone still ringing when the clock ran out never talked to anyone,
+    // so they carry no cooldown — they get a missed call and stay reachable.
+    it("does not cool down a target that was still ringing at expiry", () => {
+      connectAB();
+      clock = MAX_CALL_MS - 1000;
+      ex.handle(A, { kind: "dial", target: C });
+      clock = MAX_CALL_MS;
+      const out = ex.tick();
+      expect(kinds(out, C)).toContain("missed");
+
+      const redial = ex.handle(C, { kind: "dial", target: A });
+      expect(kinds(redial, A)).toContain("ringing");
+    });
+
+    // A participant who hung up BEFORE the clock ran out chose to leave;
+    // they were not cut off, so they are not on cooldown with anyone.
+    it("does not cool down someone who had already left the conference", () => {
+      connectAB();
+      ex.handle(A, { kind: "dial", target: C });
+      ex.handle(C, { kind: "answer" });
+      clock = 60000;
+      ex.handle(B, { kind: "hangup" });
+
+      clock = MAX_CALL_MS;
+      ex.tick();
+
+      // A and C were cut off together: they wait.
+      expect(kinds(ex.handle(A, { kind: "dial", target: C }), A)).toEqual([
+        "busy",
+      ]);
+      // B left under their own steam and can reach either of them at once.
+      expect(kinds(ex.handle(B, { kind: "dial", target: A }), A)).toContain(
+        "ringing",
+      );
+      ex.handle(B, { kind: "hangup" });
+      expect(kinds(ex.handle(B, { kind: "dial", target: C }), C)).toContain(
+        "ringing",
+      );
+    });
+
+    it("releases the conference pairs together after the cooldown", () => {
+      connectAB();
+      ex.handle(A, { kind: "dial", target: C });
+      ex.handle(C, { kind: "answer" });
+      clock = MAX_CALL_MS;
+      ex.tick();
+
+      clock = MAX_CALL_MS + REDIAL_COOLDOWN_MS;
+      const out = ex.handle(A, { kind: "dial", target: B });
+      expect(kinds(out, B)).toContain("ringing");
+    });
   });
 });

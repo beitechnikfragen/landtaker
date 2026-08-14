@@ -1512,6 +1512,7 @@
     "reject": "Decline",
     "ringing": "Ringing…",
     "silent": "Silent",
+    "time_left": "Time left in this call",
     "title": "Telephone",
     "unblock": "Unblock",
     "unmute": "Unmute",

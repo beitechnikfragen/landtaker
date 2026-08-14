@@ -107,4 +107,44 @@ describe("phone schemas", () => {
     });
     expect(result.success).toBe(true);
   });
+
+  // The 2-minute cap is enforced server-side; the client only *displays* it.
+  // The server therefore ships the remaining budget with every callState so
+  // the client never has to invent a deadline of its own.
+  it("accepts a callState carrying the remaining talk time", () => {
+    const result = ServerMessageSchema.safeParse({
+      type: "phone",
+      payload: {
+        kind: "callState",
+        callId: "call-1",
+        peers: ["abcd1234"],
+        ringing: [],
+        remainingMs: 120000,
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  // Optional, so a client built before the cap existed keeps working: it
+  // simply shows no countdown rather than failing to parse the call.
+  it("still accepts a callState without the remaining talk time", () => {
+    const result = ServerMessageSchema.safeParse({
+      type: "phone",
+      payload: { kind: "callState", callId: "call-1", peers: ["abcd1234"] },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a negative remaining talk time", () => {
+    const result = ServerMessageSchema.safeParse({
+      type: "phone",
+      payload: {
+        kind: "callState",
+        callId: "call-1",
+        peers: ["abcd1234"],
+        remainingMs: -1,
+      },
+    });
+    expect(result.success).toBe(false);
+  });
 });

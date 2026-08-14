@@ -1550,7 +1550,10 @@ export class GameServer {
       }
     });
 
-    // Out-of-band: drives 12s ring timeouts. Never touches turns/intents.
+    // Out-of-band: drives 12s ring timeouts and the 2-minute call limit.
+    // Never touches turns/intents. The limit lives on this sweep rather than
+    // a setTimeout so it stays on the server's own clock — a countdown the
+    // client owns is switched off by editing the client.
     this.deliverPhone(this.phoneExchange.tick());
   }
 

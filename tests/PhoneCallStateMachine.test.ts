@@ -345,4 +345,92 @@ describe("CallStateMachine", () => {
       expect(m.connected).toBe(false);
     });
   });
+  // The 2-minute cap is the server's; the client only draws it. The server
+  // sends a REMAINING duration (not an absolute timestamp) because the two
+  // machines' clocks are not in sync — a raw server deadline would render
+  // minutes off. The machine pins it to the local clock exactly once, on
+  // arrival, and everything after that is local arithmetic.
+  describe("remaining talk time", () => {
+    it("has no deadline while idle", () => {
+      expect(m.remainingMs()).toBeNull();
+    });
+
+    it("pins the server's remaining time to the local clock", () => {
+      vi.setSystemTime(1_000_000);
+      m.receive({
+        kind: "callState",
+        callId: "c1",
+        peers: [A],
+        remainingMs: 120000,
+      });
+      expect(m.remainingMs()).toBe(120000);
+      vi.setSystemTime(1_030_000);
+      expect(m.remainingMs()).toBe(90000);
+    });
+
+    it("never counts below zero", () => {
+      vi.setSystemTime(1_000_000);
+      m.receive({
+        kind: "callState",
+        callId: "c1",
+        peers: [A],
+        remainingMs: 5000,
+      });
+      vi.setSystemTime(1_100_000);
+      expect(m.remainingMs()).toBe(0);
+    });
+
+    it("re-pins on every fresh callState so it cannot drift", () => {
+      vi.setSystemTime(1_000_000);
+      m.receive({
+        kind: "callState",
+        callId: "c1",
+        peers: [A],
+        remainingMs: 120000,
+      });
+      vi.setSystemTime(1_060_000);
+      // A third party joins; the server restates the shared budget.
+      m.receive({
+        kind: "callState",
+        callId: "c1",
+        peers: [A, B],
+        remainingMs: 60000,
+      });
+      expect(m.remainingMs()).toBe(60000);
+    });
+
+    it("keeps no deadline when the server sends none", () => {
+      m.receive({ kind: "callState", callId: "c1", peers: [A] });
+      expect(m.remainingMs()).toBeNull();
+    });
+
+    // A stale deadline bleeding into the next call would show the new
+    // conversation counting down from the wrong number.
+    it("forgets the deadline when the call ends", () => {
+      vi.setSystemTime(1_000_000);
+      m.receive({
+        kind: "callState",
+        callId: "c1",
+        peers: [A],
+        remainingMs: 120000,
+      });
+      m.receive({ kind: "callEnded", callId: "c1" });
+      expect(m.remainingMs()).toBeNull();
+    });
+
+    it("forgets the deadline when a call is refused", () => {
+      vi.setSystemTime(1_000_000);
+      m.receive({ kind: "dialing", callId: "c1" });
+      m.receive({
+        kind: "callState",
+        callId: "c1",
+        peers: [A],
+        remainingMs: 120000,
+      });
+      m.receive({ kind: "callEnded", callId: "c1" });
+      m.receive({ kind: "dialing", callId: "c2" });
+      m.receive({ kind: "busy" });
+      expect(m.remainingMs()).toBeNull();
+    });
+  });
 });

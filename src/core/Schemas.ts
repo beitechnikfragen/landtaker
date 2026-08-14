@@ -1001,6 +1001,14 @@ export const ServerPhonePayloadSchema = z.discriminatedUnion("kind", [
     callId: z.string(),
     peers: ID.array(),
     ringing: ID.array().optional(),
+    // Wie viel Gesprächszeit dem Call noch bleibt, in Millisekunden. Bewusst
+    // eine RESTDAUER und kein absoluter Zeitstempel: Server- und Client-Uhr
+    // laufen auseinander, ein roher Server-Deadline stünde beim Empfänger
+    // minutenweit daneben. Der Client heftet die Dauer einmal an seine eigene
+    // Uhr und rechnet ab da lokal weiter. Die Frist selbst gehört dem Server
+    // (PhoneExchange.tick) — das hier ist reine Anzeige, kein Steuersignal.
+    // Optional, damit ältere Clients ohne Countdown weiterlaufen.
+    remainingMs: z.number().int().nonnegative().optional(),
   }),
   z.object({ kind: z.literal("callEnded"), callId: z.string() }),
   z.object({

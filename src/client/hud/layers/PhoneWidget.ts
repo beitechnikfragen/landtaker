@@ -221,6 +221,12 @@ const PHONE_GOLD = "rgb(250 216 130)";
 // clearly semantic and clearly legible without repainting the housing.
 const PHONE_WELL = "rgb(24 4 3 / 0.88)";
 
+// Below this the countdown turns danger-red. The user asked for the remaining
+// time to be shown *continuously* rather than for a discrete warning, so this
+// is deliberately only a colour change on digits already on screen — no popup,
+// no new element, nothing that moves the layout at the worst possible moment.
+const COUNTDOWN_WARN_MS = 15000;
+
 const ANIM_CLASS_BY_STATE: Record<PhoneUiState, string> = {
   idle: "phone-sprite-phone-anim-idle",
   ringing: "phone-sprite-phone-anim-ringing",
@@ -258,6 +264,14 @@ export class PhoneWidget extends LitElement {
 
   private unsubscribe: (() => void) | null = null;
   private blocked = new Set<string>();
+  // Repaints the mm:ss countdown once a second while a call has a deadline.
+  // Deliberately NOT a timer per render: `render()` runs on every unrelated
+  // state change (volume, mode, block, anchor re-measure), so starting one
+  // there would stack a new interval on each pass and leave every previous
+  // one ticking. It is instead started and stopped from a single place
+  // (syncCountdown) driven by whether a deadline currently exists, so there
+  // is at most one alive at any time and none at all outside a call.
+  private countdownTimer: ReturnType<typeof setInterval> | null = null;
 
   createRenderRoot() {
     return this; // Disable shadow DOM to allow Tailwind styles
@@ -292,8 +306,14 @@ export class PhoneWidget extends LitElement {
         if (!this.expanded) this.measureAnchor();
         this.expanded = true;
       }
+      this.syncCountdown();
       this.tick++;
     });
+    // The listener above only fires on the *next* machine event, so a widget
+    // (re-)initialised while a call is already running would show a frozen
+    // clock until something else happened. Sync once here as well; the
+    // start/stop guard makes the extra call a no-op in the common idle case.
+    this.syncCountdown();
     // controller/game are plain fields (not @state/@property), so assigning
     // them above does not schedule a re-render on its own. They hold large
     // object graphs (GameView is the whole game state) that we don't want
@@ -306,6 +326,27 @@ export class PhoneWidget extends LitElement {
     super.disconnectedCallback();
     this.unsubscribe?.();
     this.unsubscribe = null;
+    this.stopCountdown();
+  }
+
+  // Keeps the once-a-second repaint alive for exactly as long as there is a
+  // deadline to draw. Called on every machine change, so a call ending (or a
+  // server that sends no deadline at all) tears the interval down again —
+  // the timer never outlives the call it belongs to.
+  private syncCountdown(): void {
+    const wanted = this.controller?.machine.remainingMs() !== null;
+    if (wanted && this.countdownTimer === null) {
+      this.countdownTimer = setInterval(() => this.tick++, 1000);
+    } else if (!wanted) {
+      this.stopCountdown();
+    }
+  }
+
+  private stopCountdown(): void {
+    if (this.countdownTimer !== null) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+    }
   }
 
   // Only real fellow players belong in the directory — no bots, no nations,
@@ -477,6 +518,7 @@ export class PhoneWidget extends LitElement {
             style="background:${PHONE_WELL};border-color:${PHONE_RED_DEEP}"
           >
             <span class="lt-label !text-white">${label}</span>
+            ${this.renderCountdown()}
             ${m.state === "ringing" && m.incoming
               ? html`<span class="truncate">${m.incoming.username}</span>
                   <!-- Answer stays semantically green. On a red housing a
@@ -538,6 +580,34 @@ export class PhoneWidget extends LitElement {
           </div>`
         : ""}
     `;
+  }
+
+  // The remaining talk time, always on screen while a call has a deadline —
+  // the user asked for a permanent readout rather than a warning that pops up
+  // once. The number comes from the server (via the machine) and is only
+  // *drawn* here; it is not what ends the call, so a client that stops
+  // painting it gains nothing.
+  //
+  // The last 15 seconds shift the digits to danger-red. That is the whole
+  // warning: a colour change on a number the user is already looking at, not
+  // a second element appearing and shoving the layout around.
+  private renderCountdown() {
+    const remaining = this.controller!.machine.remainingMs();
+    if (remaining === null) return "";
+    const total = Math.ceil(remaining / 1000);
+    const mm = Math.floor(total / 60);
+    const ss = total % 60;
+    const ending = remaining <= COUNTDOWN_WARN_MS;
+    // No `ml-auto` here on purpose: the hang-up / answer buttons in the same
+    // row already claim it to sit hard right. A second auto margin would
+    // swallow the gap and pin the clock to the middle instead of leaving it
+    // beside the label it belongs to.
+    return html`<span
+      class="lt-num shrink-0 text-xs ${ending ? "text-lt-bad" : ""}"
+      style=${ending ? "" : `color:${PHONE_GOLD}`}
+      title=${translateText("phone.time_left")}
+      >${mm}:${String(ss).padStart(2, "0")}</span
+    >`;
   }
 
   private renderModeSwitch() {

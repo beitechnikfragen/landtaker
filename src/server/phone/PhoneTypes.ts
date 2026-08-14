@@ -18,4 +18,10 @@ export interface Call {
   participants: Set<ClientID>;
   // Läuft ein Ruf, ist hier das Ziel und wann er ausläuft.
   ringing: Map<ClientID, { from: ClientID; expiresAt: number }>;
+  // Wann das Zeitlimit abläuft — gesetzt beim ERSTEN Verbinden, also wenn
+  // aus dem Klingeln ein Gespräch wird. null, solange nur geklingelt wird:
+  // Klingelzeit ist keine Gesprächszeit und darf das Budget nicht anknabbern
+  // (der Ruf hat dafür sein eigenes RING_TIMEOUT_MS). Die Frist gehört dem
+  // CALL, nicht der Person: wer später dazukommt, erbt den Rest.
+  expiresAt: number | null;
 }
